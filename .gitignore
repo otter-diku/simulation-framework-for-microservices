@@ -354,4 +354,5 @@ MigrationBackup/
 
 # jetbrains quirks
 *.idea/
+.idea
 
