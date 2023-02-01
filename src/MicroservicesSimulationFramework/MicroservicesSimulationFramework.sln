@@ -1,0 +1,22 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MicroservicesSimulationFramework.Core", "MicroservicesSimulationFramework.Core\MicroservicesSimulationFramework.Core.csproj", "{A87B9964-E751-4FBD-955A-10492F6DA28F}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MicroservicesSimulationFramework.Core.Tests", "MicroservicesSimulationFramework.Core.Tests\MicroservicesSimulationFramework.Core.Tests.csproj", "{9903BF9A-07B6-4C19-A476-A68925662BCA}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{A87B9964-E751-4FBD-955A-10492F6DA28F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A87B9964-E751-4FBD-955A-10492F6DA28F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A87B9964-E751-4FBD-955A-10492F6DA28F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A87B9964-E751-4FBD-955A-10492F6DA28F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{9903BF9A-07B6-4C19-A476-A68925662BCA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9903BF9A-07B6-4C19-A476-A68925662BCA}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9903BF9A-07B6-4C19-A476-A68925662BCA}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9903BF9A-07B6-4C19-A476-A68925662BCA}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal
