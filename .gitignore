@@ -350,9 +350,8 @@ MigrationBackup/
 .ionide/
 
 # Mac quirks
-src/.DS_Store
-.DS_Store
+*.DS_Store
 
 # jetbrains quirks
-.idea/
+*.idea/
 
