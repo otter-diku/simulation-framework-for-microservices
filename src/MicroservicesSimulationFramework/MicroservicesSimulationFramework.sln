@@ -4,6 +4,18 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MicroservicesSimulationFram
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MicroservicesSimulationFramework.Core.Tests", "MicroservicesSimulationFramework.Core.Tests\MicroservicesSimulationFramework.Core.Tests.csproj", "{9903BF9A-07B6-4C19-A476-A68925662BCA}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WorkloadGenerator.Server", "..\WorkloadGenerator\WorkloadGenerator.Server\WorkloadGenerator.Server.csproj", "{F76065EB-08EF-4D3A-959C-73EB0883A77C}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WorkloadGenerator.Grains", "..\WorkloadGenerator\WorkloadGenerator.Grains\WorkloadGenerator.Grains.csproj", "{230F8134-8AAF-476D-9FB9-E8F58B4F8DA7}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WorkloadGenerator.Grains.Interfaces", "..\WorkloadGenerator\WorkloadGenerator.Grains.Interfaces\WorkloadGenerator.Grains.Interfaces.csproj", "{A425FE62-C055-45E3-8DA1-F4D3A8ADBD66}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Utilities", "..\Utilities\Utilities.csproj", "{65D8E795-4DB5-4C4E-A732-3EA76F01D35A}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WorkloadGenerator.Coordinator", "..\WorkloadGenerator\WorkloadGenerator.Coordinator\WorkloadGenerator.Coordinator.csproj", "{ACE32CDD-75E8-4C01-947A-A90BA17BA435}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Data", "..\Data\Data.csproj", "{49E9E8DC-3127-4DED-A496-0CD9E316ACDA}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -18,5 +30,29 @@ Global
 		{9903BF9A-07B6-4C19-A476-A68925662BCA}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{9903BF9A-07B6-4C19-A476-A68925662BCA}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{9903BF9A-07B6-4C19-A476-A68925662BCA}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F76065EB-08EF-4D3A-959C-73EB0883A77C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F76065EB-08EF-4D3A-959C-73EB0883A77C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F76065EB-08EF-4D3A-959C-73EB0883A77C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F76065EB-08EF-4D3A-959C-73EB0883A77C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{230F8134-8AAF-476D-9FB9-E8F58B4F8DA7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{230F8134-8AAF-476D-9FB9-E8F58B4F8DA7}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{230F8134-8AAF-476D-9FB9-E8F58B4F8DA7}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{230F8134-8AAF-476D-9FB9-E8F58B4F8DA7}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A425FE62-C055-45E3-8DA1-F4D3A8ADBD66}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A425FE62-C055-45E3-8DA1-F4D3A8ADBD66}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A425FE62-C055-45E3-8DA1-F4D3A8ADBD66}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A425FE62-C055-45E3-8DA1-F4D3A8ADBD66}.Release|Any CPU.Build.0 = Release|Any CPU
+		{65D8E795-4DB5-4C4E-A732-3EA76F01D35A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{65D8E795-4DB5-4C4E-A732-3EA76F01D35A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{65D8E795-4DB5-4C4E-A732-3EA76F01D35A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{65D8E795-4DB5-4C4E-A732-3EA76F01D35A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{ACE32CDD-75E8-4C01-947A-A90BA17BA435}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{ACE32CDD-75E8-4C01-947A-A90BA17BA435}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{ACE32CDD-75E8-4C01-947A-A90BA17BA435}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{ACE32CDD-75E8-4C01-947A-A90BA17BA435}.Release|Any CPU.Build.0 = Release|Any CPU
+		{49E9E8DC-3127-4DED-A496-0CD9E316ACDA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{49E9E8DC-3127-4DED-A496-0CD9E316ACDA}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{49E9E8DC-3127-4DED-A496-0CD9E316ACDA}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{49E9E8DC-3127-4DED-A496-0CD9E316ACDA}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal
