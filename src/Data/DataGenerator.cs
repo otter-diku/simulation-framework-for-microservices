@@ -9,6 +9,8 @@ namespace Data
         const string Alphanumeric = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
         const int Offset = 0; // temporal during testing to not reinitialize application always
 
+        public static int LargestGeneratedCatalogItemId = 10;
+
         public static List<CatalogItem> GenerateCatalogItems(int NumberOfItems, int MIN_ITEM_QTY, int MAX_ITEM_QTY)
         {
             List<CatalogItem> items = new List<CatalogItem>(NumberOfItems);
@@ -53,6 +55,47 @@ namespace Data
 
             return items;
         }
+        
+        public static CatalogItem GenerateCatalogItem(int MIN_ITEM_QTY, int MAX_ITEM_QTY)
+        {
+            CatalogItem item = new CatalogItem
+            {
+                Id = LargestGeneratedCatalogItemId,
+                Name = RandomString(8, Alphanumeric),
+                Description = RandomString(8, Alphanumeric),
+                Price = Math.Ceiling((decimal)(new Random().NextDouble() * 10000)) / 100,
+                PictureFileName = "",
+                PictureUri = "",
+                CatalogTypeId = 1,
+
+                CatalogType = new CatalogType
+                {
+                    Id = 1,
+                    Type = RandomString(8, Alphanumeric)
+                },
+
+                CatalogBrandId = 1,
+
+                CatalogBrand = new CatalogBrand
+                {
+                    Id = 1,
+                    Brand = RandomString(8, Alphanumeric)
+                },
+
+                AvailableStock = new Random().Next(MIN_ITEM_QTY, MAX_ITEM_QTY),
+                RestockThreshold = MIN_ITEM_QTY,
+                MaxStockThreshold = MAX_ITEM_QTY,
+                OnReorder = false
+
+            };
+
+            //  keep track of existing catalogItemIds such that basket transactions can access them
+            LargestGeneratedCatalogItemId += 1;
+            return item;
+        }
+
+        
+        
 
         private static List<BasketItem> GenerateBasketItems(int NumberOfItems)
         {

@@ -28,9 +28,9 @@ namespace WorkloadGenerator.Server
 
             var server = builder.Build();
             await server.StartAsync();
-            Console.WriteLine("\n *************************************************************************");
+            Console.WriteLine("*************************************************************************");
             Console.WriteLine("    The Workload Generator server started. Press Enter to terminate...");
-            Console.WriteLine("\n *************************************************************************");
+            Console.WriteLine("*************************************************************************");
             return server;
         }
     }

@@ -3,12 +3,12 @@ using Orleans.Concurrency;
 
 namespace WorkloadGenerator.Grains.Interfaces
 {
-    public interface IWorkerGrain : IGrainWithGuidKey
+    public interface IWorkerGrain : IGrainWithIntegerKey
     {
 
         Task Init();
         
-        Task<HttpResponseMessage> ExecuteTransaction();
+        Task ExecuteTransaction();
         
     }
 }

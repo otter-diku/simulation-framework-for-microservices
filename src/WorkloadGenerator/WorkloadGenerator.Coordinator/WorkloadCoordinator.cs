@@ -15,7 +15,8 @@ namespace WorkloadGenerator.Coordinator;
 public class WorkloadCoordinator : IDisposable
 {
 
-    private IHost _silo; 
+    private IHost _silo;
+    private IClusterClient _client;
 
     public WorkloadCoordinator()
     {
@@ -23,29 +24,37 @@ public class WorkloadCoordinator : IDisposable
     
     public async Task Init()
     {
-
-        // start orleans server
-        // TODO need to start orleans client to spawn grain
+        _silo = await WorkloadGeneratorServer.StartSiloAsync();
+        _client = _silo.Services.GetService<IClusterClient>()!;
     }
 
-    public void StartExecution()
+    public void StartExecution(int numTransactions)
     {
-        var grainFactory = _silo.Services.GetRequiredService<IGrainFactory>();
-        
-        // would start all grains in a loop 
-        var grain = grainFactory.GetGrain<IWorkerGrain>(new Guid());
-        
-
+        var xacts = GenerateTransactionDistribution(numTransactions);
+        for (int i = 0; i < numTransactions; i++)
+        {
+            if (xacts[i] == TransactionType.CatalogAddItem)
+            {
+                var worker = _client.GetGrain<IWorkerGrain>(i, 
+                    grainClassNamePrefix: "WorkloadGenerator.Grains.CatalogAddItemGrain");
+                worker.ExecuteTransaction().Wait();
+            } else if (xacts[i] == TransactionType.CatalogUpdatePrice)
+            {
+                var worker = _client.GetGrain<IWorkerGrain>(i, 
+                    grainClassNamePrefix: "WorkloadGenerator.Grains.CatalogUpdateItemPrice");
+                worker.ExecuteTransaction().Wait();
+            }
+        }
     }
 
-    public List<TransactionType> generateTranscationDistribution(int numClients)
+    private List<TransactionType> GenerateTransactionDistribution(int numTransactions)
     {
         // want to use config to have certain distribution of xacts 
         var values = Enum.GetValues(typeof(TransactionType));
         var random = new Random();
 
         var xacts = new List<TransactionType>();
-        for (int i = 0; i < numClients; i++)
+        for (int i = 0; i < numTransactions; i++)
         {
             var randomXact = (TransactionType) values.GetValue(random.Next(values.Length))!;
             xacts.Add(randomXact);
