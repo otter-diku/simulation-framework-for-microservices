@@ -29,7 +29,7 @@ public class CatalogAddItemGrain : Grain, IWorkerGrain
         var content = new StringContent(JsonSerializer.Serialize(item), System.Text.Encoding.UTF8, "application/json");
         _client.DefaultRequestHeaders.Add("x-requestid", "");
 
-        var response = await _client.PostAsync(Constants.catalogItemUrl, content);
+        var response = await _client.PostAsync(Constants.CatalogItemUrl, content);
         
         Console.WriteLine("Resulting response: " + response);
     }

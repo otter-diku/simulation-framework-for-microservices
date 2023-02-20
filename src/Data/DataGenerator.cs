@@ -107,7 +107,7 @@ namespace Data
 
                 BasketItem item = new BasketItem();
 
-                item.ProductId = i;
+                item.ProductId = i.ToString();
                 item.ProductName = RandomString(8, Alphanumeric);
 
                 item.UnitPrice = Math.Ceiling((decimal)(new Random().NextDouble() * 10000)) / 100;
@@ -131,7 +131,7 @@ namespace Data
                 CatalogItem catalogItem = catalogItems[new Random().Next(catalogItems.Count)];
                 BasketItem item = new BasketItem();
 
-                item.ProductId = catalogItem.Id;
+                item.ProductId = catalogItem.Id.ToString();
                 item.ProductName = catalogItem.Name;
 
                 item.UnitPrice = catalogItem.Price;

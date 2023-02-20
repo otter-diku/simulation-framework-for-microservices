@@ -41,8 +41,13 @@ public class WorkloadCoordinator : IDisposable
             } else if (xacts[i] == TransactionType.CatalogUpdatePrice)
             {
                 var worker = _client.GetGrain<IWorkerGrain>(i, 
-                    grainClassNamePrefix: "WorkloadGenerator.Grains.CatalogUpdateItemPrice");
+                    grainClassNamePrefix: "WorkloadGenerator.Grains.CatalogUpdateItemPriceGrain");
                 worker.ExecuteTransaction().Wait();
+            } else if (xacts[i] == TransactionType.BasketAddItem)
+            {
+                var worker = _client.GetGrain<IWorkerGrain>(i, 
+                    grainClassNamePrefix: "WorkloadGenerator.Grains.BasketAddItemGrain");
+                worker.ExecuteTransaction().Wait();                
             }
         }
     }

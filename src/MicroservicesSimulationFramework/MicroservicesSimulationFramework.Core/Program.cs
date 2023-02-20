@@ -8,7 +8,7 @@ var workloadCoordinator = new WorkloadCoordinator();
 await workloadCoordinator.Init();
 
 // do work, submit workload, gather results
-workloadCoordinator.StartExecution(50);
+workloadCoordinator.StartExecution(100);
 
 
 // used to prevent orleans server exit immediately

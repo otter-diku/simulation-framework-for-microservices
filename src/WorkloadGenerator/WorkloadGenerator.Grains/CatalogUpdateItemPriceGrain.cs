@@ -8,7 +8,7 @@ using Data.Model;
 namespace WorkloadGenerator.Grains;
 
 [StatelessWorker]
-public class CatalogUpdateItemPrice : Grain, IWorkerGrain  
+public class CatalogUpdateItemPriceGrain : Grain, IWorkerGrain  
 {
     public Task Init()
     {
@@ -25,7 +25,7 @@ public class CatalogUpdateItemPrice : Grain, IWorkerGrain
         var itemId = rnd.Next(Data.DataGenerator.LargestGeneratedCatalogItemId);
 
         CatalogItem catalogItem;
-        var res = await _client.GetAsync(Constants.catalogItemUrl + "/" + itemId);
+        var res = await _client.GetAsync(Constants.CatalogItemUrl + "/" + itemId);
         
         if (!res.IsSuccessStatusCode)
         {
@@ -37,7 +37,7 @@ public class CatalogUpdateItemPrice : Grain, IWorkerGrain
             var priceUpdate = rnd.Next(-1, 10);
             catalogItem.Price += priceUpdate;
 
-            var putResponse = await _client.PutAsJsonAsync(Constants.catalogItemUrl, catalogItem);
+            var putResponse = await _client.PutAsJsonAsync(Constants.CatalogItemUrl, catalogItem);
         
             Console.WriteLine("Resulting response: " + putResponse);            
         }
