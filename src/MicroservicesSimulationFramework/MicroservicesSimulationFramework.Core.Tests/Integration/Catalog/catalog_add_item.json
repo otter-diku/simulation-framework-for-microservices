@@ -1,0 +1,38 @@
+{
+  "id": "catalog-add-item",
+  "type": "http",
+  "httpMethod": "post",
+  "arguments": [
+    {
+      "name": "arg1",
+      "required": true,
+      "type": "number"
+    }
+  ],
+  "payload": {
+    "type": "json",
+    "content": {
+      "id": 0,
+      "name": "string",
+      "description": "string",
+      "price": "{{arg1}}",
+      "pictureFileName": "string",
+      "pictureUri": "string",
+      "catalogTypeId": 1,
+      "catalogType": {
+        "id": 0,
+        "type": "string"
+      },
+      "catalogBrandId": 1,
+      "catalogBrand": {
+        "id": 1,
+        "brand": "string"
+      },
+      "availableStock": 1,
+      "restockThreshold": 1,
+      "maxStockThreshold": 1,
+      "onReorder": true
+    }
+  },
+  "url": "http://localhost:5101/catalog-api/api/v1/Catalog/items"
+}

@@ -29,6 +29,9 @@
       <None Update="Operation\Invalid\*.json">
         <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       </None>
+      <None Update="Integration\Catalog\*.json">
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      </None>      
     </ItemGroup>
 
 </Project>
