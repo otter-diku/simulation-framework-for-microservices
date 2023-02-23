@@ -1,0 +1,13 @@
+{
+  "id": "operation-id",
+  "type": "http",
+  "httpMethod": "get",
+  "arguments": [
+    {
+      "name": "arg1",
+      "type": "string",
+      "required": true
+    }
+  ],
+  "url": "http://example.com/:arg1"
+}

@@ -9,6 +9,7 @@
     </PropertyGroup>
 
     <ItemGroup>
+      <PackageReference Include="FluentValidation" Version="11.5.1" />
       <PackageReference Include="Microsoft.Orleans.Server" Version="7.1.0" />
     </ItemGroup>
 

@@ -1,0 +1,5 @@
+{
+  "id": "operation-id",
+  "type": "http",
+  "url": "http://example.com"
+}
