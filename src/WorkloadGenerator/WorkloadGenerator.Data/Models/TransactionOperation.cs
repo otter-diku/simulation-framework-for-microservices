@@ -1,6 +1,6 @@
 using FluentValidation;
 
-namespace WorkloadGenerator.Data.Models.Internal;
+namespace WorkloadGenerator.Data.Models;
 
 public class TransactionOperation
 {

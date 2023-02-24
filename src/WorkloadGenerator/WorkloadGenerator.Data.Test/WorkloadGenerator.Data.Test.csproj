@@ -17,12 +17,21 @@
     </ItemGroup>
 
     <ItemGroup>
-        <None Update="Operation\Valid\*.json">
+        <None Update="Operation\Parsing\Valid\*.json">
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
         </None>
-        <None Update="Operation\Invalid\*.json">
+        <None Update="Operation\Parsing\Invalid\*.json">
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
         </None>
+        <None Update="Operation\Resolving\Valid\Input\*.json">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </None>
+        <None Update="Operation\Resolving\Valid\Arguments\*.json">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </None>
+        <None Update="Operation\Resolving\Valid\ExpectedResult\*.json">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </None>        
     </ItemGroup>
 
     <ItemGroup>

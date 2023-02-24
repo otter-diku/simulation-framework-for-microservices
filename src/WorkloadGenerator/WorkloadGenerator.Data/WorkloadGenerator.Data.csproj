@@ -15,4 +15,9 @@
       </Reference>
     </ItemGroup>
 
+    <ItemGroup>
+      <Folder Include="Models\Input" />
+      <Folder Include="Models\Internal" />
+    </ItemGroup>
+
 </Project>
