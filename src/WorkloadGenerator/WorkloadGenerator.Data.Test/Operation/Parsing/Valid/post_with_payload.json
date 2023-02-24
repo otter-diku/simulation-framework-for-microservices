@@ -1,0 +1,15 @@
+{
+  "id": "operation-id",
+  "type": "http",
+  "httpMethod": "post",
+  "payload": {
+    "type": "json",
+    "content": {
+      "key1": {
+        "key2": "value-a",
+        "key3": [ "value-b", "value-c" ]
+      }
+    }
+  },
+  "url": "http://example.com"
+}
