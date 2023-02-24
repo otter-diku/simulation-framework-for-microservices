@@ -6,12 +6,12 @@ using System.Text.Json.Serialization;
 using System.Text.RegularExpressions;
 using System.Web;
 using FluentValidation;
-using MicroservicesSimulationFramework.Core.Models.Input;
-using MicroservicesSimulationFramework.Core.Models.Internal;
 using Microsoft.Extensions.Logging;
+using WorkloadGenerator.Data.Models.Input;
+using WorkloadGenerator.Data.Models.Internal;
 using HttpMethod = System.Net.Http.HttpMethod;
 
-namespace MicroservicesSimulationFramework.Core.Services;
+namespace WorkloadGenerator.Data.Services;
 
 public class TransactionOperationService : ITransactionOperationService
 {
@@ -25,7 +25,7 @@ public class TransactionOperationService : ITransactionOperationService
     // for url paths we do not need expect any quotes so we just need to replace the `{{arg-name}}`
     private readonly Regex _urlPathArgumentRegex = new("{{([^}]*)}}");
     
-    // for url paths we do not need expect any quotes so we just need to replace the `{{arg-name}}`
+    // for url paths we do not need expect any quotes so we just need to replace the `@@arg-name@@`
     private readonly Regex _urlPathReferenceRegex = new("@@([^}]*)@@");
     
     public TransactionOperationService(ILogger<TransactionOperationService> logger)

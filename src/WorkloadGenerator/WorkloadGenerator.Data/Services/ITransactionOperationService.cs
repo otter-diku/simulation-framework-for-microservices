@@ -1,7 +1,7 @@
-using MicroservicesSimulationFramework.Core.Models.Input;
-using MicroservicesSimulationFramework.Core.Models.Internal;
+using WorkloadGenerator.Data.Models.Input;
+using WorkloadGenerator.Data.Models.Internal;
 
-namespace MicroservicesSimulationFramework.Core.Services;
+namespace WorkloadGenerator.Data.Services;
 
 public interface ITransactionOperationService
 {

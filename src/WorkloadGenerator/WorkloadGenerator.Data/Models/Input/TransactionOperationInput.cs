@@ -1,7 +1,6 @@
-using System.Text.Json.Serialization;
 using FluentValidation;
 
-namespace MicroservicesSimulationFramework.Core.Models.Input;
+namespace WorkloadGenerator.Data.Models.Input;
 
 public class TransactionOperationInput
 {
@@ -45,11 +44,9 @@ public class TransactionOperationInputValidator : AbstractValidator<TransactionO
             RuleFor(operation => operation.HttpMethod)
                 .NotNull()
                 .WithMessage("HTTP operations needs to specify the HTTP method");
-
-            // TODO: we can only validate once we resolve the URL arguments at runtime
-            // RuleFor(operation => operation.Url)
-            //     .Must(url => Uri.IsWellFormedUriString(url, UriKind.RelativeOrAbsolute))
-            //     .WithMessage("HTTP operations needs to specify a valid URL");
+            RuleFor(operation => operation.Url)
+                .NotEmpty()
+                .WithMessage("HTTP operations need to specify URL.");
         });
     }
 }

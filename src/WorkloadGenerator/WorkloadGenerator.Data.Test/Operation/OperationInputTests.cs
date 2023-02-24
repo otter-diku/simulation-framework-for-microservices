@@ -1,11 +1,8 @@
 using System.Collections;
-using System.Text.Json;
-using System.Text.RegularExpressions;
-using MicroservicesSimulationFramework.Core.Models.Input;
-using MicroservicesSimulationFramework.Core.Services;
 using Microsoft.Extensions.Logging.Abstractions;
+using WorkloadGenerator.Data.Services;
 
-namespace MicroservicesSimulationFramework.Core.Tests.Operation;
+namespace WorkloadGenerator.Data.Test.Operation;
 
 public class OperationInputTests
 {
