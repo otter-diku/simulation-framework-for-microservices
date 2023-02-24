@@ -1,6 +1,6 @@
 using FluentValidation;
 
-namespace MicroservicesSimulationFramework.Core.Models.Internal;
+namespace WorkloadGenerator.Data.Models;
 
 public class TransactionOperation
 {

@@ -6,12 +6,11 @@ using System.Text.Json.Serialization;
 using System.Text.RegularExpressions;
 using System.Web;
 using FluentValidation;
-using MicroservicesSimulationFramework.Core.Models.Input;
-using MicroservicesSimulationFramework.Core.Models.Internal;
 using Microsoft.Extensions.Logging;
+using WorkloadGenerator.Data.Models;
 using HttpMethod = System.Net.Http.HttpMethod;
 
-namespace MicroservicesSimulationFramework.Core.Services;
+namespace WorkloadGenerator.Data.Services;
 
 public class TransactionOperationService : ITransactionOperationService
 {
@@ -25,7 +24,7 @@ public class TransactionOperationService : ITransactionOperationService
     // for url paths we do not need expect any quotes so we just need to replace the `{{arg-name}}`
     private readonly Regex _urlPathArgumentRegex = new("{{([^}]*)}}");
     
-    // for url paths we do not need expect any quotes so we just need to replace the `{{arg-name}}`
+    // for url paths we do not need expect any quotes so we just need to replace the `@@arg-name@@`
     private readonly Regex _urlPathReferenceRegex = new("@@([^}]*)@@");
     
     public TransactionOperationService(ILogger<TransactionOperationService> logger)
@@ -42,54 +41,42 @@ public class TransactionOperationService : ITransactionOperationService
         }
     };
 
-    private readonly TransactionOperationInputValidator _validator = new();
+    private readonly TransactionOperationInputBaseValidator _baseValidator = new();
+    
 
-    public bool TryParseInput(string json, out TransactionOperationInput parsedInput)
-    {
-        try
-        {
-            parsedInput = JsonSerializer.Deserialize<TransactionOperationInput>(json, _jsonSerializerOptions)!;
-            _validator.ValidateAndThrow(parsedInput);
-            return true;
-        }
-        catch (Exception exception)
-        {
-            _logger.LogInformation(exception, 
-                "Failed trying to deserialize input data for {TypeName}", 
-                nameof(TransactionOperationInput));
-            
-            parsedInput = null!;
-            return false;
-        }
-    }
-
-    public TransactionOperation Convert(TransactionOperationInput transactionOperationInput, Dictionary<string, object>? providedValues = null)
-    {
-        if (transactionOperationInput.Arguments is not null && !ValidateArguments(transactionOperationInput, providedValues))
-        {
-            // TODO: Consider adding more info here for debugging purposes
-            _logger.LogInformation("Failed trying to validate arguments for {OperationId}", transactionOperationInput.Id);
-        }
-        
-        return transactionOperationInput.Type switch
-        {
-            OperationType.Http => ConvertToHttpOperation(transactionOperationInput, providedValues),
-            _ => throw new ArgumentOutOfRangeException()
-        };
-    }
-
-    private static bool ValidateArguments(TransactionOperationInput transactionOperationInput, IReadOnlyDictionary<string, object> args)
+    private static bool ValidateArguments(TransactionOperationInputUnresolved transactionOperationInput, IReadOnlyDictionary<string, object> args)
     {
         return transactionOperationInput.Arguments!
             .Where(argument => argument.Required)
             .All(requiredArgument => args.ContainsKey(requiredArgument.Name));
     }
 
-    private TransactionOperation ConvertToHttpOperation(TransactionOperationInput input, Dictionary<string,object>? providedValues)
+    private TransactionOperationInputResolved<T> ResolveInternal<T>(TransactionOperationInputUnresolved unresolvedInput,
+        Dictionary<string, object>? providedValues = null)
+    {
+        var resolvedPayload = ResolvePayload<T>(unresolvedInput.Payload, unresolvedInput.Arguments, providedValues);
+        return new TransactionOperationInputResolved<T>()
+        {
+            Headers = unresolvedInput.Headers,
+            Payload = resolvedPayload,
+            HttpMethod = unresolvedInput.HttpMethod,
+            Id = unresolvedInput.Id,
+            QueryParameters = unresolvedInput.QueryParameters,
+            Type = unresolvedInput.Type,
+            Url = ResolveUrl(unresolvedInput.Url, resolvedPayload, unresolvedInput.Arguments, providedValues)
+        };
+    }
+
+    private Type getType(PayloadType payloadType)
+    {
+        return typeof(JsonNode);
+    }
+    
+    private TransactionOperation ConvertToHttpOperation<T>(TransactionOperationInputResolved<T> input)
     {
         Action<HttpRequestMessage> func = httpRequest =>
         {
-            httpRequest.Method = GetHttpMethod(input);
+            httpRequest.Method = GetHttpMethod(input.HttpMethod);
             
             httpRequest.Headers.Clear();
             if (input.Headers is not null)
@@ -101,7 +88,7 @@ public class TransactionOperationService : ITransactionOperationService
                 }
             }
 
-            if (input.Payload?.Type is not PayloadType.Json)
+            if (input.Payload is not JsonNode jsonNode)
             {
                 // TODO: do we need to implement this?
                 throw new NotImplementedException("Non-JSON payloads are not supported");
@@ -110,14 +97,13 @@ public class TransactionOperationService : ITransactionOperationService
             JsonNode? payload = null;
             if (input.Payload is not null)
             {
-                payload = ResolvePayload(input.Payload, input.Arguments, providedValues);
-                httpRequest.Content = new StringContent(
-                    JsonSerializer.Serialize(payload,  new JsonSerializerOptions() { WriteIndented = true}),
-                    Encoding.UTF8, 
-                    GetContentType(input.Payload.Type));
+                    httpRequest.Content = new StringContent(
+                        JsonSerializer.Serialize(jsonNode,  new JsonSerializerOptions() { WriteIndented = true}),
+                        Encoding.UTF8,
+                        "application/json");
             }
-                
-            var uriBuilder = new UriBuilder(ResolveUrl(input.Url, payload, input.Arguments, providedValues));
+
+            var uriBuilder = new UriBuilder(input.Url);
             
             if (input.QueryParameters is not null)
             {
@@ -132,8 +118,8 @@ public class TransactionOperationService : ITransactionOperationService
         return new TransactionOperation() { PrepareRequestMessage = func };
     }
 
-    private string ResolveUrl(string? inputUrl, 
-        JsonNode payload, 
+    private string ResolveUrl<T>(string? inputUrl, 
+        T payload, 
         Argument[]? arguments,
         Dictionary<string, object>? providedValues)
     {
@@ -152,26 +138,31 @@ public class TransactionOperationService : ITransactionOperationService
             return value.ToString();
         });
         
+        if (payload is not JsonNode jsonNode)
+        {
+            return resolvedUrl;
+        }
+
         resolvedUrl = _urlPathReferenceRegex.Replace(resolvedUrl, (match) =>
         {
             var variableName = match.Groups[1].Value;
 
             try
             {
-                var currentNode = variableName
-                    .Split(".")
-                    .Aggregate(payload, (current, part) => current[part]);
 
-                // TODO: Do we need to support optional payload references?
-                return currentNode.GetValue<string>();
+                var finalNode = variableName
+                    .Split(".")
+                    .Aggregate(jsonNode, (current, part) => current[part]);
+
+                return finalNode.GetValue<string>();
             }
             catch (Exception exception)
             {
                 _logger.LogWarning(exception,
-                    "Failed trying to reference payload property in the URL. URL: {URL}, property referenced: {Property}", 
+                    "Failed trying to reference payload property in the URL. URL: {URL}, property referenced: {Property}",
                     resolvedUrl,
                     variableName);
-                
+
                 throw;
             }
         });
@@ -179,7 +170,7 @@ public class TransactionOperationService : ITransactionOperationService
         return resolvedUrl;
     }
 
-    private JsonNode ResolvePayload(Payload inputPayload, Argument[]? arguments, Dictionary<string,object>? providedValues)
+    private T ResolvePayload<T>(Payload inputPayload, Argument[]? arguments, Dictionary<string,object>? providedValues)
     {
         var payloadContentText  = ((JsonElement)inputPayload.Content).GetRawText();
         var resolvedPayloadText = _payloadArgumentRegex.Replace(payloadContentText, (match) =>
@@ -195,7 +186,7 @@ public class TransactionOperationService : ITransactionOperationService
             return PrintArgument(argument, value);
         });
         
-        return JsonSerializer.Deserialize<JsonNode>(resolvedPayloadText)!;
+        return JsonSerializer.Deserialize<T>(resolvedPayloadText);
     }
 
     // TODO: totally random 
@@ -223,15 +214,15 @@ public class TransactionOperationService : ITransactionOperationService
         };
     }
     
-    private HttpMethod GetHttpMethod(TransactionOperationInput input)
+    private HttpMethod GetHttpMethod(Models.HttpMethod? method)
     {
-        return input.HttpMethod switch
+        return method switch
         {
-            Models.Input.HttpMethod.Get => HttpMethod.Get,
-            Models.Input.HttpMethod.Post => HttpMethod.Post,
-            Models.Input.HttpMethod.Put => HttpMethod.Put,
-            Models.Input.HttpMethod.Patch => HttpMethod.Patch,
-            Models.Input.HttpMethod.Delete => HttpMethod.Delete,
+            Models.HttpMethod.Get => HttpMethod.Get,
+            Models.HttpMethod.Post => HttpMethod.Post,
+            Models.HttpMethod.Put => HttpMethod.Put,
+            Models.HttpMethod.Patch => HttpMethod.Patch,
+            Models.HttpMethod.Delete => HttpMethod.Delete,
             _ => throw new ArgumentOutOfRangeException()
         };
     }
@@ -266,5 +257,45 @@ public class TransactionOperationService : ITransactionOperationService
             
             throw;
         }
+    }
+
+    public bool TryParseInput(string json, out TransactionOperationInputUnresolved parsedInput)
+    {
+        try
+        {
+            parsedInput = JsonSerializer.Deserialize<TransactionOperationInputUnresolved>(json, _jsonSerializerOptions)!;
+            _baseValidator.ValidateAndThrow(parsedInput);
+            return true;
+        }
+        catch (Exception exception)
+        {
+            _logger.LogInformation(exception, 
+                "Failed trying to deserialize input data for {TypeName}", 
+                nameof(TransactionOperationInputUnresolved));
+            
+            parsedInput = null!;
+            return false;
+        }        
+    }
+
+    public TransactionOperationInputResolved<T> Resolve<T>(TransactionOperationInputUnresolved transactionOperationInputUnresolved,
+        Dictionary<string, object>? providedValues = null)
+    {
+        if (transactionOperationInputUnresolved.Arguments is not null && !ValidateArguments(transactionOperationInputUnresolved, providedValues))
+        {
+            // TODO: Consider adding more info here for debugging purposes
+            _logger.LogInformation("Failed trying to validate arguments for {OperationId}", transactionOperationInputUnresolved.Id);
+        }
+
+        return ResolveInternal<T>(transactionOperationInputUnresolved, providedValues);
+    }
+
+    public TransactionOperation Convert<T>(TransactionOperationInputResolved<T> resolvedInput)
+    {
+        return resolvedInput.Type switch
+        {
+            OperationType.Http => ConvertToHttpOperation(resolvedInput),
+            _ => throw new ArgumentOutOfRangeException()
+        };
     }
 }

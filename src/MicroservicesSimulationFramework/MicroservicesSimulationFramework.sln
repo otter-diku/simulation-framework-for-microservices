@@ -2,8 +2,6 @@
 Microsoft Visual Studio Solution File, Format Version 12.00
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MicroservicesSimulationFramework.Core", "MicroservicesSimulationFramework.Core\MicroservicesSimulationFramework.Core.csproj", "{A87B9964-E751-4FBD-955A-10492F6DA28F}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MicroservicesSimulationFramework.Core.Tests", "MicroservicesSimulationFramework.Core.Tests\MicroservicesSimulationFramework.Core.Tests.csproj", "{9903BF9A-07B6-4C19-A476-A68925662BCA}"
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WorkloadGenerator.Server", "..\WorkloadGenerator\WorkloadGenerator.Server\WorkloadGenerator.Server.csproj", "{F76065EB-08EF-4D3A-959C-73EB0883A77C}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WorkloadGenerator.Grains", "..\WorkloadGenerator\WorkloadGenerator.Grains\WorkloadGenerator.Grains.csproj", "{230F8134-8AAF-476D-9FB9-E8F58B4F8DA7}"
@@ -16,6 +14,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WorkloadGenerator.Coordinat
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Data", "..\Data\Data.csproj", "{49E9E8DC-3127-4DED-A496-0CD9E316ACDA}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WorkloadGenerator.Data", "..\WorkloadGenerator\WorkloadGenerator.Data\WorkloadGenerator.Data.csproj", "{7E15658A-DBE4-4863-A330-2F6307F88AFA}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WorkloadGenerator.Data.Test", "..\WorkloadGenerator\WorkloadGenerator.Data.Test\WorkloadGenerator.Data.Test.csproj", "{488CB08E-39BB-4E70-8D7C-0C11E5F09ECB}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -26,10 +28,6 @@ Global
 		{A87B9964-E751-4FBD-955A-10492F6DA28F}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{A87B9964-E751-4FBD-955A-10492F6DA28F}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{A87B9964-E751-4FBD-955A-10492F6DA28F}.Release|Any CPU.Build.0 = Release|Any CPU
-		{9903BF9A-07B6-4C19-A476-A68925662BCA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{9903BF9A-07B6-4C19-A476-A68925662BCA}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{9903BF9A-07B6-4C19-A476-A68925662BCA}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{9903BF9A-07B6-4C19-A476-A68925662BCA}.Release|Any CPU.Build.0 = Release|Any CPU
 		{F76065EB-08EF-4D3A-959C-73EB0883A77C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{F76065EB-08EF-4D3A-959C-73EB0883A77C}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{F76065EB-08EF-4D3A-959C-73EB0883A77C}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -54,5 +52,13 @@ Global
 		{49E9E8DC-3127-4DED-A496-0CD9E316ACDA}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{49E9E8DC-3127-4DED-A496-0CD9E316ACDA}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{49E9E8DC-3127-4DED-A496-0CD9E316ACDA}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7E15658A-DBE4-4863-A330-2F6307F88AFA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7E15658A-DBE4-4863-A330-2F6307F88AFA}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7E15658A-DBE4-4863-A330-2F6307F88AFA}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7E15658A-DBE4-4863-A330-2F6307F88AFA}.Release|Any CPU.Build.0 = Release|Any CPU
+		{488CB08E-39BB-4E70-8D7C-0C11E5F09ECB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{488CB08E-39BB-4E70-8D7C-0C11E5F09ECB}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{488CB08E-39BB-4E70-8D7C-0C11E5F09ECB}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{488CB08E-39BB-4E70-8D7C-0C11E5F09ECB}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

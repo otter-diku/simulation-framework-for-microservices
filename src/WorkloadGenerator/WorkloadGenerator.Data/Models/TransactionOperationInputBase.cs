@@ -1,19 +1,15 @@
-using System.Text.Json.Serialization;
 using FluentValidation;
 
-namespace MicroservicesSimulationFramework.Core.Models.Input;
+namespace WorkloadGenerator.Data.Models;
 
-public class TransactionOperationInput
+public abstract class TransactionOperationInputBase
 {
     public string Id { get; set; }
-    
-    public Argument[]? Arguments { get; set; }
     
     public OperationType Type { get; set; }
     
     public HttpMethod? HttpMethod { get; set; }
 
-    public Payload? Payload { get; set; }
     
     // Headers can have duplicate keys so we cannot use a dictionary here
     // TODO: Headers should be parametrized 
@@ -24,6 +20,24 @@ public class TransactionOperationInput
     
     // We might need to work with URLs with some params that are resolved at runtime so .NET's URI might not be applicable here
     public string? Url { get; set; }
+
+    protected bool Equals(TransactionOperationInputBase other)
+    {
+        return Id == other.Id && Type == other.Type && HttpMethod == other.HttpMethod && Equals(Headers, other.Headers) && Equals(QueryParameters, other.QueryParameters) && Url == other.Url;
+    }
+
+    public override bool Equals(object? obj)
+    {
+        if (ReferenceEquals(null, obj)) return false;
+        if (ReferenceEquals(this, obj)) return true;
+        if (obj.GetType() != this.GetType()) return false;
+        return Equals((TransactionOperationInputBase)obj);
+    }
+
+    public override int GetHashCode()
+    {
+        return HashCode.Combine(Id, (int)Type, HttpMethod, Headers, QueryParameters, Url);
+    }
 }
 
 public class QueryParameter
@@ -32,34 +46,26 @@ public class QueryParameter
     public string Value { get; set; }
 }
 
-public class TransactionOperationInputValidator : AbstractValidator<TransactionOperationInput>
+public class TransactionOperationInputBaseValidator : AbstractValidator<TransactionOperationInputBase>
 {
-    public TransactionOperationInputValidator()
+    public TransactionOperationInputBaseValidator()
     {
         RuleFor(operation => operation.Id)
             .NotEmpty()
-            .WithMessage($"{nameof(TransactionOperationInput)} ID needs to be a non-empty string");
+            .WithMessage($"{nameof(TransactionOperationInputBase)} ID needs to be a non-empty string");
 
         When(operation => operation.Type == OperationType.Http, () =>
         {
             RuleFor(operation => operation.HttpMethod)
                 .NotNull()
                 .WithMessage("HTTP operations needs to specify the HTTP method");
-
-            // TODO: we can only validate once we resolve the URL arguments at runtime
-            // RuleFor(operation => operation.Url)
-            //     .Must(url => Uri.IsWellFormedUriString(url, UriKind.RelativeOrAbsolute))
-            //     .WithMessage("HTTP operations needs to specify a valid URL");
+            RuleFor(operation => operation.Url)
+                .NotEmpty()
+                .WithMessage("HTTP operations need to specify URL.");
         });
     }
 }
 
-public class Payload
-{
-    public PayloadType Type { get; set; }
-    
-    public object Content { get; set; }
-}
 
 public enum PayloadType
 {
@@ -67,12 +73,7 @@ public enum PayloadType
     Json = 10
 }
 
-public class Argument
-{
-    public string Name { get; set; }
-    public ArgumentType Type { get; set; }
-    public bool Required { get; set; }
-}
+
 
 public enum ArgumentType
 {

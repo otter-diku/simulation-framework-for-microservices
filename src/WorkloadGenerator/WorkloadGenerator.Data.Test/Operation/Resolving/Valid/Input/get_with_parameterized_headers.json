@@ -1,0 +1,35 @@
+{
+  "id": "operation-id",
+  "type": "http",
+  "httpMethod": "get",
+  "headers":
+  [
+    {
+      "key": "header-1",
+      "value": "{{arg-1}}"
+    },
+    {
+      "key": "header-2",
+      "value": "{{arg-2}}"
+    }
+  ],
+  "arguments": [
+    { 
+      "name": "arg-1",
+      "required": true,
+      "type": "string"
+    },
+    {
+      "name": "arg-2",
+      "required": true,
+      "type": "string"
+    }
+  ],
+  "payload": {
+    "type": "json",
+    "content": {
+      "key1": "value1"
+    }
+  },
+  "url": "http://example.com"
+}

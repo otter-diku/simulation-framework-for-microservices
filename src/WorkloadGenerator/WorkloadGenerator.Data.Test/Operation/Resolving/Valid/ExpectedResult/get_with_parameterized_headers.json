@@ -1,0 +1,20 @@
+{
+  "id": "operation-id",
+  "type": "http",
+  "httpMethod": "get",
+  "headers":
+  [
+    {
+      "key": "header-1",
+      "value": "42"
+    },
+    {
+      "key": "header-2",
+      "value": "some-string"
+    }
+  ],
+  "payload": {
+    "key1": "value1"
+  },  
+  "url": "http://example.com"
+}
