@@ -5,6 +5,7 @@ using System.Text.Json.Nodes;
 using System.Text.Json.Serialization;
 using System.Text.RegularExpressions;
 using System.Web;
+using AutoFixture;
 using FluentValidation;
 using Microsoft.Extensions.Logging;
 using WorkloadGenerator.Data.Models;
@@ -48,7 +49,6 @@ public class TransactionOperationService : ITransactionOperationService
     private static bool ValidateArguments(TransactionOperationInputUnresolved transactionOperationInput, IReadOnlyDictionary<string, object> args)
     {
         return transactionOperationInput.Arguments!
-            .Where(argument => argument.Required)
             .All(requiredArgument => args.ContainsKey(requiredArgument.Name));
     }
     
@@ -69,7 +69,7 @@ public class TransactionOperationService : ITransactionOperationService
     private TransactionOperationInputResolved<T> ResolveInternal<T>(TransactionOperationInputUnresolved unresolvedInput,
         Dictionary<string, object>? providedValues = null)
     {
-        var resolvedPayload = ResolvePayload<T>(unresolvedInput.Payload, unresolvedInput.Arguments, providedValues);
+        var resolvedPayload = ResolvePayload<T>(unresolvedInput.Payload, unresolvedInput.Arguments, unresolvedInput.DynamicVariables, providedValues);
         return new TransactionOperationInputResolved<T>()
         {
             Headers = ResolveHeaders(unresolvedInput.Headers, unresolvedInput.Arguments, providedValues),
@@ -227,7 +227,7 @@ public class TransactionOperationService : ITransactionOperationService
     private string ResolveParameterizedString(
         string? unresolvedInput, 
         Argument[] arguments, 
-        Dictionary<string, object>? providedValues
+        Dictionary<string, object> providedValues
     )
     {
         return _stringArgumentReplaceRegex.Replace(unresolvedInput, (match) =>
@@ -235,61 +235,66 @@ public class TransactionOperationService : ITransactionOperationService
             try
             {
                 var variableName = match.Groups[1].Value;
-                var argument = arguments.Single(a => a.Name == variableName);
-                var valueHasBeenProvided = providedValues!.TryGetValue(variableName, out var value);
                 
-                if (!valueHasBeenProvided && !argument.Required)
-                {
-                    value = GenerateRandomValue(argument);
-                }
-
-                return value.ToString();
+                return providedValues[variableName].ToString();
             }
             catch (InvalidOperationException invalidOperationException)
             {
                 _logger.LogWarning(invalidOperationException,
                     "Failed trying to resolve input: {UnresolvedInput}, args: {Arguments}, provided values: {ProvidedValues}",
                     unresolvedInput,
-                    string.Join(" | ", arguments.Select(a => $"{a.Name}, {a.Type}, {a.Required}")),
+                    string.Join(" | ", arguments.Select(a => $"{a.Name}, {a.Type}")),
                     string.Join(" | ", providedValues.Select(kv => $"{kv.Key}: {kv.Value}")));
                 throw;
             }
         });
     }
 
-    private T ResolvePayload<T>(Payload inputPayload, Argument[]? arguments, Dictionary<string,object>? providedValues)
+    private T ResolvePayload<T>(Payload inputPayload, Argument[]? arguments, DynamicVariable[]? dynamicVariables,
+        Dictionary<string,object>? providedValues)
     {
         var payloadContentText  = ((JsonElement)inputPayload.Content).GetRawText();
         var resolvedPayloadText = _argumentReplaceRegex.Replace(payloadContentText, (match) =>
         {
             var variableName = match.Groups[1].Value;
-            var argument = arguments!.Single(a => a.Name == variableName);
-            var valueHasBeenProvided = providedValues!.TryGetValue(variableName, out var value);
-            if (!valueHasBeenProvided && !argument.Required)
+            var argument = arguments!.SingleOrDefault(a => a.Name == variableName);
+            if (argument is not null)
             {
-                value = GenerateRandomValue(argument);
+                return PrintArgument(argument, providedValues[variableName]);
             }
 
-            return PrintArgument(argument, value);
+            var dynamicVariable = dynamicVariables.Single(v => v.Name == variableName);
+            return PrintDynamicVariable(dynamicVariable, providedValues[variableName]);
         });
         
         return JsonSerializer.Deserialize<T>(resolvedPayloadText);
     }
 
-    // TODO: totally random 
-    private object? GenerateRandomValue(Argument argument)
+    private string PrintDynamicVariable(DynamicVariable dynamicVariable, object providedValue)
     {
-        return argument.Type switch
+        try
         {
-            ArgumentType.String => "random-string",
-            ArgumentType.Number => 42,
-            ArgumentType.Object => new { a =  5},
-            ArgumentType.Array => new[] { 1, 2, 3},
-            ArgumentType.Boolean => false,
-            ArgumentType.Null => null,
-            _ => throw new ArgumentOutOfRangeException()
-        };
+            return dynamicVariable.Type switch
+            {
+                DynamicVariableType.UnsignedInt => decimal.Parse(providedValue.ToString()).ToString(),
+                DynamicVariableType.SignedInt => decimal.Parse(providedValue.ToString()).ToString(),
+                DynamicVariableType.String => $"\"{providedValue}\"",
+                DynamicVariableType.Guid => $"\"{providedValue}\"",
+                _ => throw new ArgumentOutOfRangeException()
+            };
+        }
+        catch (Exception exception)
+        {
+            _logger.LogWarning(exception, 
+                "Failed trying to print dynamic variable {DynamicVariable} for provided value: {ProvidedValue}", 
+                dynamicVariable.Name, 
+                providedValue.ToString());
+            
+            throw;
+        }
+        
     }
+
 
     private HttpMethod GetHttpMethod(Models.HttpMethod? method)
     {
@@ -363,6 +368,16 @@ public class TransactionOperationService : ITransactionOperationService
             // TODO: Consider adding more info here for debugging purposes
             _logger.LogInformation("Failed trying to validate arguments for {OperationId}", transactionOperationInputUnresolved.Id);
         }
+        providedValues ??= new Dictionary<string, object>();
+        
+        if (transactionOperationInputUnresolved.DynamicVariables is not null)
+        {
+            var concreteVariables = GenerateDynamicVariables(transactionOperationInputUnresolved.DynamicVariables);
+            foreach (var v in concreteVariables)
+            {
+                providedValues.Add(v.Key, v.Value);
+            }    
+        }
 
         return ResolveInternal<T>(transactionOperationInputUnresolved, providedValues);
     }
@@ -375,9 +390,36 @@ public class TransactionOperationService : ITransactionOperationService
             // TODO: Consider adding more info here for debugging purposes
             _logger.LogInformation("Failed trying to validate arguments for {OperationId}", transactionOperationInputUnresolved.Id);
         }
-
-        return ResolveInternal(transactionOperationInputUnresolved, providedValues);
+        providedValues ??= new Dictionary<string, object>();
         
+        if (transactionOperationInputUnresolved.DynamicVariables is not null)
+        {
+            var concreteVariables = GenerateDynamicVariables(transactionOperationInputUnresolved.DynamicVariables);
+            foreach (var v in concreteVariables)
+            {
+                providedValues.Add(v.Key, v.Value);
+            }    
+        }
+        
+        return ResolveInternal(transactionOperationInputUnresolved, providedValues);
+    }
+
+    private Dictionary<string, object> GenerateDynamicVariables(DynamicVariable[] dynamicVariables)
+    {
+        var fixture = new Fixture();
+        return dynamicVariables.ToDictionary(dynamicVar => dynamicVar.Name, dynamicVar =>
+        {
+            return dynamicVar.Type switch
+            {
+                DynamicVariableType.UnsignedInt => fixture.Create<uint>(),
+                DynamicVariableType.SignedInt => fixture.Create<bool>()
+                    ? fixture.Create<int>()
+                    : -1 * fixture.Create<int>(),
+                DynamicVariableType.String => (object) fixture.Create<string>(),
+                DynamicVariableType.Guid => Guid.NewGuid(),
+                _ => throw new ArgumentOutOfRangeException()
+            };
+        });
     }
 
     public TransactionOperation Convert<T>(TransactionOperationInputResolved<T> resolvedInput)
