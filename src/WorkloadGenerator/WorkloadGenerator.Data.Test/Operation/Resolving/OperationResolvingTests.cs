@@ -5,6 +5,7 @@ using System.Text.Json.Serialization;
 using Microsoft.Extensions.Logging.Abstractions;
 using WorkloadGenerator.Data.Models;
 using WorkloadGenerator.Data.Services;
+using HttpMethod = WorkloadGenerator.Data.Models.HttpMethod;
 
 namespace WorkloadGenerator.Data.Test.Operation.Resolving;
 
@@ -34,6 +35,27 @@ public class OperationResolvingTests
             var expectedParsed = JsonSerializer.Deserialize<TransactionOperationInputResolved>(expectedResult, _jsonSerializerOptions)!;
             Assert.AreEqual(JsonSerializer.Serialize(resolved), JsonSerializer.Serialize(expectedParsed));
         }
+    }
+
+    [Test]
+    public void TestDynamicVariableResolving()
+    {
+        var unresolved = new TransactionOperationInputUnresolved()
+        {
+            Arguments = new Argument[]{ new Argument() {Name = "arg1", Type = ArgumentType.Number}},
+            DynamicVariables = new DynamicVariable[] {new DynamicVariable() {Name = "var1", Type = DynamicVariableType.UnsignedInt}},
+            Type = OperationType.Http,
+            HttpMethod = HttpMethod.Post,
+            Url = "http://example.com",
+            Payload = new Payload() {Type = PayloadType.Json, Content = JsonSerializer.Deserialize<object>("{\"key1\": \"{{arg1}}\", \"key2\":\"{{var1}}\"}")!}
+        };
+        var sut = new TransactionOperationService(NullLogger<TransactionOperationService>.Instance);
+        var resolved = sut.Resolve<JsonNode>(unresolved, new Dictionary<string, object>()
+        {
+            {"arg1", 42}
+        });
+        Assert.AreEqual(resolved.Payload["key1"].GetValue<int>(), 42);
+        Assert.That(resolved.Payload["key2"].GetValue<int>(), Is.Positive);
     }
     
     private class ValidOperationInputCases : IEnumerable
