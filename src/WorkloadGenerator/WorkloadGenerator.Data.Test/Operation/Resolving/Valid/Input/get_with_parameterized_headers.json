@@ -25,11 +25,5 @@
       "type": "string"
     }
   ],
-  "payload": {
-    "type": "json",
-    "content": {
-      "key1": "value1"
-    }
-  },
   "url": "http://example.com"
 }

@@ -1,0 +1,15 @@
+{
+  "id": "operation-id",
+  "type": "http",
+  "httpMethod": "post",
+  "payload": {
+    "key1": {
+      "key2": 42,
+      "key3": [ "some-string" ],
+      "key4": null,
+      "key5": "some-other-string",
+      "key6": "static-value"
+    }
+  },
+  "url": "https://httpbin.org/anything/"
+}

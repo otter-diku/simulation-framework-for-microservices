@@ -1,0 +1,19 @@
+{
+  "id": "operation-id",
+  "type": "http",
+  "httpMethod": "post",
+  "headers": [
+    {
+      "key": "user-id",
+      "value": "000001"
+    }
+  ],
+  "queryParameters": [
+    {
+      "key": "queryparam1",
+      "value": "abcdef"
+    }
+  ],
+  "url": "https://httpbin.org/anything/2"
+}
+

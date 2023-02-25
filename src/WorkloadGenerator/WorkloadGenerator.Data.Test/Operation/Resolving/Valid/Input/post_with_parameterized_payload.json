@@ -2,18 +2,6 @@
   "id": "operation-id",
   "type": "http",
   "httpMethod": "post",
-  "headers": [
-    {
-      "key": "user-id",
-      "value": "000001"
-    }
-  ],
-  "queryParameters": [
-    {
-      "key": "queryparam1",
-      "value": "abcdef"
-    }
-  ],
   "arguments": [
     {
       "name": "arg1",
@@ -34,11 +22,6 @@
       "name": "arg4",
       "required": true,
       "type": "string"
-    },
-    {
-      "name": "this-will-get-replaced-with-random-string",
-      "required": false,
-      "type": "string"
     }
   ],
   "payload": {
@@ -46,12 +29,12 @@
     "content": {
       "key1": {
         "key2": "{{arg1}}",
-        "key3": [ "{{this-will-get-replaced-with-random-string}}", "{{arg2}}" ],
+        "key3": [ "{{arg2}}" ],
         "key4": "{{arg3}}",
         "key5": "{{arg4}}",
         "key6": "static-value"
       }
     }
   },
-  "url": "https://httpbin.org/anything/{{arg2}}/@@key1.key6@@"
+  "url": "https://httpbin.org/anything/"
 }

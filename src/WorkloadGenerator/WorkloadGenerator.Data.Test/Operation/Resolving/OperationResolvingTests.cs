@@ -18,12 +18,22 @@ public class OperationResolvingTests
         Assert.True(parsingResult);
         Assert.NotNull(parsedInput);
         
-        var parsedArguments = JsonSerializer.Deserialize<Dictionary<string, object>>(arguments);
-        var resolved = sut.Resolve<JsonNode>(parsedInput, parsedArguments);
-        var expectedParsed = JsonSerializer.Deserialize<TransactionOperationInputResolved<JsonNode>>(expectedResult, _jsonSerializerOptions)!;
+        var parsedArguments = string.IsNullOrWhiteSpace(arguments)
+         ? default
+         : JsonSerializer.Deserialize<Dictionary<string, object>>(arguments);
 
-        Assert.AreEqual(JsonSerializer.Serialize(resolved), JsonSerializer.Serialize(expectedParsed));
-        //Assert.True(resolved.Equals(expectedParsed));
+        if (parsedInput.Payload?.Type == PayloadType.Json)
+        {
+            var resolved = sut.Resolve<JsonNode>(parsedInput, parsedArguments);
+            var expectedParsed = JsonSerializer.Deserialize<TransactionOperationInputResolved<JsonNode>>(expectedResult, _jsonSerializerOptions)!;
+            Assert.AreEqual(JsonSerializer.Serialize(resolved), JsonSerializer.Serialize(expectedParsed));
+        }
+        else
+        {
+            var resolved = sut.Resolve(parsedInput, parsedArguments);
+            var expectedParsed = JsonSerializer.Deserialize<TransactionOperationInputResolved>(expectedResult, _jsonSerializerOptions)!;
+            Assert.AreEqual(JsonSerializer.Serialize(resolved), JsonSerializer.Serialize(expectedParsed));
+        }
     }
     
     private class ValidOperationInputCases : IEnumerable
