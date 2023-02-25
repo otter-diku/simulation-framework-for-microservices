@@ -8,5 +8,10 @@ public interface ITransactionOperationService
 
     TransactionOperationInputResolved<T> Resolve<T>(TransactionOperationInputUnresolved transactionOperationInputUnresolved,
         Dictionary<string, object>? providedValues = null);
+    TransactionOperationInputResolved Resolve(TransactionOperationInputUnresolved transactionOperationInputUnresolved,
+        Dictionary<string, object>? providedValues = null);
+    
     TransactionOperation Convert<T>(TransactionOperationInputResolved<T> resolvedInput);
+    
+    TransactionOperation Convert(TransactionOperationInputResolved resolvedInput);
 }

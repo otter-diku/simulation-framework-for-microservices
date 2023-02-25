@@ -1,0 +1,25 @@
+{
+  "id": "operation-id",
+  "type": "http",
+  "httpMethod": "post",
+  "headers": [
+    {
+      "key": "user-id",
+      "value": "000001"
+    }
+  ],
+  "queryParameters": [
+    {
+      "key": "queryparam1",
+      "value": "abcdef"
+    }
+  ],
+  "arguments": [
+    {
+      "name": "arg2",
+      "required": true,
+      "type": "string"
+    }
+  ],
+  "url": "https://httpbin.org/anything/{{arg2}}"
+}

@@ -19,10 +19,11 @@ public class TransactionOperationService : ITransactionOperationService
     // for payloads we need to replace the quotes since we might be replacing this string with a number/array/null/boolean
     // e.g. "key1": "{{arg1}}" => "key1": false 
     // the reason we need the quotes in the first place, is because `"key1": @arg1` is not a valid JSON
-    private readonly Regex _payloadArgumentRegex = new("\"{{([^}]*)}}\"");
+    private readonly Regex _argumentReplaceRegex = new("\"{{([^}]*)}}\"");
     
     // for url paths we do not need expect any quotes so we just need to replace the `{{arg-name}}`
-    private readonly Regex _urlPathArgumentRegex = new("{{([^}]*)}}");
+    private readonly Regex _stringArgumentReplaceRegex = new("{{([^}]*)}}");
+    
     
     // for url paths we do not need expect any quotes so we just need to replace the `@@arg-name@@`
     private readonly Regex _urlPathReferenceRegex = new("@@([^}]*)@@");
@@ -50,6 +51,20 @@ public class TransactionOperationService : ITransactionOperationService
             .Where(argument => argument.Required)
             .All(requiredArgument => args.ContainsKey(requiredArgument.Name));
     }
+    
+    private TransactionOperationInputResolved ResolveInternal(TransactionOperationInputUnresolved unresolvedInput,
+        Dictionary<string, object>? providedValues = null)
+    {
+        return new TransactionOperationInputResolved()
+        {
+            Headers = ResolveHeaders(unresolvedInput.Headers, unresolvedInput.Arguments, providedValues),
+            HttpMethod = unresolvedInput.HttpMethod,
+            Id = unresolvedInput.Id,
+            QueryParameters = unresolvedInput.QueryParameters,
+            Type = unresolvedInput.Type,
+            Url = ResolveUrl(unresolvedInput.Url, unresolvedInput.Arguments, providedValues)
+        };
+    }
 
     private TransactionOperationInputResolved<T> ResolveInternal<T>(TransactionOperationInputUnresolved unresolvedInput,
         Dictionary<string, object>? providedValues = null)
@@ -57,7 +72,7 @@ public class TransactionOperationService : ITransactionOperationService
         var resolvedPayload = ResolvePayload<T>(unresolvedInput.Payload, unresolvedInput.Arguments, providedValues);
         return new TransactionOperationInputResolved<T>()
         {
-            Headers = unresolvedInput.Headers,
+            Headers = ResolveHeaders(unresolvedInput.Headers, unresolvedInput.Arguments, providedValues),
             Payload = resolvedPayload,
             HttpMethod = unresolvedInput.HttpMethod,
             Id = unresolvedInput.Id,
@@ -67,11 +82,25 @@ public class TransactionOperationService : ITransactionOperationService
         };
     }
 
-    private Type getType(PayloadType payloadType)
+    private List<Header> ResolveHeaders(
+        List<Header> unresolvedInputHeaders, 
+        Argument[]? arguments, 
+        Dictionary<string, object>? providedValues)
     {
-        return typeof(JsonNode);
+        if (unresolvedInputHeaders is not { Count: > 0 } || arguments is not { Length: > 0 })
+        {
+            return unresolvedInputHeaders;
+        }
+
+        return unresolvedInputHeaders
+            .Select(header => new Header()
+            {
+                Key = ResolveParameterizedString(header.Key, arguments, providedValues),
+                Value = ResolveParameterizedString(header.Value, arguments, providedValues),
+            })
+            .ToList();
     }
-    
+
     private TransactionOperation ConvertToHttpOperation<T>(TransactionOperationInputResolved<T> input)
     {
         Action<HttpRequestMessage> func = httpRequest =>
@@ -117,26 +146,52 @@ public class TransactionOperationService : ITransactionOperationService
 
         return new TransactionOperation() { PrepareRequestMessage = func };
     }
+    
+    private TransactionOperation ConvertToHttpOperation(TransactionOperationInputResolved input)
+    {
+        Action<HttpRequestMessage> func = httpRequest =>
+        {
+            httpRequest.Method = GetHttpMethod(input.HttpMethod);
+            
+            httpRequest.Headers.Clear();
+            if (input.Headers is not null)
+            {
+                foreach (var header in input.Headers)
+                {
+                    // TODO: headers.Add does not have an overload for (string, string), expects a list of values
+                    var _ = httpRequest.Headers.TryAddWithoutValidation(header.Key, header.Value);
+                }
+            }
+
+            var uriBuilder = new UriBuilder(input.Url);
+            
+            if (input.QueryParameters is not null)
+            {
+                var queryString = string.Join('&', input.QueryParameters.Select(qp => $"{qp.Key}={qp.Value}"));
+                var queryStringParsed = HttpUtility.ParseQueryString(queryString);
+                uriBuilder.Query = queryStringParsed.ToString();
+            }
+
+            httpRequest.RequestUri = uriBuilder.Uri;
+        };
+
+        return new TransactionOperation() { PrepareRequestMessage = func };
+    }
+
+    
+    private string ResolveUrl(string? inputUrl, 
+        Argument[]? arguments,
+        Dictionary<string, object>? providedValues)
+    {
+        return ResolveParameterizedString(inputUrl, arguments, providedValues);
+    }
 
     private string ResolveUrl<T>(string? inputUrl, 
         T payload, 
         Argument[]? arguments,
         Dictionary<string, object>? providedValues)
     {
-        var resolvedUrl = _urlPathArgumentRegex.Replace(inputUrl, (match) =>
-        {
-            var variableName = match.Groups[1].Value;
-            var argument = arguments!.Single(a => a.Name == variableName);
-            var valueHasBeenProvided = providedValues!.TryGetValue(variableName, out var value);
-            if (!valueHasBeenProvided && !argument.Required)
-            {
-                // TODO: probably doesnt make sense to generate objects etc here for the URL path
-                value = GenerateRandomValue(argument);
-            }
-
-            // TODO: it should not be necessary to 'pretty-print' it here, but maybe url-encode is needed?
-            return value.ToString();
-        });
+        var resolvedUrl = ResolveParameterizedString(inputUrl, arguments, providedValues);
         
         if (payload is not JsonNode jsonNode)
         {
@@ -149,7 +204,6 @@ public class TransactionOperationService : ITransactionOperationService
 
             try
             {
-
                 var finalNode = variableName
                     .Split(".")
                     .Aggregate(jsonNode, (current, part) => current[part]);
@@ -170,10 +224,43 @@ public class TransactionOperationService : ITransactionOperationService
         return resolvedUrl;
     }
 
+    private string ResolveParameterizedString(
+        string? unresolvedInput, 
+        Argument[] arguments, 
+        Dictionary<string, object>? providedValues
+    )
+    {
+        return _stringArgumentReplaceRegex.Replace(unresolvedInput, (match) =>
+        {
+            try
+            {
+                var variableName = match.Groups[1].Value;
+                var argument = arguments.Single(a => a.Name == variableName);
+                var valueHasBeenProvided = providedValues!.TryGetValue(variableName, out var value);
+                
+                if (!valueHasBeenProvided && !argument.Required)
+                {
+                    value = GenerateRandomValue(argument);
+                }
+
+                return value.ToString();
+            }
+            catch (InvalidOperationException invalidOperationException)
+            {
+                _logger.LogWarning(invalidOperationException,
+                    "Failed trying to resolve input: {UnresolvedInput}, args: {Arguments}, provided values: {ProvidedValues}",
+                    unresolvedInput,
+                    string.Join(" | ", arguments.Select(a => $"{a.Name}, {a.Type}, {a.Required}")),
+                    string.Join(" | ", providedValues.Select(kv => $"{kv.Key}: {kv.Value}")));
+                throw;
+            }
+        });
+    }
+
     private T ResolvePayload<T>(Payload inputPayload, Argument[]? arguments, Dictionary<string,object>? providedValues)
     {
         var payloadContentText  = ((JsonElement)inputPayload.Content).GetRawText();
-        var resolvedPayloadText = _payloadArgumentRegex.Replace(payloadContentText, (match) =>
+        var resolvedPayloadText = _argumentReplaceRegex.Replace(payloadContentText, (match) =>
         {
             var variableName = match.Groups[1].Value;
             var argument = arguments!.Single(a => a.Name == variableName);
@@ -204,16 +291,6 @@ public class TransactionOperationService : ITransactionOperationService
         };
     }
 
-
-    private static string GetContentType(PayloadType payloadType)
-    {
-        return payloadType switch
-        {
-            PayloadType.Json => "application/json",
-            _ => throw new ArgumentOutOfRangeException(nameof(payloadType), payloadType, null)
-        };
-    }
-    
     private HttpMethod GetHttpMethod(Models.HttpMethod? method)
     {
         return method switch
@@ -290,7 +367,29 @@ public class TransactionOperationService : ITransactionOperationService
         return ResolveInternal<T>(transactionOperationInputUnresolved, providedValues);
     }
 
+    public TransactionOperationInputResolved Resolve(TransactionOperationInputUnresolved transactionOperationInputUnresolved,
+        Dictionary<string, object>? providedValues = null)
+    {
+        if (transactionOperationInputUnresolved.Arguments is not null && !ValidateArguments(transactionOperationInputUnresolved, providedValues))
+        {
+            // TODO: Consider adding more info here for debugging purposes
+            _logger.LogInformation("Failed trying to validate arguments for {OperationId}", transactionOperationInputUnresolved.Id);
+        }
+
+        return ResolveInternal(transactionOperationInputUnresolved, providedValues);
+        
+    }
+
     public TransactionOperation Convert<T>(TransactionOperationInputResolved<T> resolvedInput)
+    {
+        return resolvedInput.Type switch
+        {
+            OperationType.Http => ConvertToHttpOperation(resolvedInput),
+            _ => throw new ArgumentOutOfRangeException()
+        };
+    }
+
+    public TransactionOperation Convert(TransactionOperationInputResolved resolvedInput)
     {
         return resolvedInput.Type switch
         {

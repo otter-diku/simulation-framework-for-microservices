@@ -31,6 +31,18 @@
         </None>
         <None Update="Operation\Resolving\Valid\ExpectedResult\*.json">
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </None>
+        <None Update="Operation\Resolving\Valid\ExpectedResult\post_with_parameterized_payload.json">
+          <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </None>
+        <None Update="Operation\Resolving\Valid\Arguments\post_with_parameterized_payload.json">
+          <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </None>
+        <None Update="Operation\Resolving\Valid\ExpectedResult\put_with_payload_reference_in_url.json">
+          <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </None>
+        <None Update="Operation\Resolving\Valid\Arguments\put_with_payload_reference_in_url.json">
+          <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
         </None>        
     </ItemGroup>
 

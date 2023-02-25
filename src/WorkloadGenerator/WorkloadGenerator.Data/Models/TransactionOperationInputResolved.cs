@@ -1,5 +1,9 @@
 namespace WorkloadGenerator.Data.Models;
 
+public class TransactionOperationInputResolved : TransactionOperationInputBase
+{
+}
+
 public class TransactionOperationInputResolved<T> : TransactionOperationInputBase
 {
     public T? Payload { get; set; }
