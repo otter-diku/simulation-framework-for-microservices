@@ -151,7 +151,19 @@ public class TransactionOperationService : ITransactionOperationService
 
     private TransactionOperationExecutableBase ConvertToExecutableSleepOperation(SleepOperationInputResolved input)
     {
-        throw new NotImplementedException();
+        var duration = decimal.ToDouble(input.Duration);
+        var timespan = input.Units switch
+        {
+            TimeSpanType.Milliseconds => TimeSpan.FromMilliseconds(duration),
+            TimeSpanType.Seconds => TimeSpan.FromSeconds(duration),
+            TimeSpanType.Minutes => TimeSpan.FromMinutes(duration),
+            _ => throw new ArgumentOutOfRangeException()
+        };
+
+        return new SleepOperationTransactionExecutable
+        {
+            Sleep = () => Task.Delay(timespan)
+        };
     }
 
     private TransactionOperationExecutableBase ConvertToExecutableHttpOperation(HttpOperationInputResolved input)
