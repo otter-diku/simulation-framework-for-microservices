@@ -1,17 +1,15 @@
 using WorkloadGenerator.Data.Models;
+using WorkloadGenerator.Data.Models.Operation;
+using WorkloadGenerator.Data.Models.Operation.Http;
 
 namespace WorkloadGenerator.Data.Services;
 
 public interface ITransactionOperationService
 {
-    bool TryParseInput(string json, out TransactionOperationInputUnresolved parsedInput);
+    bool TryParseInput(string json, out ITransactionOperationUnresolved unresolvedInput);
 
-    TransactionOperationInputResolved<T> Resolve<T>(TransactionOperationInputUnresolved transactionOperationInputUnresolved,
-        Dictionary<string, object>? providedValues = null);
-    TransactionOperationInputResolved Resolve(TransactionOperationInputUnresolved transactionOperationInputUnresolved,
-        Dictionary<string, object>? providedValues = null);
+    bool TryResolve(ITransactionOperationUnresolved unresolvedInput,
+        Dictionary<string, object>? providedValues, out ITransactionOperationResolved resolvedInput);
     
-    TransactionOperation Convert<T>(TransactionOperationInputResolved<T> resolvedInput);
-    
-    TransactionOperation Convert(TransactionOperationInputResolved resolvedInput);
+    bool TryConvertToExecutable(ITransactionOperationResolved resolvedInput, out TransactionOperationExecutableBase transactionOperationbaseExecutable);
 }

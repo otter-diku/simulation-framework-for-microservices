@@ -24,7 +24,7 @@
       "type": "string"
     }
   ],
-  "payload": {
+  "requestPayload": {
     "type": "json",
     "content": {
       "key1": {

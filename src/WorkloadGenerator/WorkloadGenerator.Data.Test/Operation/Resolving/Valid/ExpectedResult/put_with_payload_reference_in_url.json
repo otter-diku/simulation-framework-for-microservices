@@ -2,9 +2,12 @@
   "id": "operation-id",
   "type": "http",
   "httpMethod": "put",
-  "payload": {
-    "key1": {
-      "key2": "some-string"
+  "requestPayload": {
+    "type": "json",
+    "content": {
+      "key1": {
+        "key2": "some-string"
+      }
     }
   },
   "url": "https://httpbin.org/anything/some-string"

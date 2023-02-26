@@ -6,9 +6,11 @@ using System.Text.Json.Serialization;
 using System.Text.RegularExpressions;
 using System.Web;
 using AutoFixture;
-using FluentValidation;
 using Microsoft.Extensions.Logging;
 using WorkloadGenerator.Data.Models;
+using WorkloadGenerator.Data.Models.Operation;
+using WorkloadGenerator.Data.Models.Operation.Http;
+using WorkloadGenerator.Data.Models.Operation.Sleep;
 using HttpMethod = System.Net.Http.HttpMethod;
 
 namespace WorkloadGenerator.Data.Services;
@@ -43,49 +45,207 @@ public class TransactionOperationService : ITransactionOperationService
         }
     };
 
-    private readonly TransactionOperationInputBaseValidator _baseValidator = new();
-    
-
-    private static bool ValidateArguments(TransactionOperationInputUnresolved transactionOperationInput, IReadOnlyDictionary<string, object> args)
+    public bool TryParseInput(string json, out ITransactionOperationUnresolved unresolvedInput)
     {
-        return transactionOperationInput.Arguments!
-            .All(requiredArgument => args.ContainsKey(requiredArgument.Name));
+        unresolvedInput = null!;
+        try
+        {
+            var baseInput = JsonSerializer.Deserialize<TransactionOperationInputBase>(json, _jsonSerializerOptions);
+            if (baseInput is null)
+            {
+                return false;
+            }
+            
+            switch (baseInput.Type)
+            {
+                case OperationType.Http:
+                {
+                    unresolvedInput = Parse<HttpOperationInputUnresolved>(json);
+                    return true;
+                }
+                case OperationType.Sleep:
+                {
+                    unresolvedInput = Parse<SleepOperationInputUnresolved>(json);
+                    return true;
+                }
+                default:
+                    throw new ArgumentOutOfRangeException();
+            }
+        }
+        catch (Exception exception)
+        {
+            _logger.LogInformation(exception, 
+                "Failed trying to deserialize input data for operation");
+            
+            return false;
+        }
+    }
+
+    private ITransactionOperationUnresolved Parse<T>(string json) where T : ITransactionOperationUnresolved
+    {
+        var operationUnresolved =
+            JsonSerializer.Deserialize<T>(json, _jsonSerializerOptions);
+
+        if (operationUnresolved is null)
+        {
+            throw new ArgumentException($"Cannot parse string into {typeof(T)} - invalid JSON provided");
+        }
+
+        operationUnresolved.ValidateAndThrow();
+
+        return operationUnresolved;
+    }
+
+    public bool TryResolve(ITransactionOperationUnresolved unresolvedInput, Dictionary<string, object>? providedValues,
+        out ITransactionOperationResolved resolvedInput)
+    {
+        if (!ValidateArguments(unresolvedInput, providedValues))
+        {
+            resolvedInput = null!;
+            return false;
+        }
+        
+        providedValues = AddDynamicValues(unresolvedInput, providedValues ?? new Dictionary<string, object>());
+
+        resolvedInput = ResolveInternal(unresolvedInput, providedValues);
+        return true;
+    }
+
+    private Dictionary<string, object> AddDynamicValues(ITransactionOperationUnresolved unresolvedInput, Dictionary<string, object> providedValues)
+    {
+        if (unresolvedInput.DynamicVariables is null)
+        {
+            return providedValues;
+        }
+        
+        var concreteVariables = GenerateDynamicVariables(unresolvedInput.DynamicVariables);
+        foreach (var kv in concreteVariables)
+        {
+            providedValues.Add(kv.Key, kv.Value);
+        }
+
+        return providedValues;
+    }
+
+    public bool TryConvertToExecutable(ITransactionOperationResolved resolvedInput,
+        out TransactionOperationExecutableBase transactionOperationbaseExecutable)
+    {
+        try
+        {
+            transactionOperationbaseExecutable = resolvedInput switch
+            {
+                HttpOperationInputResolved httpOperationInputResolved => ConvertToExecutableHttpOperation(httpOperationInputResolved),
+                SleepOperationInputResolved sleepOperationInputResolved => ConvertToExecutableSleepOperation(sleepOperationInputResolved),
+                _ => throw new ArgumentOutOfRangeException(nameof(resolvedInput))
+            };
+            
+            return true;
+        }
+        catch (Exception e)
+        {
+            _logger.LogWarning(e, "Failed converting to executable");
+            transactionOperationbaseExecutable = null!;
+            return false;
+        }
+    }
+
+    private TransactionOperationExecutableBase ConvertToExecutableSleepOperation(SleepOperationInputResolved input)
+    {
+        throw new NotImplementedException();
+    }
+
+    private TransactionOperationExecutableBase ConvertToExecutableHttpOperation(HttpOperationInputResolved input)
+    {
+        Action<HttpRequestMessage> func = httpRequest =>
+        {
+            httpRequest.Method = GetHttpMethod(input.HttpMethod);
+
+            var uriBuilder = new UriBuilder(input.Url);
+            if (input.QueryParameters is not null)
+            {
+                var queryString = string.Join('&', input.QueryParameters.Select(qp => $"{qp.Key}={qp.Value}"));
+                var queryStringParsed = HttpUtility.ParseQueryString(queryString);
+                uriBuilder.Query = queryStringParsed.ToString();
+            }
+            httpRequest.RequestUri = uriBuilder.Uri;
+
+            httpRequest.Headers.Clear();
+            if (input.Headers is not null)
+            {
+                foreach (var header in input.Headers)
+                {
+                    // TODO: headers.Add does not have an overload for (string, string), expects a list of values
+                    var _ = httpRequest.Headers.TryAddWithoutValidation(header.Key, header.Value);
+                }
+            }
+            
+            if (input.RequestPayload is null)
+            {
+                return;
+            }
+
+            if (input.RequestPayload is not JsonPayloadResolved jsonPayload)
+            {
+                // TODO: do we need to implement this?
+                throw new NotImplementedException("Non-JSON payloads are not supported");
+            }
+
+            if (input.RequestPayload is not null)
+            {
+                httpRequest.Content = new StringContent(
+                    JsonSerializer.Serialize(jsonPayload.Content,  new JsonSerializerOptions() { WriteIndented = true}),
+                    Encoding.UTF8,
+                    "application/json");
+            }
+        };
+
+        return new HttpOperationTransactionExecutable() { PrepareRequestMessage = func };
+    }
+
+
+    private static bool ValidateArguments(ITransactionOperationUnresolved unresolvedInput, IReadOnlyDictionary<string, object>? providedValues)
+    {
+        return unresolvedInput.Arguments is null ||
+               unresolvedInput.Arguments.All(requiredArgument => providedValues?.ContainsKey(requiredArgument.Name) ?? false);
     }
     
-    private TransactionOperationInputResolved ResolveInternal(TransactionOperationInputUnresolved unresolvedInput,
-        Dictionary<string, object>? providedValues = null)
+    private ITransactionOperationResolved ResolveInternal(
+        ITransactionOperationUnresolved unresolvedInput,
+        Dictionary<string, object> providedValues)
     {
-        return new TransactionOperationInputResolved()
+        return unresolvedInput switch
         {
-            Headers = ResolveHeaders(unresolvedInput.Headers, unresolvedInput.Arguments, providedValues),
-            HttpMethod = unresolvedInput.HttpMethod,
-            Id = unresolvedInput.Id,
-            QueryParameters = unresolvedInput.QueryParameters,
-            Type = unresolvedInput.Type,
-            Url = ResolveUrl(unresolvedInput.Url, unresolvedInput.Arguments, providedValues)
+            HttpOperationInputUnresolved httpOperation => ResolveHttpOperation(httpOperation, providedValues),
+            SleepOperationInputUnresolved sleepOperation => ResolveSleepOperation(sleepOperation, providedValues),
+            _ => throw new ArgumentOutOfRangeException(nameof(unresolvedInput))
         };
     }
 
-    private TransactionOperationInputResolved<T> ResolveInternal<T>(TransactionOperationInputUnresolved unresolvedInput,
-        Dictionary<string, object>? providedValues = null)
+    private ITransactionOperationResolved ResolveHttpOperation(HttpOperationInputUnresolved unresolvedInput, Dictionary<string, object> providedValues)
     {
-        var resolvedPayload = ResolvePayload<T>(unresolvedInput.Payload, unresolvedInput.Arguments, unresolvedInput.DynamicVariables, providedValues);
-        return new TransactionOperationInputResolved<T>()
+        var _ = TryResolveRequestPayload(unresolvedInput, providedValues, out var resolvedPayload);
+        return new HttpOperationInputResolved()
         {
             Headers = ResolveHeaders(unresolvedInput.Headers, unresolvedInput.Arguments, providedValues),
-            Payload = resolvedPayload,
             HttpMethod = unresolvedInput.HttpMethod,
+            RequestPayload = resolvedPayload,
             Id = unresolvedInput.Id,
             QueryParameters = unresolvedInput.QueryParameters,
             Type = unresolvedInput.Type,
-            Url = ResolveUrl(unresolvedInput.Url, resolvedPayload, unresolvedInput.Arguments, providedValues)
+            // TODO: ResponsePayload = ResolveResponsePayload(unresolvedInput.ResponsePayload),
+            Url = ResolveUrl(unresolvedInput, resolvedPayload, providedValues)
         };
     }
+    
+    private ITransactionOperationResolved ResolveSleepOperation(SleepOperationInputUnresolved sleepOperation, Dictionary<string, object> providedValues)
+    {
+        throw new NotImplementedException();
+    }
 
-    private List<Header> ResolveHeaders(
-        List<Header> unresolvedInputHeaders, 
+    private List<Header>? ResolveHeaders(
+        List<Header>? unresolvedInputHeaders, 
         Argument[]? arguments, 
-        Dictionary<string, object>? providedValues)
+        Dictionary<string, object> providedValues)
     {
         if (unresolvedInputHeaders is not { Count: > 0 } || arguments is not { Length: > 0 })
         {
@@ -100,101 +260,21 @@ public class TransactionOperationService : ITransactionOperationService
             })
             .ToList();
     }
-
-    private TransactionOperation ConvertToHttpOperation<T>(TransactionOperationInputResolved<T> input)
-    {
-        Action<HttpRequestMessage> func = httpRequest =>
-        {
-            httpRequest.Method = GetHttpMethod(input.HttpMethod);
-            
-            httpRequest.Headers.Clear();
-            if (input.Headers is not null)
-            {
-                foreach (var header in input.Headers)
-                {
-                    // TODO: headers.Add does not have an overload for (string, string), expects a list of values
-                    var _ = httpRequest.Headers.TryAddWithoutValidation(header.Key, header.Value);
-                }
-            }
-
-            if (input.Payload is not JsonNode jsonNode)
-            {
-                // TODO: do we need to implement this?
-                throw new NotImplementedException("Non-JSON payloads are not supported");
-            }
-
-            JsonNode? payload = null;
-            if (input.Payload is not null)
-            {
-                    httpRequest.Content = new StringContent(
-                        JsonSerializer.Serialize(jsonNode,  new JsonSerializerOptions() { WriteIndented = true}),
-                        Encoding.UTF8,
-                        "application/json");
-            }
-
-            var uriBuilder = new UriBuilder(input.Url);
-            
-            if (input.QueryParameters is not null)
-            {
-                var queryString = string.Join('&', input.QueryParameters.Select(qp => $"{qp.Key}={qp.Value}"));
-                var queryStringParsed = HttpUtility.ParseQueryString(queryString);
-                uriBuilder.Query = queryStringParsed.ToString();
-            }
-
-            httpRequest.RequestUri = uriBuilder.Uri;
-        };
-
-        return new TransactionOperation() { PrepareRequestMessage = func };
-    }
     
-    private TransactionOperation ConvertToHttpOperation(TransactionOperationInputResolved input)
-    {
-        Action<HttpRequestMessage> func = httpRequest =>
-        {
-            httpRequest.Method = GetHttpMethod(input.HttpMethod);
-            
-            httpRequest.Headers.Clear();
-            if (input.Headers is not null)
-            {
-                foreach (var header in input.Headers)
-                {
-                    // TODO: headers.Add does not have an overload for (string, string), expects a list of values
-                    var _ = httpRequest.Headers.TryAddWithoutValidation(header.Key, header.Value);
-                }
-            }
-
-            var uriBuilder = new UriBuilder(input.Url);
-            
-            if (input.QueryParameters is not null)
-            {
-                var queryString = string.Join('&', input.QueryParameters.Select(qp => $"{qp.Key}={qp.Value}"));
-                var queryStringParsed = HttpUtility.ParseQueryString(queryString);
-                uriBuilder.Query = queryStringParsed.ToString();
-            }
-
-            httpRequest.RequestUri = uriBuilder.Uri;
-        };
-
-        return new TransactionOperation() { PrepareRequestMessage = func };
-    }
-
-    
-    private string ResolveUrl(string? inputUrl, 
-        Argument[]? arguments,
+    private string ResolveUrl(HttpOperationInputUnresolved unresolved,
+        HttpOperationRequestPayloadResolvedBase payload,
         Dictionary<string, object>? providedValues)
     {
-        return ResolveParameterizedString(inputUrl, arguments, providedValues);
-    }
-
-    private string ResolveUrl<T>(string? inputUrl, 
-        T payload, 
-        Argument[]? arguments,
-        Dictionary<string, object>? providedValues)
-    {
-        var resolvedUrl = ResolveParameterizedString(inputUrl, arguments, providedValues);
+        var resolvedUrl = ResolveParameterizedString(unresolved.Url, unresolved.Arguments, providedValues);
         
-        if (payload is not JsonNode jsonNode)
+        if (payload is null )
         {
+            return resolvedUrl;
+        }
+
+        if (payload is not JsonPayloadResolved jsonPayload)
+        {
+            // TODO: We only support JSON payloads to be used when being referenced by other fields 
             return resolvedUrl;
         }
 
@@ -206,7 +286,7 @@ public class TransactionOperationService : ITransactionOperationService
             {
                 var finalNode = variableName
                     .Split(".")
-                    .Aggregate(jsonNode, (current, part) => current[part]);
+                    .Aggregate(jsonPayload.Content, (current, part) => current[part]);
 
                 return finalNode.GetValue<string>();
             }
@@ -227,9 +307,14 @@ public class TransactionOperationService : ITransactionOperationService
     private string ResolveParameterizedString(
         string? unresolvedInput, 
         Argument[] arguments, 
-        Dictionary<string, object> providedValues
+        IReadOnlyDictionary<string, object> providedValues
     )
     {
+        if (string.IsNullOrEmpty(unresolvedInput))
+        {
+            return unresolvedInput;
+        }
+
         return _stringArgumentReplaceRegex.Replace(unresolvedInput, (match) =>
         {
             try
@@ -250,24 +335,50 @@ public class TransactionOperationService : ITransactionOperationService
         });
     }
 
-    private T ResolvePayload<T>(Payload inputPayload, Argument[]? arguments, DynamicVariable[]? dynamicVariables,
-        Dictionary<string,object>? providedValues)
+    private bool TryResolveRequestPayload(
+        HttpOperationInputUnresolved inputUnresolved,
+        Dictionary<string,object> providedValues,
+        out HttpOperationRequestPayloadResolvedBase resolvedPayload)
     {
-        var payloadContentText  = ((JsonElement)inputPayload.Content).GetRawText();
-        var resolvedPayloadText = _argumentReplaceRegex.Replace(payloadContentText, (match) =>
-        {
-            var variableName = match.Groups[1].Value;
-            var argument = arguments!.SingleOrDefault(a => a.Name == variableName);
-            if (argument is not null)
-            {
-                return PrintArgument(argument, providedValues[variableName]);
-            }
+        resolvedPayload = null!;
 
-            var dynamicVariable = dynamicVariables.Single(v => v.Name == variableName);
-            return PrintDynamicVariable(dynamicVariable, providedValues[variableName]);
-        });
-        
-        return JsonSerializer.Deserialize<T>(resolvedPayloadText);
+        if (inputUnresolved.RequestPayload?.Type is not HttpPayloadType.Json)
+        {
+            // TODO: We currently only support resolving JSON payloads
+            return false;
+        }
+
+        try
+        {
+            var payloadContentText = ((JsonElement)inputUnresolved.RequestPayload.Content).GetRawText();
+            var resolvedPayloadText = _argumentReplaceRegex.Replace(payloadContentText, (match) =>
+            {
+                var variableName = match.Groups[1].Value;
+
+                var argument = inputUnresolved.Arguments!.SingleOrDefault(a => a.Name == variableName);
+                if (argument is not null)
+                {
+                    return PrintArgument(argument, providedValues[variableName]);
+                }
+
+                var dynamicVariable = inputUnresolved.DynamicVariables?.SingleOrDefault(v => v.Name == variableName);
+                if (dynamicVariable is not null)
+                {
+                    return PrintDynamicVariable(dynamicVariable, providedValues[variableName]);
+                }
+
+                throw new ArgumentException($"Cannot find matching arg or var for name {variableName}");
+            });
+
+            resolvedPayload = new JsonPayloadResolved() { Content = JsonNode.Parse(resolvedPayloadText) };
+
+            return true;
+        }
+        catch (Exception exception)
+        {
+            _logger.LogWarning(exception, exception.Message);
+            return false;
+        }
     }
 
     private string PrintDynamicVariable(DynamicVariable dynamicVariable, object providedValue)
@@ -295,16 +406,15 @@ public class TransactionOperationService : ITransactionOperationService
         
     }
 
-
-    private HttpMethod GetHttpMethod(Models.HttpMethod? method)
+    private HttpMethod GetHttpMethod(Models.Operation.Http.HttpMethod? method)
     {
         return method switch
         {
-            Models.HttpMethod.Get => HttpMethod.Get,
-            Models.HttpMethod.Post => HttpMethod.Post,
-            Models.HttpMethod.Put => HttpMethod.Put,
-            Models.HttpMethod.Patch => HttpMethod.Patch,
-            Models.HttpMethod.Delete => HttpMethod.Delete,
+            Models.Operation.Http.HttpMethod.Get => HttpMethod.Get,
+            Models.Operation.Http.HttpMethod.Post => HttpMethod.Post,
+            Models.Operation.Http.HttpMethod.Put => HttpMethod.Put,
+            Models.Operation.Http.HttpMethod.Patch => HttpMethod.Patch,
+            Models.Operation.Http.HttpMethod.Delete => HttpMethod.Delete,
             _ => throw new ArgumentOutOfRangeException()
         };
     }
@@ -341,69 +451,6 @@ public class TransactionOperationService : ITransactionOperationService
         }
     }
 
-    public bool TryParseInput(string json, out TransactionOperationInputUnresolved parsedInput)
-    {
-        try
-        {
-            parsedInput = JsonSerializer.Deserialize<TransactionOperationInputUnresolved>(json, _jsonSerializerOptions)!;
-            _baseValidator.ValidateAndThrow(parsedInput);
-            return true;
-        }
-        catch (Exception exception)
-        {
-            _logger.LogInformation(exception, 
-                "Failed trying to deserialize input data for {TypeName}", 
-                nameof(TransactionOperationInputUnresolved));
-            
-            parsedInput = null!;
-            return false;
-        }        
-    }
-
-    public TransactionOperationInputResolved<T> Resolve<T>(TransactionOperationInputUnresolved transactionOperationInputUnresolved,
-        Dictionary<string, object>? providedValues = null)
-    {
-        if (transactionOperationInputUnresolved.Arguments is not null && !ValidateArguments(transactionOperationInputUnresolved, providedValues))
-        {
-            // TODO: Consider adding more info here for debugging purposes
-            _logger.LogInformation("Failed trying to validate arguments for {OperationId}", transactionOperationInputUnresolved.Id);
-        }
-        providedValues ??= new Dictionary<string, object>();
-        
-        if (transactionOperationInputUnresolved.DynamicVariables is not null)
-        {
-            var concreteVariables = GenerateDynamicVariables(transactionOperationInputUnresolved.DynamicVariables);
-            foreach (var v in concreteVariables)
-            {
-                providedValues.Add(v.Key, v.Value);
-            }    
-        }
-
-        return ResolveInternal<T>(transactionOperationInputUnresolved, providedValues);
-    }
-
-    public TransactionOperationInputResolved Resolve(TransactionOperationInputUnresolved transactionOperationInputUnresolved,
-        Dictionary<string, object>? providedValues = null)
-    {
-        if (transactionOperationInputUnresolved.Arguments is not null && !ValidateArguments(transactionOperationInputUnresolved, providedValues))
-        {
-            // TODO: Consider adding more info here for debugging purposes
-            _logger.LogInformation("Failed trying to validate arguments for {OperationId}", transactionOperationInputUnresolved.Id);
-        }
-        providedValues ??= new Dictionary<string, object>();
-        
-        if (transactionOperationInputUnresolved.DynamicVariables is not null)
-        {
-            var concreteVariables = GenerateDynamicVariables(transactionOperationInputUnresolved.DynamicVariables);
-            foreach (var v in concreteVariables)
-            {
-                providedValues.Add(v.Key, v.Value);
-            }    
-        }
-        
-        return ResolveInternal(transactionOperationInputUnresolved, providedValues);
-    }
-
     private Dictionary<string, object> GenerateDynamicVariables(DynamicVariable[] dynamicVariables)
     {
         var fixture = new Fixture();
@@ -420,23 +467,5 @@ public class TransactionOperationService : ITransactionOperationService
                 _ => throw new ArgumentOutOfRangeException()
             };
         });
-    }
-
-    public TransactionOperation Convert<T>(TransactionOperationInputResolved<T> resolvedInput)
-    {
-        return resolvedInput.Type switch
-        {
-            OperationType.Http => ConvertToHttpOperation(resolvedInput),
-            _ => throw new ArgumentOutOfRangeException()
-        };
-    }
-
-    public TransactionOperation Convert(TransactionOperationInputResolved resolvedInput)
-    {
-        return resolvedInput.Type switch
-        {
-            OperationType.Http => ConvertToHttpOperation(resolvedInput),
-            _ => throw new ArgumentOutOfRangeException()
-        };
     }
 }
