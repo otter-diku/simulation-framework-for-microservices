@@ -1,0 +1,40 @@
+{
+  "id": "operation-id",
+  "type": "http",
+  "httpMethod": "put",
+  "requestPayload": {
+    "type": "json",
+    "content": {
+      "key1": {
+        "key2": 2,
+        "key3": [ "look", "what", "we", "have", "done"],
+        "key4": {
+          "price": 42
+        }
+      }
+    }
+  },
+  "returnValues": [
+    {
+      "key": "val1",
+      "value": "response.payload.key1.key3[1]",
+      "type": "object"
+    },
+    {
+      "key": "val2",
+      "value": "response.payload.key1.key3",
+      "type": "array"
+    },
+    {
+      "key": "val3",
+      "value": "response.payload",
+      "type": "object"
+    },
+    {
+      "key": "val4",
+      "value": "response.payload.key1.key4.price",
+      "type": "number"
+    }
+  ],
+  "url": "https://httpbin.org/anything"
+}

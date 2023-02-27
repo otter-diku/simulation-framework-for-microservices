@@ -6,6 +6,7 @@ public class HttpOperationInputUnresolved : HttpOperationInputBase, ITransaction
 {
     public Argument[]? Arguments { get; set; }
     public DynamicVariable[]? DynamicVariables { get; set; }
+    public ReturnValue[]? ReturnValues { get; set; }
     public HttpOperationRequestPayloadUnresolved? RequestPayload { get; set; }
 
     public void ValidateAndThrow()
