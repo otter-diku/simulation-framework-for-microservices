@@ -47,7 +47,8 @@ public class TransactionExecutionTest
                 new ReturnValue { Key = "val1", Value = "response.payload", Type = ReturnValueType.Object },
                 new ReturnValue { Key = "val2", Value = "response.payload.key1.key3", Type = ReturnValueType.Array },
                 new ReturnValue
-                    { Key = "val3", Value = "response.payload.key1.key4.price", Type = ReturnValueType.Number }
+                    { Key = "val3", Value = "response.payload.key1.key4.price", Type = ReturnValueType.Number },
+                new ReturnValue { Key = "val4", Value = "response.payload.key1.key3[2]", Type = ReturnValueType.String }
             },
             Url = "https://httpbin.org/anything"
         };
@@ -86,6 +87,8 @@ public class TransactionExecutionTest
             "[\"look\",\"what\",\"we\",\"have\",\"done\"]");
         Assert.AreEqual(((JsonNode)providedValues["val3"]).ToJsonString(),
             "42");
+        Assert.AreEqual(((JsonNode)providedValues["val4"]).ToJsonString(),
+            "\"we\"");
     }
 
     private class TestClass

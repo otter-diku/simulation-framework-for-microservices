@@ -107,10 +107,23 @@
                         var response = JsonNode.Parse(content)["json"];
                         var payloadPath = value.Replace("response.payload.", "");
 
-                        var finalNode = payloadPath.Split(".")
+                        var pathComponents = payloadPath.Split(".")
                             .SelectMany(p => p.Split("["))
-                            .Select(p => p.Replace("[", "").Replace("]", ""))
-                            .Aggregate(response, (current, part) => current[part]);
+                            .ToList();
+
+                        var finalNode = response;
+                        foreach (var comp in pathComponents)
+                        {
+                            if (comp.EndsWith("]"))
+                            {
+                                var arrayIndex = int.Parse(comp.Replace("]", ""));
+                                finalNode = finalNode[arrayIndex];
+                            }
+                            else
+                            {
+                                finalNode = finalNode[comp];
+                            }
+                        }
 
                         extractedValues.Add(returnValue.Key, finalNode);
                     }
