@@ -23,10 +23,10 @@
             _httpClientFactory = httpClientFactory;
             _logger = logger;
         }
-        
+
         public async Task Run(
-            TransactionInput transaction, 
-            Dictionary<string, object> providedValues, 
+            TransactionInput transaction,
+            Dictionary<string, object> providedValues,
             Dictionary<string, HttpOperationInputUnresolved> operationsDictionary)
         {
             // generate dynamic variable for transaction.DynamicVariables
@@ -38,27 +38,38 @@
                     throw new Exception($"Could not find operation with ID {opRefId}");
                 }
 
-                _transactionOperationService.TryResolve(operation, providedValues, out var resolved);         
+                _transactionOperationService.TryResolve(operation, providedValues, out var resolved);
                 _transactionOperationService.TryConvertToExecutable(resolved, out var transactionOperationbaseExecutable);
 
                 var result = await ExecuteOperation(transactionOperationbaseExecutable);
-                
-                var returnValues = ExtractReturnValues(operation, result);
+
+                var returnValues = await ExtractReturnValues(operation, result);
+
+                // Todo: this simply adds new return values to all provided Values,
+                // if we really only want to pass what the next operation uses it gets more tricky
+                foreach (var p in returnValues)
+                {
+                    if (!providedValues.ContainsKey(p.Key))
+                    {
+                        providedValues.Add(p.Key, p.Value);
+                    }
+                }
+
             }
         }
 
-        private Dictionary<string, object> ExtractReturnValues(
-            HttpOperationInputUnresolved operation, 
+        private async Task<Dictionary<string, object>> ExtractReturnValues(
+            HttpOperationInputUnresolved operation,
             object result)
         {
             if (operation.ReturnValues is not null)
             {
-                return result switch
+                return  result switch
                 {
-                    HttpResponseMessage responseMessage => ExtractReturnValuesFromHttpMessage(operation.ReturnValues,
+                    HttpResponseMessage responseMessage => await ExtractReturnValuesFromHttpMessage(operation.ReturnValues,
                         responseMessage),
                     _ => throw new ArgumentOutOfRangeException(nameof(result), result, null)
-                };            
+                };
             }
             else
             {
@@ -66,33 +77,41 @@
             }
         }
 
-        private Dictionary<string, object> ExtractReturnValuesFromHttpMessage(
-            ReturnValue[] operationReturnValues, 
+        private async Task<Dictionary<string, object>> ExtractReturnValuesFromHttpMessage(
+            ReturnValue[] operationReturnValues,
             HttpResponseMessage responseMessage)
         {
             var extractedValues = new Dictionary<string, object>();
             foreach (var returnValue in operationReturnValues)
             {
                 var value = returnValue.Value;
-                
+
                 if (value.StartsWith("response.statuscode"))
                 {
-                    // todo 
-                }   
+                    // todo
+                }
                 else if (value.StartsWith("response.headers"))
                 {
                     // todo
                 }
+                else if (value == "response.payload")
+                {
+                    var content = await responseMessage.Content.ReadAsStringAsync();
+                    var response = JsonNode.Parse(content);
+                    extractedValues.Add(returnValue.Key, response["json"]);
+                }
                 else if (value.StartsWith("response.payload"))
                 {
-                    try {                
-                        var response = JsonNode.Parse(responseMessage.Content.ReadAsStream());
-                        var payloadPath = value.Replace("response.payload", "");
-                        
+                    try {
+                        var content = await responseMessage.Content.ReadAsStringAsync();
+                        var response = JsonNode.Parse(content)["json"];
+                        var payloadPath = value.Replace("response.payload.", "");
+
                         var finalNode = payloadPath.Split(".")
                             .SelectMany(p => p.Split("["))
                             .Select(p => p.Replace("[", "").Replace("]", ""))
                             .Aggregate(response, (current, part) => current[part]);
+
                         extractedValues.Add(returnValue.Key, finalNode);
                     }
                     catch (Exception exception)
@@ -102,14 +121,14 @@
                             $" value: {returnValue.Value}, Response: {responseMessage}"
                         );
                         throw;
-                    }                    
+                    }
                 }
             }
 
             return extractedValues;
         }
-        
-        
+
+
         private async Task<object> ExecuteOperation(TransactionOperationExecutableBase transactionOperationbaseExecutable)
         {
             return transactionOperationbaseExecutable.Type switch
@@ -124,7 +143,7 @@
         {
             var httpClient = _httpClientFactory.CreateClient();
             var requestMessage = new HttpRequestMessage();
-            
+
             // TODO: is using explicit cast really best solution here?
             var executable = (HttpOperationTransactionExecutable) transactionOperationbaseExecutable;
             executable.PrepareRequestMessage(requestMessage);

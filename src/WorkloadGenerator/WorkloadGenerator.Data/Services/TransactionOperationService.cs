@@ -211,7 +211,7 @@ public class TransactionOperationService : ITransactionOperationService
             }
         };
 
-        return new HttpOperationTransactionExecutable() { PrepareRequestMessage = func };
+        return new HttpOperationTransactionExecutable() { Type = OperationType.Http, PrepareRequestMessage = func };
     }
 
 
