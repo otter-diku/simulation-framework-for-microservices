@@ -7,18 +7,18 @@
     </PropertyGroup>
 
     <ItemGroup>
-      <Reference Include="FluentValidation">
-        <HintPath>..\..\..\..\..\.nuget\packages\fluentvalidation\11.5.1\lib\net7.0\FluentValidation.dll</HintPath>
-      </Reference>
-      <Reference Include="Microsoft.Extensions.Logging.Abstractions">
-        <HintPath>..\..\..\..\..\.nuget\packages\microsoft.extensions.logging.abstractions\7.0.0\lib\net7.0\Microsoft.Extensions.Logging.Abstractions.dll</HintPath>
-      </Reference>
+        <Reference Include="FluentValidation">
+            <HintPath>..\..\..\..\..\.nuget\packages\fluentvalidation\11.5.1\lib\net7.0\FluentValidation.dll</HintPath>
+        </Reference>
+        <Reference Include="Microsoft.Extensions.Logging.Abstractions">
+            <HintPath>..\..\..\..\..\.nuget\packages\microsoft.extensions.logging.abstractions\7.0.0\lib\net7.0\Microsoft.Extensions.Logging.Abstractions.dll</HintPath>
+        </Reference>
     </ItemGroup>
 
     <ItemGroup>
-      <PackageReference Include="AutoFixture" Version="4.18.0" />
-      <PackageReference Include="JsonDocumentPath" Version="1.0.3" />
-      <PackageReference Include="Microsoft.Extensions.Http" Version="7.0.0" />
+        <PackageReference Include="AutoFixture" Version="4.18.0"/>
+        <PackageReference Include="JsonDocumentPath" Version="1.0.3"/>
+        <PackageReference Include="Microsoft.Extensions.Http" Version="7.0.0"/>
     </ItemGroup>
 
 </Project>

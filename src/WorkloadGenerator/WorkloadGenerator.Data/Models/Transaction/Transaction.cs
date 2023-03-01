@@ -2,7 +2,6 @@ using FluentValidation;
 
 namespace WorkloadGenerator.Data.Models.Transaction;
 
-
 public class TransactionInput
 {
     public string Id { get; set; }

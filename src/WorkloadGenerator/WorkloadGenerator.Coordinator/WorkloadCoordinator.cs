@@ -6,7 +6,6 @@ using WorkloadGenerator.Grains.Interfaces;
 
 namespace WorkloadGenerator.Coordinator;
 
-
 /// <summary>
 /// This class is responsible for executing a given Workload / scenario
 /// by creating the worker grains which execute the requests against
@@ -14,14 +13,13 @@ namespace WorkloadGenerator.Coordinator;
 /// </summary>
 public class WorkloadCoordinator : IDisposable
 {
-
     private IHost _silo;
     private IClusterClient _client;
 
     public WorkloadCoordinator()
     {
     }
-    
+
     public async Task Init()
     {
         _silo = await WorkloadGeneratorServer.StartSiloAsync();
@@ -35,19 +33,21 @@ public class WorkloadCoordinator : IDisposable
         {
             if (xacts[i] == TransactionType.CatalogAddItem)
             {
-                var worker = _client.GetGrain<IWorkerGrain>(i, 
+                var worker = _client.GetGrain<IWorkerGrain>(i,
                     grainClassNamePrefix: "WorkloadGenerator.Grains.CatalogAddItemGrain");
                 worker.ExecuteTransaction().Wait();
-            } else if (xacts[i] == TransactionType.CatalogUpdatePrice)
+            }
+            else if (xacts[i] == TransactionType.CatalogUpdatePrice)
             {
-                var worker = _client.GetGrain<IWorkerGrain>(i, 
+                var worker = _client.GetGrain<IWorkerGrain>(i,
                     grainClassNamePrefix: "WorkloadGenerator.Grains.CatalogUpdateItemPriceGrain");
                 worker.ExecuteTransaction().Wait();
-            } else if (xacts[i] == TransactionType.BasketAddItem)
+            }
+            else if (xacts[i] == TransactionType.BasketAddItem)
             {
-                var worker = _client.GetGrain<IWorkerGrain>(i, 
+                var worker = _client.GetGrain<IWorkerGrain>(i,
                     grainClassNamePrefix: "WorkloadGenerator.Grains.BasketAddItemGrain");
-                worker.ExecuteTransaction().Wait();                
+                worker.ExecuteTransaction().Wait();
             }
         }
     }
@@ -61,7 +61,7 @@ public class WorkloadCoordinator : IDisposable
         var xacts = new List<TransactionType>();
         for (int i = 0; i < numTransactions; i++)
         {
-            var randomXact = (TransactionType) values.GetValue(random.Next(values.Length))!;
+            var randomXact = (TransactionType)values.GetValue(random.Next(values.Length))!;
             xacts.Add(randomXact);
         }
 

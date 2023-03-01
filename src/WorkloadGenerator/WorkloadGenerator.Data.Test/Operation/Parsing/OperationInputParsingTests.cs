@@ -7,14 +7,14 @@ namespace WorkloadGenerator.Data.Test.Operation.Parsing;
 public class OperationInputTests
 {
     [TestCaseSource(typeof(ValidOperationInputCases))]
-    public void  TestValidCases(string fileName, string input)
+    public void TestValidCases(string fileName, string input)
     {
         var sut = new TransactionOperationService(NullLogger<TransactionOperationService>.Instance);
         var result = sut.TryParseInput(input, out var parsedInput);
         Assert.True(result);
         Assert.NotNull(parsedInput);
     }
-    
+
     [TestCaseSource(typeof(InvalidOperationInputCases))]
     public void TestInvalidCases(string fileName, string input)
     {
@@ -22,17 +22,16 @@ public class OperationInputTests
         var result = sut.TryParseInput(input, out var parsed);
         Assert.False(result);
     }
-    
-  
+
+
     private class InvalidOperationInputCases : IEnumerable
     {
-
         public IEnumerator GetEnumerator()
         {
             return GetFilesFromDirectory("Operation/Parsing/Invalid")
                 .Select(file => new object[]
                 {
-                    file.Split("/").Last(), 
+                    file.Split("/").Last(),
                     File.ReadAllText(file)
                 })
                 .GetEnumerator();
@@ -46,7 +45,7 @@ public class OperationInputTests
             return GetFilesFromDirectory("Operation/Parsing/Valid")
                 .Select(file => new object[]
                 {
-                    file.Split("/").Last(), 
+                    file.Split("/").Last(),
                     File.ReadAllText(file)
                 })
                 .GetEnumerator();

@@ -6,5 +6,5 @@ public enum HttpMethod
     Post = 20,
     Put = 30,
     Patch = 40,
-    Delete = 50 
+    Delete = 50
 }

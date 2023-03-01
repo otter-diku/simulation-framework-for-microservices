@@ -9,11 +9,11 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.3.2" />
-        <PackageReference Include="NUnit" Version="3.13.3" />
-        <PackageReference Include="NUnit3TestAdapter" Version="4.2.1" />
-        <PackageReference Include="NUnit.Analyzers" Version="3.3.0" />
-        <PackageReference Include="coverlet.collector" Version="3.1.2" />
+        <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.3.2"/>
+        <PackageReference Include="NUnit" Version="3.13.3"/>
+        <PackageReference Include="NUnit3TestAdapter" Version="4.2.1"/>
+        <PackageReference Include="NUnit.Analyzers" Version="3.3.0"/>
+        <PackageReference Include="coverlet.collector" Version="3.1.2"/>
     </ItemGroup>
 
     <ItemGroup>
@@ -33,27 +33,27 @@
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
         </None>
         <None Update="Operation\Resolving\Valid\ExpectedResult\post_with_parameterized_payload.json">
-          <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
         </None>
         <None Update="Operation\Resolving\Valid\Arguments\post_with_parameterized_payload.json">
-          <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
         </None>
         <None Update="Operation\Resolving\Valid\ExpectedResult\put_with_payload_reference_in_url.json">
-          <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
         </None>
         <None Update="Operation\Resolving\Valid\Arguments\put_with_payload_reference_in_url.json">
-          <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-        </None>        
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </None>
     </ItemGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\WorkloadGenerator.Data\WorkloadGenerator.Data.csproj" />
+        <ProjectReference Include="..\WorkloadGenerator.Data\WorkloadGenerator.Data.csproj"/>
     </ItemGroup>
 
     <ItemGroup>
-      <Reference Include="Microsoft.Extensions.Logging.Abstractions">
-        <HintPath>..\..\..\..\..\.nuget\packages\microsoft.extensions.logging.abstractions\7.0.0\lib\net7.0\Microsoft.Extensions.Logging.Abstractions.dll</HintPath>
-      </Reference>
+        <Reference Include="Microsoft.Extensions.Logging.Abstractions">
+            <HintPath>..\..\..\..\..\.nuget\packages\microsoft.extensions.logging.abstractions\7.0.0\lib\net7.0\Microsoft.Extensions.Logging.Abstractions.dll</HintPath>
+        </Reference>
     </ItemGroup>
 
 </Project>

@@ -10,6 +10,7 @@ public interface ITransactionOperationService
 
     bool TryResolve(ITransactionOperationUnresolved unresolvedInput,
         Dictionary<string, object>? providedValues, out ITransactionOperationResolved resolvedInput);
-    
-    bool TryConvertToExecutable(ITransactionOperationResolved resolvedInput, out TransactionOperationExecutableBase transactionOperationbaseExecutable);
+
+    bool TryConvertToExecutable(ITransactionOperationResolved resolvedInput,
+        out TransactionOperationExecutableBase transactionOperationbaseExecutable);
 }

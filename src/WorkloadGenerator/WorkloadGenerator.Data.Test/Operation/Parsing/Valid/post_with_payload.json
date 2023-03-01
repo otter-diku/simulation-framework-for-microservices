@@ -7,7 +7,10 @@
     "content": {
       "key1": {
         "key2": "value-a",
-        "key3": [ "value-b", "value-c" ]
+        "key3": [
+          "value-b",
+          "value-c"
+        ]
       }
     }
   },

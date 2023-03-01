@@ -7,13 +7,13 @@
     </PropertyGroup>
 
     <ItemGroup>
-      <PackageReference Include="Microsoft.Orleans.Core" Version="7.1.0" />
+        <PackageReference Include="Microsoft.Orleans.Core" Version="7.1.0"/>
     </ItemGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\..\Utilities\Utilities.csproj" />
-      <ProjectReference Include="..\WorkloadGenerator.Grains\WorkloadGenerator.Grains.csproj" />
-      <ProjectReference Include="..\WorkloadGenerator.Server\WorkloadGenerator.Server.csproj" />
+        <ProjectReference Include="..\..\Utilities\Utilities.csproj"/>
+        <ProjectReference Include="..\WorkloadGenerator.Grains\WorkloadGenerator.Grains.csproj"/>
+        <ProjectReference Include="..\WorkloadGenerator.Server\WorkloadGenerator.Server.csproj"/>
     </ItemGroup>
 
 </Project>

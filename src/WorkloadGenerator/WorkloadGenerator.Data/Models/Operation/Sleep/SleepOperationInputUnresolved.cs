@@ -6,9 +6,9 @@ public class SleepOperationInputUnresolved : SleepOperationInputBase, ITransacti
 {
     public Argument[]? Arguments { get; set; }
     public DynamicVariable[]? DynamicVariables { get; set; }
-    
+
     public string Duration { get; set; }
-    
+
     public void ValidateAndThrow()
     {
         var validator = new SleepOperationInputUnresolvedValidator();

@@ -20,27 +20,28 @@ public class OperationResolvingTests
         var parsingResult = sut.TryParseInput(input, out var parsedInput);
         Assert.True(parsingResult);
         Assert.NotNull(parsedInput);
-        
+
         var parsedArguments = string.IsNullOrWhiteSpace(arguments)
-         ? default
-         : JsonSerializer.Deserialize<Dictionary<string, object>>(arguments);
+            ? default
+            : JsonSerializer.Deserialize<Dictionary<string, object>>(arguments);
 
         var isResolvedSuccessful = sut.TryResolve(parsedInput, parsedArguments, out var resolved);
         Assert.IsTrue(isResolvedSuccessful);
         Assert.IsInstanceOf<HttpOperationInputResolved>(resolved);
-        
-        var expectedResolved = 
-            JsonSerializer.Deserialize<HttpOperationInputResolved>(expectedResult, new JsonSerializerOptions() 
+
+        var expectedResolved =
+            JsonSerializer.Deserialize<HttpOperationInputResolved>(expectedResult, new JsonSerializerOptions()
             {
-                Converters = 
+                Converters =
                 {
-                    new HttpOperationRequestPayloadResolvedBaseConverter(),            
-                    new JsonStringEnumConverter(JsonNamingPolicy.CamelCase) 
+                    new HttpOperationRequestPayloadResolvedBaseConverter(),
+                    new JsonStringEnumConverter(JsonNamingPolicy.CamelCase)
                 },
                 PropertyNameCaseInsensitive = true
             });
 
-        Assert.AreEqual(JsonSerializer.Serialize(resolved as HttpOperationInputResolved), JsonSerializer.Serialize(expectedResolved));
+        Assert.AreEqual(JsonSerializer.Serialize(resolved as HttpOperationInputResolved),
+            JsonSerializer.Serialize(expectedResolved));
     }
 
     [Test]
@@ -48,21 +49,22 @@ public class OperationResolvingTests
     {
         var unresolved = new HttpOperationInputUnresolved()
         {
-            Arguments = new Argument[]{ new() {Name = "arg1", Type = ArgumentType.Number}},
-            DynamicVariables = new DynamicVariable[] {new() {Name = "var1", Type = DynamicVariableType.UnsignedInt}},
+            Arguments = new Argument[] { new() { Name = "arg1", Type = ArgumentType.Number } },
+            DynamicVariables =
+                new DynamicVariable[] { new() { Name = "var1", Type = DynamicVariableType.UnsignedInt } },
             Type = OperationType.Http,
             HttpMethod = HttpMethod.Post,
             Url = "http://example.com",
             RequestPayload = new HttpOperationRequestPayloadUnresolved()
             {
-                Type = HttpPayloadType.Json, 
+                Type = HttpPayloadType.Json,
                 Content = JsonSerializer.Deserialize<object>("{\"key1\": \"{{arg1}}\", \"key2\":\"{{var1}}\"}")!
             }
         };
         var sut = new TransactionOperationService(NullLogger<TransactionOperationService>.Instance);
         var didResolveSuccessfully = sut.TryResolve(unresolved, new Dictionary<string, object>()
         {
-            {"arg1", 42}
+            { "arg1", 42 }
         }, out var resolved);
 
         Assert.True(didResolveSuccessfully);
@@ -72,7 +74,7 @@ public class OperationResolvingTests
         Assert.AreEqual(json.Content["key1"].GetValue<int>(), 42);
         Assert.That(json.Content["key2"].GetValue<int>(), Is.Positive);
     }
-    
+
     private class ValidOperationInputCases : IEnumerable
     {
         public IEnumerator GetEnumerator()
@@ -83,8 +85,10 @@ public class OperationResolvingTests
                 {
                     tuple.FileName,
                     File.ReadAllText(tuple.FullFileName),
-                    File.ReadAllText(Path.Combine(Directory.GetParent(tuple.FullFileName).Parent.FullName, "Arguments", tuple.FileName)),
-                    File.ReadAllText(Path.Combine(Directory.GetParent(tuple.FullFileName).Parent.FullName, "ExpectedResult", tuple.FileName))
+                    File.ReadAllText(Path.Combine(Directory.GetParent(tuple.FullFileName).Parent.FullName, "Arguments",
+                        tuple.FileName)),
+                    File.ReadAllText(Path.Combine(Directory.GetParent(tuple.FullFileName).Parent.FullName,
+                        "ExpectedResult", tuple.FileName))
                 })
                 .GetEnumerator();
         }
@@ -92,7 +96,7 @@ public class OperationResolvingTests
 
     private static IEnumerable<string> GetFilesFromDirectory(string relativePath)
         => Directory.GetFiles(Path.Combine(Directory.GetCurrentDirectory(), relativePath));
-    
+
     private readonly JsonSerializerOptions _jsonSerializerOptions = new()
     {
         PropertyNameCaseInsensitive = true,

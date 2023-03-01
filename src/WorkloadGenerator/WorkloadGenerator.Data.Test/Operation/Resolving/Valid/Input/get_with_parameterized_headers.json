@@ -2,8 +2,7 @@
   "id": "operation-id",
   "type": "http",
   "httpMethod": "get",
-  "headers":
-  [
+  "headers": [
     {
       "key": "header-1",
       "value": "{{arg-1}}"
@@ -14,7 +13,7 @@
     }
   ],
   "arguments": [
-    { 
+    {
       "name": "arg-1",
       "required": true,
       "type": "string"

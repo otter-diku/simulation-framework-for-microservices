@@ -25,7 +25,9 @@
     "content": {
       "key1": {
         "key2": "{{arg1}}",
-        "key3": [ "{{arg2}}" ],
+        "key3": [
+          "{{arg2}}"
+        ],
         "key4": "{{arg3}}",
         "key5": "{{arg4}}"
       }

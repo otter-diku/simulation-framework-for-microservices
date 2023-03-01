@@ -17,7 +17,9 @@ public class TransactionRunnerService
     private readonly ITransactionOperationService _transactionOperationService;
     private readonly IHttpClientFactory _httpClientFactory;
     private readonly ILogger<TransactionRunnerService> _logger;
-    public TransactionRunnerService(ITransactionOperationService transactionOperationService, IHttpClientFactory httpClientFactory,
+
+    public TransactionRunnerService(ITransactionOperationService transactionOperationService,
+        IHttpClientFactory httpClientFactory,
         ILogger<TransactionRunnerService> logger)
     {
         _transactionOperationService = transactionOperationService;
@@ -55,7 +57,6 @@ public class TransactionRunnerService
                     providedValues.Add(p.Key, p.Value);
                 }
             }
-
         }
     }
 
@@ -65,7 +66,7 @@ public class TransactionRunnerService
     {
         if (operation.Response is not null)
         {
-            return  result switch
+            return result switch
             {
                 HttpResponseMessage responseMessage => await ExtractReturnValuesFromHttpMessage(operation.Response,
                     responseMessage),
@@ -77,18 +78,18 @@ public class TransactionRunnerService
     }
 
     private async Task<Dictionary<string, object>> ExtractReturnValuesFromHttpMessage(
-        HttpOperationResponseInput? httpOperationResponseInput, 
+        HttpOperationResponseInput? httpOperationResponseInput,
         HttpResponseMessage responseMessage)
     {
         var extractedValues = new Dictionary<string, object>();
 
         if (httpOperationResponseInput?.Payload is not null)
         {
-           var extracted = await ResolveResponsePayload(httpOperationResponseInput.Payload, responseMessage);
-           foreach (var kv in extracted)
-           {
-               extractedValues.Add(kv.Key, kv.Value);
-           }
+            var extracted = await ResolveResponsePayload(httpOperationResponseInput.Payload, responseMessage);
+            foreach (var kv in extracted)
+            {
+                extractedValues.Add(kv.Key, kv.Value);
+            }
         }
 
         if (httpOperationResponseInput?.Headers is not null)
@@ -119,8 +120,8 @@ public class TransactionRunnerService
     }
 
     private async Task<Dictionary<string, object>> ExtractedReturnValuesFromJsonPayload(
-        HttpOperationResponsePayloadInput httpOperationResponsePayloadInput, 
-        HttpResponseMessage responseMessage, 
+        HttpOperationResponsePayloadInput httpOperationResponsePayloadInput,
+        HttpResponseMessage responseMessage,
         Dictionary<string, object> extractedValues)
     {
         string? content = null;
@@ -162,18 +163,20 @@ public class TransactionRunnerService
         };
     }
 
-    private async Task<HttpResponseMessage> ExecuteHttpRequestOperation(TransactionOperationExecutableBase transactionOperationbaseExecutable)
+    private async Task<HttpResponseMessage> ExecuteHttpRequestOperation(
+        TransactionOperationExecutableBase transactionOperationbaseExecutable)
     {
         var httpClient = _httpClientFactory.CreateClient();
         var requestMessage = new HttpRequestMessage();
 
         // TODO: is using explicit cast really best solution here?
-        var executable = (HttpOperationTransactionExecutable) transactionOperationbaseExecutable;
+        var executable = (HttpOperationTransactionExecutable)transactionOperationbaseExecutable;
         executable.PrepareRequestMessage(requestMessage);
         return await httpClient.SendAsync(requestMessage);
     }
 
-    private async Task<object> ExecuteSleepOperation(TransactionOperationExecutableBase transactionOperationbaseExecutable)
+    private async Task<object> ExecuteSleepOperation(
+        TransactionOperationExecutableBase transactionOperationbaseExecutable)
     {
         throw new NotImplementedException();
     }

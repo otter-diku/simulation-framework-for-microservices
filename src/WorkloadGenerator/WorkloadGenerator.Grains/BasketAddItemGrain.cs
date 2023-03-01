@@ -11,7 +11,7 @@ using Newtonsoft.Json.Linq;
 namespace WorkloadGenerator.Grains;
 
 [StatelessWorker]
-public class BasketAddItemGrain : Grain, IWorkerGrain  
+public class BasketAddItemGrain : Grain, IWorkerGrain
 {
     public Task Init()
     {
@@ -19,10 +19,10 @@ public class BasketAddItemGrain : Grain, IWorkerGrain
     }
 
     public async Task ExecuteTransaction()
-    {   
+    {
         var _client = new HttpClient();
         Console.WriteLine("Starting BasketAddItem Transaction.");
-        
+
         // randomly draw catalog items from 
         var rnd = new Random();
         var numItemsToBuy = rnd.Next(Data.DataGenerator.LargestGeneratedCatalogItemId);
@@ -39,7 +39,7 @@ public class BasketAddItemGrain : Grain, IWorkerGrain
             // Console.WriteLine(responseCatalog["data"]);
             var catalogItems = JsonConvert
                 .DeserializeObject<List<CatalogItem>>(responseCatalog["data"].ToString());
-            
+
             var basketItems = new List<BasketItem>();
             foreach (var catalogItem in catalogItems)
             {
@@ -62,20 +62,19 @@ public class BasketAddItemGrain : Grain, IWorkerGrain
             var content = new JObject
             {
                 // TODO: select random customer for now just use Alice
-                { "buyerId", userId},
+                { "buyerId", userId },
                 { "items", JsonConvert.SerializeObject(basketItems) },
             };
             var basketRequest = new BasketRequest();
             basketRequest.buyerId = userId;
             basketRequest.items = basketItems;
-            
+
             Console.WriteLine(content.ToString());
 
             _client.DefaultRequestHeaders.Add("user-id", userId);
             var putResponse = await _client.PostAsJsonAsync(Constants.BasketUrl, basketRequest);
-        
-            Console.WriteLine("Resulting response: " + putResponse);         
-        }
 
+            Console.WriteLine("Resulting response: " + putResponse);
+        }
     }
 }

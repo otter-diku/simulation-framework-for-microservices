@@ -4,7 +4,6 @@ namespace Data
 {
     public static class DataGenerator
     {
-
         const string Numbers = "0123456789";
         const string Alphanumeric = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
         const int Offset = 0; // temporal during testing to not reinitialize application always
@@ -15,9 +14,8 @@ namespace Data
         {
             List<CatalogItem> items = new List<CatalogItem>(NumberOfItems);
 
-            for (int i = 1+Offset; i <= NumberOfItems + Offset; i++)
+            for (int i = 1 + Offset; i <= NumberOfItems + Offset; i++)
             {
-
                 CatalogItem item = new CatalogItem
                 {
                     Id = i,
@@ -46,16 +44,14 @@ namespace Data
                     RestockThreshold = MIN_ITEM_QTY,
                     MaxStockThreshold = MAX_ITEM_QTY,
                     OnReorder = false
-
                 };
 
                 items.Add(item);
-
             }
 
             return items;
         }
-        
+
         public static CatalogItem GenerateCatalogItem(int MIN_ITEM_QTY, int MAX_ITEM_QTY)
         {
             CatalogItem item = new CatalogItem
@@ -86,7 +82,6 @@ namespace Data
                 RestockThreshold = MIN_ITEM_QTY,
                 MaxStockThreshold = MAX_ITEM_QTY,
                 OnReorder = false
-
             };
 
             //  keep track of existing catalogItemIds such that basket transactions can access them
@@ -94,8 +89,6 @@ namespace Data
             return item;
         }
 
-        
-        
 
         private static List<BasketItem> GenerateBasketItems(int NumberOfItems)
         {
@@ -104,7 +97,6 @@ namespace Data
 
             for (int i = 0; i < NumberOfItems; i++)
             {
-
                 BasketItem item = new BasketItem();
 
                 item.ProductId = i.ToString();
@@ -112,11 +104,10 @@ namespace Data
 
                 item.UnitPrice = Math.Ceiling((decimal)(new Random().NextDouble() * 10000)) / 100;
                 item.OldUnitPrice = item.UnitPrice;
-                item.Quantity = 10; 
+                item.Quantity = 10;
                 item.PictureUrl = "";
 
                 items.Add(item);
-
             }
 
             return items;
@@ -136,11 +127,10 @@ namespace Data
 
                 item.UnitPrice = catalogItem.Price;
                 item.OldUnitPrice = catalogItem.Price;
-                item.Quantity = new Random().Next(1,catalogItem.AvailableStock);
+                item.Quantity = new Random().Next(1, catalogItem.AvailableStock);
                 item.PictureUrl = null;
 
                 basket.Add(item);
-
             }
 
             return basket;
@@ -148,12 +138,10 @@ namespace Data
 
         public static List<ApplicationUser> GenerateCustomers(int NumberOfCustomers)
         {
-
             List<ApplicationUser> users = new List<ApplicationUser>(NumberOfCustomers);
 
             for (int i = 0; i < NumberOfCustomers; i++)
             {
-
                 ApplicationUser user = new ApplicationUser();
                 user.CardNumber = RandomString(16, Numbers); // needs to be between 12 and 19
                 user.SecurityNumber = RandomString(3, Numbers); // needs to have length 3
@@ -176,20 +164,23 @@ namespace Data
 
             return users;
         }
-        
-        public static List<string> GenerateGuids(int numberOfIds) {
+
+        public static List<string> GenerateGuids(int numberOfIds)
+        {
             List<string> guids = new List<string>();
-            for (int i = 0; i < numberOfIds; i++) {
+            for (int i = 0; i < numberOfIds; i++)
+            {
                 guids.Add(Guid.NewGuid().ToString());
             }
+
             return guids;
         }
+
         private static string RandomString(int length, string chars)
         {
             var random = new Random();
             return new string(Enumerable.Repeat(chars, length)
-              .Select(s => s[random.Next(s.Length)]).ToArray());
+                .Select(s => s[random.Next(s.Length)]).ToArray());
         }
-
     }
 }

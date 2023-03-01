@@ -12,12 +12,11 @@ namespace WorkloadGenerator.Data.Test.Transaction.Execution;
 
 public class TransactionExecutionTest
 {
-
-[Test]
+    [Test]
     public async Task TestExtractingValues()
     {
         var payloadString =
-        """
+            """
         {
           "key1": {
             "key2": 2,
@@ -39,7 +38,7 @@ public class TransactionExecutionTest
                 Type = HttpPayloadType.Json,
                 Content = JsonSerializer.Deserialize<object>(payloadString)!
             },
-            Response =new HttpOperationResponseInput()
+            Response = new HttpOperationResponseInput()
             {
                 Payload = new HttpOperationResponsePayloadInput()
                 {
@@ -84,7 +83,7 @@ public class TransactionExecutionTest
 
         var providedValues = new Dictionary<string, object>();
         await sut.Run(transaction, providedValues, operations);
-        
+
         Assert.AreEqual(JsonSerializer.Serialize((JsonElement)providedValues["val1"]),
             JsonSerializer.Serialize(JsonDocument.Parse(payloadString).RootElement));
         Assert.AreEqual(JsonSerializer.Serialize((JsonElement)providedValues["val2"]),
@@ -101,9 +100,9 @@ public class TransactionExecutionTest
     /// </summary>
     public sealed class DefaultHttpClientFactory : IHttpClientFactory, IDisposable
     {
-        private readonly Lazy<HttpMessageHandler> _handlerLazy = new (() => new HttpClientHandler());
+        private readonly Lazy<HttpMessageHandler> _handlerLazy = new(() => new HttpClientHandler());
 
-        public HttpClient CreateClient(string name) => new (_handlerLazy.Value, disposeHandler: false);
+        public HttpClient CreateClient(string name) => new(_handlerLazy.Value, disposeHandler: false);
 
         public void Dispose()
         {

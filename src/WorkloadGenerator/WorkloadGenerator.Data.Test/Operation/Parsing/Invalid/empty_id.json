@@ -1,6 +1,6 @@
 {
-    "id": "",
-    "type": "http",
-    "httpMethod": "get",
-    "url": "http://example.com"
+  "id": "",
+  "type": "http",
+  "httpMethod": "get",
+  "url": "http://example.com"
 }

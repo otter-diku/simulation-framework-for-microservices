@@ -7,9 +7,9 @@ public class HttpOperationInputUnresolved : HttpOperationInputBase, ITransaction
     public Argument[]? Arguments { get; set; }
     public DynamicVariable[]? DynamicVariables { get; set; }
     public HttpOperationRequestPayloadUnresolved? RequestPayload { get; set; }
-    
+
     public HttpOperationResponseInput? Response { get; set; }
-    
+
     public void ValidateAndThrow()
     {
         var validator = new HttpOperationInputUnresolvedValidator();
@@ -22,7 +22,7 @@ public class HttpOperationInputUnresolvedValidator : AbstractValidator<HttpOpera
     public HttpOperationInputUnresolvedValidator()
     {
         Include(new HttpOperationInputBaseValidator());
-        
+
         When(input => input.Arguments is not null && input.DynamicVariables is not null, () =>
         {
             RuleFor(input => input).Must(input => !input.Arguments.Select(a => a.Name)

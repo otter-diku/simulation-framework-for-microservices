@@ -16,8 +16,9 @@ public class HttpOperationRequestPayloadResolvedBaseConverter : JsonConverter<Ht
      *  More on polymorphic deserialization:
      *   https://learn.microsoft.com/en-us/dotnet/standard/serialization/system-text-json/converters-how-to?pivots=dotnet-7-0#support-polymorphic-deserialization
      */
-    
-    public override HttpOperationRequestPayloadResolvedBase? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+
+    public override HttpOperationRequestPayloadResolvedBase? Read(ref Utf8JsonReader reader, Type typeToConvert,
+        JsonSerializerOptions options)
     {
         if (reader.TokenType != JsonTokenType.StartObject)
             throw new JsonException();
@@ -34,12 +35,13 @@ public class HttpOperationRequestPayloadResolvedBaseConverter : JsonConverter<Ht
         {
             throw new JsonException();
         }
-            
+
         var jsonString = jsonDocument.RootElement.GetRawText();
         return JsonSerializer.Deserialize<JsonPayloadResolved>(jsonString, options);
     }
 
-    public override void Write(Utf8JsonWriter writer, HttpOperationRequestPayloadResolvedBase value, JsonSerializerOptions options)
+    public override void Write(Utf8JsonWriter writer, HttpOperationRequestPayloadResolvedBase value,
+        JsonSerializerOptions options)
     {
         JsonSerializer.Serialize(writer, (object)value, options);
     }

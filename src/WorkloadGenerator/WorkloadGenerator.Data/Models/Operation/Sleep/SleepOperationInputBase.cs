@@ -20,7 +20,7 @@ public class SleepOperationInputBaseValidator : AbstractValidator<SleepOperation
 
 public enum TimeSpanType
 {
-    Milliseconds = 10, 
+    Milliseconds = 10,
     Seconds = 20,
     Minutes = 30
 }

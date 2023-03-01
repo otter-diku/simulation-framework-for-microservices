@@ -4,7 +4,7 @@
   "httpMethod": "get",
   "returnValues": [
     {
-      "key": "host-name", 
+      "key": "host-name",
       "value": "@@payload.headers.Host@@",
       "type": "string"
     }

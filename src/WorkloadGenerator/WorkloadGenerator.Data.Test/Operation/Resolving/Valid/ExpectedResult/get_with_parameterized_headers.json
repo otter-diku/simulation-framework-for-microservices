@@ -2,8 +2,7 @@
   "id": "operation-id",
   "type": "http",
   "httpMethod": "get",
-  "headers":
-  [
+  "headers": [
     {
       "key": "header-1",
       "value": "42"

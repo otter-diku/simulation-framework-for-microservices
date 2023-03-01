@@ -12,7 +12,6 @@ namespace WorkloadGenerator.Data.Test.Operation.Convert;
 
 public class OperationConvertTests
 {
-
     [Test]
     public async Task ConvertTests()
     {
@@ -22,7 +21,8 @@ public class OperationConvertTests
                 Headers = new List<Header>() { new() { Key = "header1", Value = "value1" } },
                 HttpMethod = HttpMethod.Post,
                 Id = "some-string",
-                RequestPayload = new JsonPayloadResolved() { Content = JsonNode.Parse(JsonSerializer.Serialize(new TestClass() {ItemId = 42})) },
+                RequestPayload = new JsonPayloadResolved()
+                    { Content = JsonNode.Parse(JsonSerializer.Serialize(new TestClass() { ItemId = 42 })) },
                 QueryParameters = new List<QueryParameter>() { new() { Key = "a", Value = "b" } },
                 Type = OperationType.Http,
                 Url = "http://example.com"
@@ -36,7 +36,7 @@ public class OperationConvertTests
 
         var httpOperationExecutable = executable as HttpOperationTransactionExecutable;
         httpOperationExecutable.PrepareRequestMessage(httpMessage);
-        
+
         Assert.AreEqual(httpMessage.RequestUri.AbsoluteUri, "http://example.com/?a=b");
         Assert.AreEqual(httpMessage.Method.ToString().ToLower(), HttpMethod.Post.ToString().ToLower());
         Assert.AreEqual(httpMessage.RequestUri.Query, "?a=b");
@@ -69,7 +69,7 @@ public class OperationConvertTests
 
         var httpOperationExecutable = executable as HttpOperationTransactionExecutable;
         httpOperationExecutable.PrepareRequestMessage(httpMessage);
-        
+
         Assert.AreEqual(httpMessage.RequestUri.AbsoluteUri, "http://example.com/?a=b");
         Assert.AreEqual(httpMessage.Method.ToString().ToLower(), HttpMethod.Get.ToString().ToLower());
         Assert.AreEqual(httpMessage.RequestUri.Query, "?a=b");
@@ -77,9 +77,9 @@ public class OperationConvertTests
         Assert.AreEqual(val.Single(), "value1");
         Assert.IsNull(httpMessage.Content);
     }
-    
+
     private class TestClass
     {
         public int ItemId { get; set; }
-    } 
+    }
 }

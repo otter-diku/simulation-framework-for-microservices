@@ -1,6 +1,6 @@
 namespace WorkloadGenerator.Data.Models.Operation.Http;
 
-public class HttpOperationRequestPayloadUnresolved 
+public class HttpOperationRequestPayloadUnresolved
 {
     public HttpPayloadType Type { get; set; }
 

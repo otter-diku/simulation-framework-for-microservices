@@ -39,8 +39,5 @@
         /// True if item is on reorder
         /// </summary>
         public bool OnReorder { get; set; }
-
-
-
     }
 }

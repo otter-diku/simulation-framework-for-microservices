@@ -5,10 +5,8 @@ namespace WorkloadGenerator.Grains.Interfaces
 {
     public interface IWorkerGrain : IGrainWithIntegerKey
     {
-
         Task Init();
-        
+
         Task ExecuteTransaction();
-        
     }
 }

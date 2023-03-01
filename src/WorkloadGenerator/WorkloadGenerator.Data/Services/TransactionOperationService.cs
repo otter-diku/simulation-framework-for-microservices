@@ -23,19 +23,19 @@ public class TransactionOperationService : ITransactionOperationService
     // e.g. "key1": "{{arg1}}" => "key1": false 
     // the reason we need the quotes in the first place, is because `"key1": @arg1` is not a valid JSON
     private readonly Regex _argumentReplaceRegex = new("\"{{([^}]*)}}\"");
-    
+
     // for url paths we do not need expect any quotes so we just need to replace the `{{arg-name}}`
     private readonly Regex _stringArgumentReplaceRegex = new("{{([^}]*)}}");
-    
-    
+
+
     // for url paths we do not need expect any quotes so we just need to replace the `@@arg-name@@`
     private readonly Regex _urlPathReferenceRegex = new("@@([^}]*)@@");
-    
+
     public TransactionOperationService(ILogger<TransactionOperationService> logger)
     {
         _logger = logger;
     }
-    
+
     private readonly JsonSerializerOptions _jsonSerializerOptions = new()
     {
         PropertyNameCaseInsensitive = true,
@@ -55,7 +55,7 @@ public class TransactionOperationService : ITransactionOperationService
             {
                 return false;
             }
-            
+
             switch (baseInput.Type)
             {
                 case OperationType.Http:
@@ -74,9 +74,9 @@ public class TransactionOperationService : ITransactionOperationService
         }
         catch (Exception exception)
         {
-            _logger.LogInformation(exception, 
+            _logger.LogInformation(exception,
                 "Failed trying to deserialize input data for operation");
-            
+
             return false;
         }
     }
@@ -104,20 +104,21 @@ public class TransactionOperationService : ITransactionOperationService
             resolvedInput = null!;
             return false;
         }
-        
+
         providedValues = AddDynamicValues(unresolvedInput, providedValues ?? new Dictionary<string, object>());
 
         resolvedInput = ResolveInternal(unresolvedInput, providedValues);
         return true;
     }
 
-    private Dictionary<string, object> AddDynamicValues(ITransactionOperationUnresolved unresolvedInput, Dictionary<string, object> providedValues)
+    private Dictionary<string, object> AddDynamicValues(ITransactionOperationUnresolved unresolvedInput,
+        Dictionary<string, object> providedValues)
     {
         if (unresolvedInput.DynamicVariables is null)
         {
             return providedValues;
         }
-        
+
         var concreteVariables = GenerateDynamicVariables(unresolvedInput.DynamicVariables);
         foreach (var kv in concreteVariables)
         {
@@ -134,11 +135,13 @@ public class TransactionOperationService : ITransactionOperationService
         {
             transactionOperationbaseExecutable = resolvedInput switch
             {
-                HttpOperationInputResolved httpOperationInputResolved => ConvertToExecutableHttpOperation(httpOperationInputResolved),
-                SleepOperationInputResolved sleepOperationInputResolved => ConvertToExecutableSleepOperation(sleepOperationInputResolved),
+                HttpOperationInputResolved httpOperationInputResolved => ConvertToExecutableHttpOperation(
+                    httpOperationInputResolved),
+                SleepOperationInputResolved sleepOperationInputResolved => ConvertToExecutableSleepOperation(
+                    sleepOperationInputResolved),
                 _ => throw new ArgumentOutOfRangeException(nameof(resolvedInput))
             };
-            
+
             return true;
         }
         catch (Exception e)
@@ -179,6 +182,7 @@ public class TransactionOperationService : ITransactionOperationService
                 var queryStringParsed = HttpUtility.ParseQueryString(queryString);
                 uriBuilder.Query = queryStringParsed.ToString();
             }
+
             httpRequest.RequestUri = uriBuilder.Uri;
 
             httpRequest.Headers.Clear();
@@ -190,7 +194,7 @@ public class TransactionOperationService : ITransactionOperationService
                     var _ = httpRequest.Headers.TryAddWithoutValidation(header.Key, header.Value);
                 }
             }
-            
+
             if (input.RequestPayload is null)
             {
                 return;
@@ -205,7 +209,7 @@ public class TransactionOperationService : ITransactionOperationService
             if (input.RequestPayload is not null)
             {
                 httpRequest.Content = new StringContent(
-                    JsonSerializer.Serialize(jsonPayload.Content,  new JsonSerializerOptions() { WriteIndented = true}),
+                    JsonSerializer.Serialize(jsonPayload.Content, new JsonSerializerOptions() { WriteIndented = true }),
                     Encoding.UTF8,
                     "application/json");
             }
@@ -215,12 +219,14 @@ public class TransactionOperationService : ITransactionOperationService
     }
 
 
-    private static bool ValidateArguments(ITransactionOperationUnresolved unresolvedInput, IReadOnlyDictionary<string, object>? providedValues)
+    private static bool ValidateArguments(ITransactionOperationUnresolved unresolvedInput,
+        IReadOnlyDictionary<string, object>? providedValues)
     {
         return unresolvedInput.Arguments is null ||
-               unresolvedInput.Arguments.All(requiredArgument => providedValues?.ContainsKey(requiredArgument.Name) ?? false);
+               unresolvedInput.Arguments.All(requiredArgument =>
+                   providedValues?.ContainsKey(requiredArgument.Name) ?? false);
     }
-    
+
     private ITransactionOperationResolved ResolveInternal(
         ITransactionOperationUnresolved unresolvedInput,
         Dictionary<string, object> providedValues)
@@ -233,7 +239,8 @@ public class TransactionOperationService : ITransactionOperationService
         };
     }
 
-    private ITransactionOperationResolved ResolveHttpOperation(HttpOperationInputUnresolved unresolvedInput, Dictionary<string, object> providedValues)
+    private ITransactionOperationResolved ResolveHttpOperation(HttpOperationInputUnresolved unresolvedInput,
+        Dictionary<string, object> providedValues)
     {
         var _ = TryResolveRequestPayload(unresolvedInput, providedValues, out var resolvedPayload);
         return new HttpOperationInputResolved()
@@ -248,15 +255,16 @@ public class TransactionOperationService : ITransactionOperationService
             Url = ResolveUrl(unresolvedInput, resolvedPayload, providedValues)
         };
     }
-    
-    private ITransactionOperationResolved ResolveSleepOperation(SleepOperationInputUnresolved sleepOperation, Dictionary<string, object> providedValues)
+
+    private ITransactionOperationResolved ResolveSleepOperation(SleepOperationInputUnresolved sleepOperation,
+        Dictionary<string, object> providedValues)
     {
         throw new NotImplementedException();
     }
 
     private List<Header>? ResolveHeaders(
-        List<Header>? unresolvedInputHeaders, 
-        Argument[]? arguments, 
+        List<Header>? unresolvedInputHeaders,
+        Argument[]? arguments,
         Dictionary<string, object> providedValues)
     {
         if (unresolvedInputHeaders is not { Count: > 0 } || arguments is not { Length: > 0 })
@@ -272,14 +280,14 @@ public class TransactionOperationService : ITransactionOperationService
             })
             .ToList();
     }
-    
+
     private string ResolveUrl(HttpOperationInputUnresolved unresolved,
         HttpOperationRequestPayloadResolvedBase payload,
         Dictionary<string, object>? providedValues)
     {
         var resolvedUrl = ResolveParameterizedString(unresolved.Url, unresolved.Arguments, providedValues);
-        
-        if (payload is null )
+
+        if (payload is null)
         {
             return resolvedUrl;
         }
@@ -317,8 +325,8 @@ public class TransactionOperationService : ITransactionOperationService
     }
 
     private string ResolveParameterizedString(
-        string? unresolvedInput, 
-        Argument[] arguments, 
+        string? unresolvedInput,
+        Argument[] arguments,
         IReadOnlyDictionary<string, object> providedValues
     )
     {
@@ -332,7 +340,7 @@ public class TransactionOperationService : ITransactionOperationService
             try
             {
                 var variableName = match.Groups[1].Value;
-                
+
                 return providedValues[variableName].ToString();
             }
             catch (InvalidOperationException invalidOperationException)
@@ -349,7 +357,7 @@ public class TransactionOperationService : ITransactionOperationService
 
     private bool TryResolveRequestPayload(
         HttpOperationInputUnresolved inputUnresolved,
-        Dictionary<string,object> providedValues,
+        Dictionary<string, object> providedValues,
         out HttpOperationRequestPayloadResolvedBase resolvedPayload)
     {
         resolvedPayload = null!;
@@ -408,14 +416,13 @@ public class TransactionOperationService : ITransactionOperationService
         }
         catch (Exception exception)
         {
-            _logger.LogWarning(exception, 
-                "Failed trying to print dynamic variable {DynamicVariable} for provided value: {ProvidedValue}", 
-                dynamicVariable.Name, 
+            _logger.LogWarning(exception,
+                "Failed trying to print dynamic variable {DynamicVariable} for provided value: {ProvidedValue}",
+                dynamicVariable.Name,
                 providedValue.ToString());
-            
+
             throw;
         }
-        
     }
 
     private HttpMethod GetHttpMethod(Models.Operation.Http.HttpMethod? method)
@@ -443,9 +450,7 @@ public class TransactionOperationService : ITransactionOperationService
                 ArgumentType.Object => JsonSerializer.Serialize(providedValue),
                 ArgumentType.Array =>
                     "[" +
-                    $"{string.Join(", ", ((IEnumerable)providedValue)
-                        .Cast<object>()
-                        .Select(x => x.ToString()))} " +
+                    $"{string.Join(", ", ((IEnumerable)providedValue).Cast<object>().Select(x => x.ToString()))} " +
                     "]",
                 ArgumentType.Boolean => providedValue.ToString(),
                 ArgumentType.Null => "null",
@@ -454,11 +459,11 @@ public class TransactionOperationService : ITransactionOperationService
         }
         catch (Exception exception)
         {
-            _logger.LogWarning(exception, 
-                "Failed trying to print argument {ArgumentName} for provided value: {ProvidedValue}", 
-                argument.Name, 
+            _logger.LogWarning(exception,
+                "Failed trying to print argument {ArgumentName} for provided value: {ProvidedValue}",
+                argument.Name,
                 providedValue.ToString());
-            
+
             throw;
         }
     }
@@ -474,7 +479,7 @@ public class TransactionOperationService : ITransactionOperationService
                 DynamicVariableType.SignedInt => fixture.Create<bool>()
                     ? fixture.Create<int>()
                     : -1 * fixture.Create<int>(),
-                DynamicVariableType.String => (object) fixture.Create<string>(),
+                DynamicVariableType.String => (object)fixture.Create<string>(),
                 DynamicVariableType.Guid => Guid.NewGuid(),
                 _ => throw new ArgumentOutOfRangeException()
             };

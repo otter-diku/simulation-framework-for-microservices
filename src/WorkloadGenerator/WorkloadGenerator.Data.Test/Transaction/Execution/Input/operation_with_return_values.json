@@ -7,7 +7,13 @@
     "content": {
       "key1": {
         "key2": 2,
-        "key3": [ "look", "what", "we", "have", "done"],
+        "key3": [
+          "look",
+          "what",
+          "we",
+          "have",
+          "done"
+        ],
         "key4": {
           "price": 42
         }
