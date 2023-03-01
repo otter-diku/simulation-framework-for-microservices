@@ -43,6 +43,12 @@
         </None>
         <None Update="Operation\Resolving\Valid\Arguments\put_with_payload_reference_in_url.json">
           <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </None>
+        <None Update="Transaction\Parsing\Valid\*.json">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </None>
+        <None Update="Transaction\Parsing\Invalid\*.json">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
         </None>        
     </ItemGroup>
 

@@ -4,6 +4,8 @@ using WorkloadGenerator.Data.Services;
 
 namespace WorkloadGenerator.Data.Test.Operation.Parsing;
 
+
+
 public class OperationInputTests
 {
     [TestCaseSource(typeof(ValidOperationInputCases))]

@@ -16,7 +16,7 @@ public class TransactionInput
 
         public string Id { get; set; }
 
-        public ProvidedValue[] ProvidedValues { get; set; }
+        public ProvidedValue?[] ProvidedValues { get; set; }
 
         public class ProvidedValue
         {

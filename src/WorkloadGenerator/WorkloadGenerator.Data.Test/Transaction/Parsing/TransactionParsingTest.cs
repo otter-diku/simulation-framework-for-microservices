@@ -1,77 +1,60 @@
+using System.Collections;
+using Microsoft.Extensions.Logging.Abstractions;
+using WorkloadGenerator.Data.Services;
+
 namespace WorkloadGenerator.Data.Test.Transaction.Parsing;
 
 public class TransactionParsingTest
 {
-    [Test]
-    public void ShouldParse()
+    
+    [TestCaseSource(typeof(ValidTransactionInputCases))]
+    public void  TestValidCases(string fileName, string input)
     {
-        var json =
-            """
-                "id": "some-id",
-                "arguments": [ 
-                    {
-                        "name": "arg1",
-                        "type": "number"
-                    },
-                    {
-                        "name": "arg2",
-                        "type": "string"
-                    }
-                ],
-                "dynamicVariables": [
-                    {
-                        "name": "var1",
-                        "type": "guid"
-                    } 
-                ],
-                "operations": [ 
-                    {
-                        "operationReferenceId": "some-op-ref-id-1",
-                        "id": "first-transaction-op-id",
-                        "providedValues": [
-                            {
-                                "key": "arg1",
-                                "value": "{{arg1}}"
-                            }
-                        ]
-                    },
-                    {
-                        "operationReferenceId": "some-op-ref-id-2",
-                        "id": "second-transaction-op-id",
-                        "providedValues": [
-                            {
-                                "key": "arg42",
-                                "value": "@@first-transaction-op-id.payload.some-return-value-key@@"
-                            }
-                        ]
-                    }
-                ]
-            """;
+        var sut = new TransactionService(NullLogger<TransactionService>.Instance);
+        var result = sut.TryParseInput(input, out var parsedInput);
+        Assert.True(result);
+        Assert.NotNull(parsedInput);
     }
-}
-
-/*
- public class TransactionInput
-{
-    public string Id { get; set; }
-    public Argument[]? Arguments { get; set; }
-    public DynamicVariable?[] DynamicVariables { get; set; }
-    public List<Operation> Operations { get; set; }
-
-    public class Operation
+    
+     
+    [TestCaseSource(typeof(InvalidTransactionInputCases))]
+    public void  TestInvalidCases(string fileName, string input)
     {
-        public string OperationReferenceId { get; set; }
-
-        public string Id { get; set; }
-
-        public ProvidedValue[] ProvidedValues { get; set; }
-
-        public class ProvidedValue
+        var sut = new TransactionService(NullLogger<TransactionService>.Instance);
+        var result = sut.TryParseInput(input, out var parsedInput);
+        Assert.False(result);
+        Assert.Null(parsedInput);
+    }
+    
+    private class InvalidTransactionInputCases : IEnumerable
+    {
+        public IEnumerator GetEnumerator()
         {
-            public string Key { get; set; }
-            public object Value { get; set; }
+            return GetFilesFromDirectory("Transaction/Parsing/Invalid")
+                .Select(file => new object[]
+                {
+                    file.Split("/").Last(), 
+                    File.ReadAllText(file)
+                })
+                .GetEnumerator();
         }
     }
+    
+    private class ValidTransactionInputCases : IEnumerable
+    {
+        public IEnumerator GetEnumerator()
+        {
+            return GetFilesFromDirectory("Transaction/Parsing/Valid")
+                .Select(file => new object[]
+                {
+                    file.Split("/").Last(), 
+                    File.ReadAllText(file)
+                })
+                .GetEnumerator();
+        }
+    }
+
+    private static IEnumerable<string> GetFilesFromDirectory(string relativePath)
+        => Directory.GetFiles(Path.Combine(Directory.GetCurrentDirectory(), relativePath));
 }
- */
 

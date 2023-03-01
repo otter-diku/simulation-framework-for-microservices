@@ -1,0 +1,10 @@
+{
+  "id": "no-operations",
+  "arguments": [
+    {
+      "name": "user-id",
+      "type": "guid"
+    }
+  ],
+  "operations": []
+}
