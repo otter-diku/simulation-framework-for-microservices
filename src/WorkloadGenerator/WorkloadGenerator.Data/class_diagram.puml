@@ -1,0 +1,76 @@
+@startuml
+class TransactionOperationInputBase {
+  OperationType Type
+}
+
+abstract class TransactionOperationExecutableBase {
+  OperationType Type
+}
+
+interface ITransactionOperationUnresolved
+interface ITransactionOperationResolved
+
+'http ops'
+
+abstract class HttpOperationInputBase
+TransactionOperationInputBase <|-- HttpOperationInputBase
+
+class HttpOperationInputResolved 
+{
+  HttpOperationRequestPayloadResolvedBase? RequestPayload 
+}
+
+abstract class HttpOperationRequestPayloadResolvedBase
+
+HttpOperationInputResolved --* HttpOperationRequestPayloadResolvedBase
+HttpOperationInputBase <|-- HttpOperationInputResolved
+ITransactionOperationResolved <|-- HttpOperationInputResolved
+
+class JsonPayloadResolved
+{
+  JsonNode Content
+}
+
+class HttpOperationInputUnresolved
+{
+    Argument[]? Arguments
+    DynamicVariable[]? DynamicVariables 
+    HttpOperationRequestPayloadUnresolved? RequestPayload 
+}
+
+HttpOperationInputUnresolved --* HttpOperationRequestPayloadUnresolved
+
+class HttpOperationRequestPayloadUnresolved 
+{
+    HttpPayloadType Type
+    object Content
+}
+
+HttpOperationInputUnresolved --|> HttpOperationInputBase
+HttpOperationInputUnresolved --|> ITransactionOperationUnresolved
+JsonPayloadResolved --|> HttpOperationRequestPayloadResolvedBase
+
+'sleep ops'
+abstract class SleepOperationInputBase
+ 
+TransactionOperationInputBase <|-- SleepOperationInputBase 
+SleepOperationInputBase <|-- SleepOperationInputResolved
+ITransactionOperationResolved <|-- SleepOperationInputResolved
+
+class SleepOperationInputUnresolved
+SleepOperationInputUnresolved --|> SleepOperationInputBase
+SleepOperationInputUnresolved --|> ITransactionOperationUnresolved
+
+class HttpOperationTransactionExecutable
+{
+    Action<HttpRequestMessage>? PrepareRequestMessage
+}
+
+class SleepOperationTransactionExecutable 
+{
+    Func<Task> Sleep()
+}
+SleepOperationTransactionExecutable --|> TransactionOperationExecutableBase
+
+HttpOperationTransactionExecutable --|> TransactionOperationExecutableBase
+@enduml

@@ -2,8 +2,10 @@ using System.Text.Json.Nodes;
 using Microsoft.Extensions.Logging.Abstractions;
 using Newtonsoft.Json;
 using WorkloadGenerator.Data.Models;
+using WorkloadGenerator.Data.Models.Operation;
+using WorkloadGenerator.Data.Models.Operation.Http;
 using WorkloadGenerator.Data.Services;
-using HttpMethod = WorkloadGenerator.Data.Models.HttpMethod;
+using HttpMethod = WorkloadGenerator.Data.Models.Operation.Http.HttpMethod;
 using JsonSerializer = System.Text.Json.JsonSerializer;
 
 namespace WorkloadGenerator.Data.Test.Operation.Convert;
@@ -14,23 +16,26 @@ public class OperationConvertTests
     [Test]
     public async Task ConvertTests()
     {
-        TransactionOperationInputResolved<JsonNode> resolvedInput =
-            new TransactionOperationInputResolved<JsonNode>()
+        var resolvedInput =
+            new HttpOperationInputResolved()
             {
-                Headers = new List<Header>() { new Header() { Key = "header1", Value = "value1" } },
+                Headers = new List<Header>() { new() { Key = "header1", Value = "value1" } },
                 HttpMethod = HttpMethod.Post,
                 Id = "some-string",
-                Payload = JsonNode.Parse(JsonSerializer.Serialize(new TestClass() {ItemId = 42})),
-                QueryParameters = new List<QueryParameter>() { new QueryParameter() { Key = "a", Value = "b" } },
+                RequestPayload = new JsonPayloadResolved() { Content = JsonNode.Parse(JsonSerializer.Serialize(new TestClass() {ItemId = 42})) },
+                QueryParameters = new List<QueryParameter>() { new() { Key = "a", Value = "b" } },
                 Type = OperationType.Http,
                 Url = "http://example.com"
             };
 
         var sut = new TransactionOperationService(NullLogger<TransactionOperationService>.Instance);
-        var transactionOperation = sut.Convert(resolvedInput);
+        var isConvertSuccessful = sut.TryConvertToExecutable(resolvedInput, out var executable);
+        Assert.IsTrue(isConvertSuccessful);
+
         var httpMessage = new HttpRequestMessage();
 
-        transactionOperation.PrepareRequestMessage(httpMessage);
+        var httpOperationExecutable = executable as HttpOperationTransactionExecutable;
+        httpOperationExecutable.PrepareRequestMessage(httpMessage);
         
         Assert.AreEqual(httpMessage.RequestUri.AbsoluteUri, "http://example.com/?a=b");
         Assert.AreEqual(httpMessage.Method.ToString().ToLower(), HttpMethod.Post.ToString().ToLower());
@@ -45,22 +50,25 @@ public class OperationConvertTests
     [Test]
     public async Task ConvertWithoutPayloadTest()
     {
-        TransactionOperationInputResolved resolvedInput =
-            new TransactionOperationInputResolved()
+        var resolvedInput =
+            new HttpOperationInputResolved()
             {
-                Headers = new List<Header>() { new Header() { Key = "header1", Value = "value1" } },
+                Headers = new List<Header>() { new() { Key = "header1", Value = "value1" } },
                 HttpMethod = HttpMethod.Get,
                 Id = "some-string",
-                QueryParameters = new List<QueryParameter>() { new QueryParameter() { Key = "a", Value = "b" } },
+                QueryParameters = new List<QueryParameter>() { new() { Key = "a", Value = "b" } },
                 Type = OperationType.Http,
                 Url = "http://example.com"
             };
 
         var sut = new TransactionOperationService(NullLogger<TransactionOperationService>.Instance);
-        var transactionOperation = sut.Convert(resolvedInput);
+        var isConvertSuccessful = sut.TryConvertToExecutable(resolvedInput, out var executable);
+        Assert.IsTrue(isConvertSuccessful);
+
         var httpMessage = new HttpRequestMessage();
 
-        transactionOperation.PrepareRequestMessage(httpMessage);
+        var httpOperationExecutable = executable as HttpOperationTransactionExecutable;
+        httpOperationExecutable.PrepareRequestMessage(httpMessage);
         
         Assert.AreEqual(httpMessage.RequestUri.AbsoluteUri, "http://example.com/?a=b");
         Assert.AreEqual(httpMessage.Method.ToString().ToLower(), HttpMethod.Get.ToString().ToLower());

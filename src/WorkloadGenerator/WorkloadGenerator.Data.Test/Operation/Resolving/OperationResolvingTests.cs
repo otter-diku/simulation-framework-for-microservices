@@ -4,8 +4,10 @@ using System.Text.Json.Nodes;
 using System.Text.Json.Serialization;
 using Microsoft.Extensions.Logging.Abstractions;
 using WorkloadGenerator.Data.Models;
+using WorkloadGenerator.Data.Models.Operation;
+using WorkloadGenerator.Data.Models.Operation.Http;
 using WorkloadGenerator.Data.Services;
-using HttpMethod = WorkloadGenerator.Data.Models.HttpMethod;
+using HttpMethod = WorkloadGenerator.Data.Models.Operation.Http.HttpMethod;
 
 namespace WorkloadGenerator.Data.Test.Operation.Resolving;
 
@@ -23,39 +25,52 @@ public class OperationResolvingTests
          ? default
          : JsonSerializer.Deserialize<Dictionary<string, object>>(arguments);
 
-        if (parsedInput.Payload?.Type == PayloadType.Json)
-        {
-            var resolved = sut.Resolve<JsonNode>(parsedInput, parsedArguments);
-            var expectedParsed = JsonSerializer.Deserialize<TransactionOperationInputResolved<JsonNode>>(expectedResult, _jsonSerializerOptions)!;
-            Assert.AreEqual(JsonSerializer.Serialize(resolved), JsonSerializer.Serialize(expectedParsed));
-        }
-        else
-        {
-            var resolved = sut.Resolve(parsedInput, parsedArguments);
-            var expectedParsed = JsonSerializer.Deserialize<TransactionOperationInputResolved>(expectedResult, _jsonSerializerOptions)!;
-            Assert.AreEqual(JsonSerializer.Serialize(resolved), JsonSerializer.Serialize(expectedParsed));
-        }
+        var isResolvedSuccessful = sut.TryResolve(parsedInput, parsedArguments, out var resolved);
+        Assert.IsTrue(isResolvedSuccessful);
+        Assert.IsInstanceOf<HttpOperationInputResolved>(resolved);
+        
+        var expectedResolved = 
+            JsonSerializer.Deserialize<HttpOperationInputResolved>(expectedResult, new JsonSerializerOptions() 
+            {
+                Converters = 
+                {
+                    new HttpOperationRequestPayloadResolvedBaseConverter(),            
+                    new JsonStringEnumConverter(JsonNamingPolicy.CamelCase) 
+                },
+                PropertyNameCaseInsensitive = true
+            });
+
+        Assert.AreEqual(JsonSerializer.Serialize(resolved as HttpOperationInputResolved), JsonSerializer.Serialize(expectedResolved));
     }
 
     [Test]
     public void TestDynamicVariableResolving()
     {
-        var unresolved = new TransactionOperationInputUnresolved()
+        var unresolved = new HttpOperationInputUnresolved()
         {
-            Arguments = new Argument[]{ new Argument() {Name = "arg1", Type = ArgumentType.Number}},
-            DynamicVariables = new DynamicVariable[] {new DynamicVariable() {Name = "var1", Type = DynamicVariableType.UnsignedInt}},
+            Arguments = new Argument[]{ new() {Name = "arg1", Type = ArgumentType.Number}},
+            DynamicVariables = new DynamicVariable[] {new() {Name = "var1", Type = DynamicVariableType.UnsignedInt}},
             Type = OperationType.Http,
             HttpMethod = HttpMethod.Post,
             Url = "http://example.com",
-            Payload = new Payload() {Type = PayloadType.Json, Content = JsonSerializer.Deserialize<object>("{\"key1\": \"{{arg1}}\", \"key2\":\"{{var1}}\"}")!}
+            RequestPayload = new HttpOperationRequestPayloadUnresolved()
+            {
+                Type = HttpPayloadType.Json, 
+                Content = JsonSerializer.Deserialize<object>("{\"key1\": \"{{arg1}}\", \"key2\":\"{{var1}}\"}")!
+            }
         };
         var sut = new TransactionOperationService(NullLogger<TransactionOperationService>.Instance);
-        var resolved = sut.Resolve<JsonNode>(unresolved, new Dictionary<string, object>()
+        var didResolveSuccessfully = sut.TryResolve(unresolved, new Dictionary<string, object>()
         {
             {"arg1", 42}
-        });
-        Assert.AreEqual(resolved.Payload["key1"].GetValue<int>(), 42);
-        Assert.That(resolved.Payload["key2"].GetValue<int>(), Is.Positive);
+        }, out var resolved);
+
+        Assert.True(didResolveSuccessfully);
+
+        var httpRequestOperationResolved = resolved as HttpOperationInputResolved;
+        var json = httpRequestOperationResolved.RequestPayload as JsonPayloadResolved;
+        Assert.AreEqual(json.Content["key1"].GetValue<int>(), 42);
+        Assert.That(json.Content["key2"].GetValue<int>(), Is.Positive);
     }
     
     private class ValidOperationInputCases : IEnumerable

@@ -1,0 +1,13 @@
+{
+  "id": "operation-id",
+  "type": "http",
+  "httpMethod": "get",
+  "returnValues": [
+    {
+      "key": "host-name", 
+      "value": "@@payload.headers.Host@@",
+      "type": "string"
+    }
+  ],
+  "url": "http://httpbin.com/anything/whatever"
+}

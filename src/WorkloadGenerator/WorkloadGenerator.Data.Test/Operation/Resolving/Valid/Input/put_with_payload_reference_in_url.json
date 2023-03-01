@@ -2,7 +2,7 @@
   "id": "operation-id",
   "type": "http",
   "httpMethod": "put",
-  "payload": {
+  "requestPayload": {
     "type": "json",
     "content": {
       "key1": {

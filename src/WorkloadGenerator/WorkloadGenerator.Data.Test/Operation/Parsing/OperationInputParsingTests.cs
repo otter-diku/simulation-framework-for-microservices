@@ -7,7 +7,7 @@ namespace WorkloadGenerator.Data.Test.Operation.Parsing;
 public class OperationInputTests
 {
     [TestCaseSource(typeof(ValidOperationInputCases))]
-    public void TestValidCases(string fileName, string input)
+    public void  TestValidCases(string fileName, string input)
     {
         var sut = new TransactionOperationService(NullLogger<TransactionOperationService>.Instance);
         var result = sut.TryParseInput(input, out var parsedInput);
@@ -19,7 +19,7 @@ public class OperationInputTests
     public void TestInvalidCases(string fileName, string input)
     {
         var sut = new TransactionOperationService(NullLogger<TransactionOperationService>.Instance);
-        var result = sut.TryParseInput(input, out _);
+        var result = sut.TryParseInput(input, out var parsed);
         Assert.False(result);
     }
     
