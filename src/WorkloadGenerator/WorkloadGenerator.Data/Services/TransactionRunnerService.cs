@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Runtime.InteropServices.JavaScript;
 using System.Text.Json;
 using System.Text.Json.Nodes;
@@ -62,78 +63,92 @@ public class TransactionRunnerService
         HttpOperationInputUnresolved operation,
         object result)
     {
-        if (operation.ReturnValues is not null)
+        if (operation.Response is not null)
         {
             return  result switch
             {
-                HttpResponseMessage responseMessage => await ExtractReturnValuesFromHttpMessage(operation.ReturnValues,
+                HttpResponseMessage responseMessage => await ExtractReturnValuesFromHttpMessage(operation.Response,
                     responseMessage),
                 _ => throw new ArgumentOutOfRangeException(nameof(result), result, null)
             };
         }
-        else
-        {
-            return new Dictionary<string, object>();
-        }
+
+        return new Dictionary<string, object>();
     }
 
     private async Task<Dictionary<string, object>> ExtractReturnValuesFromHttpMessage(
-        ReturnValue[] operationReturnValues,
+        HttpOperationResponseInput? httpOperationResponseInput, 
         HttpResponseMessage responseMessage)
     {
         var extractedValues = new Dictionary<string, object>();
-        foreach (var returnValue in operationReturnValues)
+
+        if (httpOperationResponseInput?.Payload is not null)
         {
-            var value = returnValue.Value;
+           var extracted = await ResolveResponsePayload(httpOperationResponseInput.Payload, responseMessage);
+           foreach (var kv in extracted)
+           {
+               extractedValues.Add(kv.Key, kv.Value);
+           }
+        }
 
-            if (value.StartsWith("response.statuscode"))
-            {
-                // todo
-            }
-            else if (value.StartsWith("response.headers"))
-            {
-                // todo
-            }
-            else if (value.StartsWith("response.payload"))
-            {
-                try {
-                    var content = await responseMessage.Content.ReadAsStringAsync();
-                    var response = JsonNode.Parse(content);
-                    
-                    var payloadPath = value.Replace("response.payload", "");
-                    var pathComponents = payloadPath.Split(".")
-                        .SelectMany(p => p.Split("["))
-                        .Where(p => !string.IsNullOrWhiteSpace(p))
-                        .ToList();
-
-                    var finalNode = response;
-                    foreach (var comp in pathComponents)
-                    {
-                        if (comp.EndsWith("]"))
-                        {
-                            var arrayIndex = int.Parse(comp.Replace("]", ""));
-                            finalNode = finalNode[arrayIndex];
-                        }
-                        else
-                        {
-                            finalNode = finalNode[comp];
-                        }
-                    }
-
-                    extractedValues.Add(returnValue.Key, finalNode);
-                }
-                catch (Exception exception)
-                {
-                    _logger.LogWarning(exception,
-                        $"Failed trying to extract resultValue. Key: {returnValue.Key}," +
-                        $" value: {returnValue.Value}, Response: {responseMessage}"
-                    );
-                    throw;
-                }
-            }
+        if (httpOperationResponseInput?.Headers is not null)
+        {
+            throw new NotImplementedException();
+            // TODO:
+            // var extracted = await ResolveResponseHeaders(httpOperationResponseInput.Payload, responseMessage);
+            // foreach (var kv in extracted)
+            // {
+            //     extractedValues.Add(kv.Key, kv.Value);
+            // }
         }
 
         return extractedValues;
+    }
+
+    private async Task<Dictionary<string, object>> ResolveResponsePayload(
+        HttpOperationResponsePayloadInput httpOperationResponsePayloadInput, HttpResponseMessage responseMessage)
+    {
+        var extractedValues = new Dictionary<string, object>();
+
+        return httpOperationResponsePayloadInput.Type switch
+        {
+            HttpPayloadType.Json => await ExtractedReturnValuesFromJsonPayload(httpOperationResponsePayloadInput,
+                responseMessage, extractedValues),
+            _ => throw new ArgumentOutOfRangeException()
+        };
+    }
+
+    private async Task<Dictionary<string, object>> ExtractedReturnValuesFromJsonPayload(
+        HttpOperationResponsePayloadInput httpOperationResponsePayloadInput, 
+        HttpResponseMessage responseMessage, 
+        Dictionary<string, object> extractedValues)
+    {
+        string? content = null;
+        try
+        {
+            content = await responseMessage.Content.ReadAsStringAsync();
+            var jsonDocument = JsonDocument.Parse(content);
+
+            foreach (var rv in httpOperationResponsePayloadInput.ReturnValues)
+            {
+                var obj = jsonDocument.RootElement.SelectElement(rv.Value);
+                if (obj.HasValue)
+                {
+                    extractedValues.Add(rv.Key, obj.Value);
+                }
+            }
+
+            return extractedValues;
+        }
+        catch (Exception exception)
+        {
+            _logger.LogWarning(exception,
+                "Failed trying to extract return value from payload. Input: {Input}, response message payload: {ResponseMessagePayload}",
+                JsonSerializer.Serialize(httpOperationResponsePayloadInput),
+                content
+            );
+            throw;
+        }
     }
 
 

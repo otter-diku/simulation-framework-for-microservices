@@ -1,8 +1,5 @@
-using System.Net.Http.Json;
-using System.Runtime.InteropServices;
 using System.Text.Json;
 using System.Text.Json.Nodes;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging.Abstractions;
 using WorkloadGenerator.Data.Models;
 using WorkloadGenerator.Data.Models.Operation;
@@ -42,13 +39,20 @@ public class TransactionExecutionTest
                 Type = HttpPayloadType.Json,
                 Content = JsonSerializer.Deserialize<object>(payloadString)!
             },
-            ReturnValues = new ReturnValue[]
+            Response =new HttpOperationResponseInput()
             {
-                new ReturnValue { Key = "val1", Value = "response.payload.json", Type = ReturnValueType.Object },
-                new ReturnValue { Key = "val2", Value = "response.payload.json.key1.key3", Type = ReturnValueType.Array },
-                new ReturnValue
-                    { Key = "val3", Value = "response.payload.json.key1.key4.price", Type = ReturnValueType.Number },
-                new ReturnValue { Key = "val4", Value = "response.payload.json.key1.key3[2]", Type = ReturnValueType.String }
+                Payload = new HttpOperationResponsePayloadInput()
+                {
+                    ReturnValues = new[]
+                    {
+                        new ReturnValue { Key = "val1", Value = "$.json", Type = ReturnValueType.Object },
+                        new ReturnValue { Key = "val2", Value = "$.json.key1.key3", Type = ReturnValueType.Array },
+                        new ReturnValue
+                            { Key = "val3", Value = "$.json.key1.key4.price", Type = ReturnValueType.Number },
+                        new ReturnValue { Key = "val4", Value = "$.json.key1.key3[2]", Type = ReturnValueType.String }
+                    },
+                    Type = HttpPayloadType.Json
+                }
             },
             Url = "https://httpbin.org/anything"
         };
@@ -59,7 +63,7 @@ public class TransactionExecutionTest
             Id = "transaction-1",
             Operations = new List<TransactionInput.Operation>()
             {
-                new TransactionInput.Operation()
+                new()
                 {
                     Id = "op-1",
                     OperationReferenceId = "operation-1",
@@ -80,14 +84,14 @@ public class TransactionExecutionTest
 
         var providedValues = new Dictionary<string, object>();
         await sut.Run(transaction, providedValues, operations);
-
-        Assert.AreEqual(((JsonNode)providedValues["val1"]).ToJsonString(),
-            JsonNode.Parse(payloadString).ToJsonString());
-        Assert.AreEqual(((JsonNode)providedValues["val2"]).ToJsonString(),
+        
+        Assert.AreEqual(JsonSerializer.Serialize((JsonElement)providedValues["val1"]),
+            JsonSerializer.Serialize(JsonDocument.Parse(payloadString).RootElement));
+        Assert.AreEqual(JsonSerializer.Serialize((JsonElement)providedValues["val2"]),
             "[\"look\",\"what\",\"we\",\"have\",\"done\"]");
-        Assert.AreEqual(((JsonNode)providedValues["val3"]).ToJsonString(),
+        Assert.AreEqual(JsonSerializer.Serialize((JsonElement)providedValues["val3"]),
             "42");
-        Assert.AreEqual(((JsonNode)providedValues["val4"]).ToJsonString(),
+        Assert.AreEqual(JsonSerializer.Serialize((JsonElement)providedValues["val4"]),
             "\"we\"");
     }
 
