@@ -44,11 +44,11 @@ public class TransactionExecutionTest
             },
             ReturnValues = new ReturnValue[]
             {
-                new ReturnValue { Key = "val1", Value = "response.payload", Type = ReturnValueType.Object },
-                new ReturnValue { Key = "val2", Value = "response.payload.key1.key3", Type = ReturnValueType.Array },
+                new ReturnValue { Key = "val1", Value = "response.payload.json", Type = ReturnValueType.Object },
+                new ReturnValue { Key = "val2", Value = "response.payload.json.key1.key3", Type = ReturnValueType.Array },
                 new ReturnValue
-                    { Key = "val3", Value = "response.payload.key1.key4.price", Type = ReturnValueType.Number },
-                new ReturnValue { Key = "val4", Value = "response.payload.key1.key3[2]", Type = ReturnValueType.String }
+                    { Key = "val3", Value = "response.payload.json.key1.key4.price", Type = ReturnValueType.Number },
+                new ReturnValue { Key = "val4", Value = "response.payload.json.key1.key3[2]", Type = ReturnValueType.String }
             },
             Url = "https://httpbin.org/anything"
         };
@@ -91,11 +91,6 @@ public class TransactionExecutionTest
             "\"we\"");
     }
 
-    private class TestClass
-    {
-
-        public Dictionary<string, object> key1 { get; set; }
-    }
 
     /// <summary>
     /// Taken from https://stackoverflow.com/questions/52576394/create-default-httpclientfactory-for-integration-test

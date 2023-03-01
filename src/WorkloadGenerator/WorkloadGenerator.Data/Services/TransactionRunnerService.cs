@@ -94,21 +94,16 @@ public class TransactionRunnerService
             {
                 // todo
             }
-            else if (value == "response.payload")
-            {
-                var content = await responseMessage.Content.ReadAsStringAsync();
-                var response = JsonNode.Parse(content);
-                extractedValues.Add(returnValue.Key, response["json"]);
-            }
             else if (value.StartsWith("response.payload"))
             {
                 try {
                     var content = await responseMessage.Content.ReadAsStringAsync();
-                    var response = JsonNode.Parse(content)["json"];
-                    var payloadPath = value.Replace("response.payload.", "");
-
+                    var response = JsonNode.Parse(content);
+                    
+                    var payloadPath = value.Replace("response.payload", "");
                     var pathComponents = payloadPath.Split(".")
                         .SelectMany(p => p.Split("["))
+                        .Where(p => !string.IsNullOrWhiteSpace(p))
                         .ToList();
 
                     var finalNode = response;
