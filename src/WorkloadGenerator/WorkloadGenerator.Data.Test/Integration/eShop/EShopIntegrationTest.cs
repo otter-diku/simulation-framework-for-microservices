@@ -3,8 +3,9 @@ namespace WorkloadGenerator.Data.Test.Integration.eShop;
 public class EShopIntegrationTest
 {
     [Test] 
-    public void ParseValidTransactions()
+    public void ParseTransactionTest()
     {
-        // File    
+        var json = File.ReadAllText("Integration/eShop/Transaction/xact_add_items_to_basket.json");
+        
     }
 }

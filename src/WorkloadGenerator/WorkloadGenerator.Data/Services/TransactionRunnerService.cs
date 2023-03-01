@@ -28,7 +28,7 @@ public class TransactionRunnerService
     }
 
     public async Task Run(
-        TransactionInput transaction,
+        TransactionInputUnresolved transaction,
         Dictionary<string, object> providedValues,
         Dictionary<string, HttpOperationInputUnresolved> operationsDictionary)
     {
