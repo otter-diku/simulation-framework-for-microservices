@@ -1,5 +1,5 @@
 {
-  "id": "catalog-get-items",
+  "templateId": "catalog-get-items",
   "type": "http",
   "httpMethod": "get",
   "queryParameters": [

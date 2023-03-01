@@ -1,5 +1,5 @@
 {
-  "id": "catalog-update-price",
+  "templateId": "catalog-update-price",
   "type": "http",
   "httpMethod": "put",
   "arguments": [

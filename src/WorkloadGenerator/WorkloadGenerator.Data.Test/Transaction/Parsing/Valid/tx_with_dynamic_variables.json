@@ -1,5 +1,5 @@
 {
-  "id": "update-catalog-item-price",
+  "templateId": "update-catalog-item-price",
   "dynamicVariables": [
     {
       "name": "new-price",

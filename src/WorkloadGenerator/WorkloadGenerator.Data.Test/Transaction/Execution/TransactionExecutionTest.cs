@@ -29,7 +29,7 @@ public class TransactionExecutionTest
         var operations = new Dictionary<string, HttpOperationInputUnresolved>();
         var op = new HttpOperationInputUnresolved()
         {
-            Id = "operation-1",
+            TemplateId = "operation-1",
             HttpMethod = HttpMethod.Post,
             Type = OperationType.Http,
             RequestPayload = new HttpOperationRequestPayloadUnresolved()
@@ -58,7 +58,7 @@ public class TransactionExecutionTest
 
         var transaction = new TransactionInputUnresolved()
         {
-            Id = "transaction-1",
+            TemplateId = "transaction-1",
             Operations = new List<OperationReference>()
             {
                 new()

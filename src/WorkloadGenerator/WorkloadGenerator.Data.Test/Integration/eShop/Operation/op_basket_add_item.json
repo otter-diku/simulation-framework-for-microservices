@@ -1,5 +1,5 @@
 {
-  "id": "basket-add-item",
+  "templateId": "basket-add-item",
   "type": "http",
   "httpMethod": "post",
   "arguments": [

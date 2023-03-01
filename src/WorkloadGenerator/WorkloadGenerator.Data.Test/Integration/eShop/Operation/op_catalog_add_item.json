@@ -1,5 +1,5 @@
 {
-  "id": "catalog-add-item",
+  "templateId": "catalog-add-item",
   "type": "http",
   "httpMethod": "post",
   "arguments": [

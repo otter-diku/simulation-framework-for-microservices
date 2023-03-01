@@ -20,7 +20,7 @@ public class OperationConvertTests
             {
                 Headers = new List<Header>() { new() { Key = "header1", Value = "value1" } },
                 HttpMethod = HttpMethod.Post,
-                Id = "some-string",
+                TemplateId = "some-string",
                 RequestPayload = new JsonPayloadResolved()
                     { Content = JsonNode.Parse(JsonSerializer.Serialize(new TestClass() { ItemId = 42 })) },
                 QueryParameters = new List<QueryParameter>() { new() { Key = "a", Value = "b" } },
@@ -55,7 +55,7 @@ public class OperationConvertTests
             {
                 Headers = new List<Header>() { new() { Key = "header1", Value = "value1" } },
                 HttpMethod = HttpMethod.Get,
-                Id = "some-string",
+                TemplateId = "some-string",
                 QueryParameters = new List<QueryParameter>() { new() { Key = "a", Value = "b" } },
                 Type = OperationType.Http,
                 Url = "http://example.com"

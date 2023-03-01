@@ -8,7 +8,7 @@
   ],
   "operations": [
     {
-      "operationRefId": "catalog-get-items",
+      "operationTemplateId": "catalog-get-items",
       "id": "op-1"
     },
     {

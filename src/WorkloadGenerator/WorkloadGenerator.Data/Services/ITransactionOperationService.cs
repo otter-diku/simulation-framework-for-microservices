@@ -9,7 +9,7 @@ public interface ITransactionOperationService
     bool TryParseInput(string json, out ITransactionOperationUnresolved unresolvedInput);
 
     bool TryResolve(ITransactionOperationUnresolved unresolvedInput,
-        Dictionary<string, object>? providedValues, out ITransactionOperationResolved resolvedInput);
+        Dictionary<string, object> providedValues, out ITransactionOperationResolved resolvedInput);
 
     bool TryConvertToExecutable(ITransactionOperationResolved resolvedInput,
         out TransactionOperationExecutableBase transactionOperationbaseExecutable);
