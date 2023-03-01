@@ -15,41 +15,40 @@ public class TransactionParsingTest
         Assert.NotNull(parsedInput);
     }
 
-    // [TestCaseSource(typeof(InvalidOperationInputCases))]
-    // public void TestInvalidCases(string fileName, string input)
-    // {
-    //     var sut = new TransactionOperationService(NullLogger<TransactionOperationService>.Instance);
-    //     var result = sut.TryParseInput(input, out var parsed);
-    //     Assert.False(result);
-    // }
-
-
-    // private class InvalidOperationInputCases : IEnumerable
-    // {
-    //     public IEnumerator GetEnumerator()
-    //     {
-    //         return GetFilesFromDirectory("Operation/Parsing/Invalid")
-    //             .Select(file => new object[]
-    //             {
-    //                 file.Split("/").Last(),
-    //                 File.ReadAllText(file)
-    //             })
-    //             .GetEnumerator();
-    //     }
-    // }
-
+    [TestCaseSource(typeof(InvalidOperationInputCases))]
+    public void TestInvalidCases(string fileName, string input)
+    {
+        var sut = new TransactionService(NullLogger<TransactionService>.Instance);
+        var result = sut.TryParseInput(input, out var parsed);
+        Assert.False(result);
+    }
+    
     private class ValidOperationInputCases : IEnumerable
     {
         public IEnumerator GetEnumerator()
         {
-            return GetFilesFromDirectory("Transaction/Parsing/Valid")
-                .Select(file => new object[]
-                {
-                    file.Split("/").Last(),
-                    File.ReadAllText(file)
-                })
-                .GetEnumerator();
+            return TransactionParsingTest.GetEnumerator("Transaction/Parsing/Valid");
         }
+    }
+    
+    private class InvalidOperationInputCases : IEnumerable
+    {
+        public IEnumerator GetEnumerator()
+        {
+            return TransactionParsingTest.GetEnumerator("Transaction/Parsing/Invalid");
+        }
+    }
+
+    
+    private static IEnumerator GetEnumerator(string relativePath)
+    {
+        return GetFilesFromDirectory(relativePath)
+            .Select(file => new object[]
+            {
+                file.Split("/").Last(),
+                File.ReadAllText(file)
+            })
+            .GetEnumerator();
     }
 
     private static IEnumerable<string> GetFilesFromDirectory(string relativePath)
