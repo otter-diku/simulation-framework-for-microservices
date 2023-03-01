@@ -16,13 +16,12 @@
       "id": "op-2",
       "providedValues": [
         {
-	  "key": "buyerId",
+          "key": "buyerId",
           "value": "{{user-id}}"
         },
         {
           "key": "item-1",
-          "value":
-          {
+          "value": {
             "id": "1",
             "productId": "{{item-1-id}}",
             "productName": "{{item-1-name}}",
@@ -34,8 +33,7 @@
         },
         {
           "key": "item-2",
-          "value":
-          {
+          "value": {
             "id": "2",
             "productId": "{{item-2-id}}",
             "productName": "{{item-2-name}}",
@@ -47,8 +45,7 @@
         },
         {
           "key": "item-3",
-          "value":
-          {
+          "value": {
             "id": "3",
             "productId": "{{item-3-id}}",
             "productName": "{{item-3-name}}",

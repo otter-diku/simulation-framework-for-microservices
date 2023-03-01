@@ -3,9 +3,11 @@
   "type": "http",
   "httpMethod": "post",
   "arguments": [
-    "name": "product-id",
-    "type": "unsignedInt"
-  ]
+    {
+      "name": "product-id",
+      "type": "unsignedInt"
+    }
+  ],
   "dynamicVariables": [
     {
       "name": "item-name",
@@ -34,8 +36,8 @@
     {
       "name": "max-stock-threshold",
       "type": "unsignedInt"
-    }     
-  ]     
+    }
+  ],
   "payload": {
     "type": "json",
     "content": {

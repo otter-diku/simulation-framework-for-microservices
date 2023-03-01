@@ -3,7 +3,7 @@
   "type": "http",
   "httpMethod": "post",
   "arguments": [
-   {
+    {
       "name": "buyerId",
       "required": true,
       "type": "guid"

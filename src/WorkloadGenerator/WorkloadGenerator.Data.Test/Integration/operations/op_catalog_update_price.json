@@ -11,9 +11,7 @@
   ],
   "payload": {
     "type": "json",
-    "content": {
-      "{{item-1}}"
-    }
+    "content": "{{item-1}}"
   },
   "url": "http://localhost:5101/catalog-api/api/v1/Catalog/items"
 }
