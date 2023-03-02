@@ -14,48 +14,6 @@
     {
       "operationRefId": "basket-add-item",
       "id": "op-2",
-      "providedValues": [
-        {
-          "key": "buyerId",
-          "value": "{{user-id}}"
-        },
-        {
-          "key": "item-1",
-          "value": {
-            "id": "1",
-            "productId": "{{item-1-id}}",
-            "productName": "{{item-1-name}}",
-            "unitPrice": "{{item-1-price}}",
-            "oldUnitPrice": "{{item-1-price}}",
-            "quantity": "{{item-1-available-stock}}",
-            "pictureUrl": ""
-          }
-        },
-        {
-          "key": "item-2",
-          "value": {
-            "id": "2",
-            "productId": "{{item-2-id}}",
-            "productName": "{{item-2-name}}",
-            "unitPrice": "{{item-2-price}}",
-            "oldUnitPrice": "{{item-2-price}}",
-            "quantity": "{{item-2-available-stock}}",
-            "pictureUrl": ""
-          }
-        },
-        {
-          "key": "item-3",
-          "value": {
-            "id": "3",
-            "productId": "{{item-3-id}}",
-            "productName": "{{item-3-name}}",
-            "unitPrice": "{{item-3-price}}",
-            "oldUnitPrice": "{{item-3-price}}",
-            "quantity": "{{item-3-available-stock}}",
-            "pictureUrl": ""
-          }
-        }
-      ]
     }
   ]
 }

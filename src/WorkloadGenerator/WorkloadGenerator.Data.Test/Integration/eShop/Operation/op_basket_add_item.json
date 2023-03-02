@@ -29,9 +29,33 @@
     "content": {
       "buyerId": "{{buyerId}}",
       "items": [
-        "{{item-1}}",
-        "{{item-2}}",
-        "{{item-3}}"
+        {
+          "id": "1",
+          "productId": "{{@@item-1.id@@}}",
+          "productName": "{{@@item-1.name@@}}",
+          "unitPrice": "{{@@item-1.price@@}}",
+          "oldUnitPrice": "{{@@item-1.price@@}}",
+          "quantity": "{{@@item-1.availableStock@@}}",
+          "pictureUrl": ""
+        },
+        {
+          "id": "2",
+          "productId": "{{@@item-2.id@@}}",
+          "productName": "{{@@item-2.name@@}}",
+          "unitPrice": "{{@@item-2.price@@}}",
+          "oldUnitPrice": "{{@@item-2.price@@}}",
+          "quantity": "{{@@item-2.availableStock@@}}",
+          "pictureUrl": ""
+        },
+        {
+          "id": "3",
+          "productId": "{{@@item-3.id@@}}",
+          "productName": "{{@@item-3.name@@}}",
+          "unitPrice": "{{@@item-3.price@@}}",
+          "oldUnitPrice": "{{@@item-3.price@@}}",
+          "quantity": "{{@@item-3.availableStock@@}}",
+          "pictureUrl": ""
+        }        
       ]
     }
   },
