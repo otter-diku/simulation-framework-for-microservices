@@ -1,6 +1,6 @@
 using FluentValidation;
 
-namespace WorkloadGenerator.Data.Models.Scenario;
+namespace WorkloadGenerator.Data.Models.Workload;
 
 public class TransactionReference
 {
@@ -8,6 +8,9 @@ public class TransactionReference
     public string Id { get; set; } = null!;
 
     public int Count { get; set; }
+
+    public List<GeneratedData>? Data { get; set; }
+
 }
 
 public class TransactionReferenceValidator : AbstractValidator<TransactionReference>
@@ -18,5 +21,7 @@ public class TransactionReferenceValidator : AbstractValidator<TransactionRefere
             .NotEmpty();
         RuleFor(txRef => txRef.TransactionReferenceId)
             .NotEmpty();
+        RuleFor(txRef => txRef.Count)
+            .NotEmpty();        
     }
 }

@@ -8,12 +8,12 @@
   ],
   "operations": [
     {
-      "operationTemplateId": "catalog-get-items",
+      "operationReferenceId": "catalog-get-items",
       "id": "op-1"
     },
     {
-      "operationRefId": "basket-add-item",
-      "id": "op-2",
+      "operationReferenceId": "basket-add-item",
+      "id": "op-2"
     }
   ]
 }

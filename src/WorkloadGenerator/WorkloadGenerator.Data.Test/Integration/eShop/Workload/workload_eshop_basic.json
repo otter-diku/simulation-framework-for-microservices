@@ -27,19 +27,18 @@
   ],
   "transactions": [
     {
-      "id": "add-items-to-basket",
+      "transactionReferenceId": "add-items-to-basket",
       "count": 10000,
       "data": [
-          "userId"
+        {
+          "name":  "user-id",
+          "generator": "userId"
+        }
       ]
     },
     {
-      "id": "update-catalog-item-price",
-      "count": 1000,
-      "data": [
-          "userId",
-          "productId"
-      ]
+      "transactionReferenceId": "update-catalog-item-price",
+      "count": 1000
     }
   ]
 }

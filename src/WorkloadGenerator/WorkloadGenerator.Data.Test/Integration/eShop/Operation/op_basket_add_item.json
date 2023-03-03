@@ -4,10 +4,15 @@
   "httpMethod": "post",
   "arguments": [
     {
-      "name": "buyerId",
+      "name": "user-id",
       "required": true,
       "type": "string"
     },
+    {
+      "name": "buyerId",
+      "required": true,
+      "type": "string"
+    },    
     {
       "name": "item-1",
       "required": true,
@@ -24,6 +29,12 @@
       "type": "object"
     }
   ],
+  "headers": [
+    {
+      "key": "user-id",
+      "value": "{{user-id}}"
+    }
+  ],
   "requestPayload": {
     "type": "json",
     "content": {
@@ -31,7 +42,7 @@
       "items": [
         {
           "id": "1",
-          "productId": "{{@@item-1.id@@}}",
+          "productId": "{{item-1@@$.id@@}}",
           "productName": "{{@@item-1.name@@}}",
           "unitPrice": "{{@@item-1.price@@}}",
           "oldUnitPrice": "{{@@item-1.price@@}}",

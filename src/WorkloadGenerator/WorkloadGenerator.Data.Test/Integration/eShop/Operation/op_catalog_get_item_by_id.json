@@ -1,0 +1,13 @@
+{
+  "templateId": "catalog-get-item-by-id",
+  "type": "http",
+  "httpMethod": "get",
+  "returnValues": [
+    {
+      "key": "item-1",
+      "value": "$",
+      "type": "object"
+    }
+  ],
+  "url": "http://localhost:5101/catalog-api/api/v1/Catalog/items/{{product-id}}"
+}
