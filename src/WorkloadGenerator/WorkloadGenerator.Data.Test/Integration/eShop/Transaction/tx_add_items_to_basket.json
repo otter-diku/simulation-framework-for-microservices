@@ -3,7 +3,7 @@
   "arguments": [
     {
       "name": "user-id",
-      "type": "guid"
+      "type": "string"
     }
   ],
   "operations": [

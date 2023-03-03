@@ -1,0 +1,15 @@
+{
+  "id": "add-catalog-item",
+  "dynamicsVariables": [
+    {
+      "name": "product-id",
+      "type": "unsignedInt"
+    }
+  ],
+  "operations": [
+    {
+      "operationRefId": "catalog-add-item",
+      "id": "op-1"
+    }
+  ]
+}

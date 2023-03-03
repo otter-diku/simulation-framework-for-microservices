@@ -6,7 +6,7 @@
     {
       "name": "buyerId",
       "required": true,
-      "type": "guid"
+      "type": "string"
     },
     {
       "name": "item-1",
