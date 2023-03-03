@@ -1,5 +1,5 @@
 {
-  "id": "operation-id",
+  "templateId": "operation-id",
   "type": "http",
   "httpMethod": "get"
 }

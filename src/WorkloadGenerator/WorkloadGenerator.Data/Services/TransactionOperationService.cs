@@ -5,7 +5,6 @@ using System.Text.Json.Nodes;
 using System.Text.Json.Serialization;
 using System.Text.RegularExpressions;
 using System.Web;
-using AutoFixture;
 using Microsoft.Extensions.Logging;
 using WorkloadGenerator.Data.Models;
 using WorkloadGenerator.Data.Models.Operation;
@@ -96,36 +95,19 @@ public class TransactionOperationService : ITransactionOperationService
         return operationUnresolved;
     }
 
-    public bool TryResolve(ITransactionOperationUnresolved unresolvedInput, Dictionary<string, object>? providedValues,
+    public bool TryResolve(ITransactionOperationUnresolved unresolvedInput, Dictionary<string, object> providedValues,
         out ITransactionOperationResolved resolvedInput)
     {
-        if (!ValidateArguments(unresolvedInput, providedValues))
+        if (!Utilities.ValidateArguments(unresolvedInput.Arguments, providedValues))
         {
             resolvedInput = null!;
             return false;
         }
 
-        providedValues = AddDynamicValues(unresolvedInput, providedValues ?? new Dictionary<string, object>());
+        providedValues = Utilities.AddDynamicValues(unresolvedInput.DynamicVariables, providedValues);
 
         resolvedInput = ResolveInternal(unresolvedInput, providedValues);
         return true;
-    }
-
-    private Dictionary<string, object> AddDynamicValues(ITransactionOperationUnresolved unresolvedInput,
-        Dictionary<string, object> providedValues)
-    {
-        if (unresolvedInput.DynamicVariables is null)
-        {
-            return providedValues;
-        }
-
-        var concreteVariables = GenerateDynamicVariables(unresolvedInput.DynamicVariables);
-        foreach (var kv in concreteVariables)
-        {
-            providedValues.Add(kv.Key, kv.Value);
-        }
-
-        return providedValues;
     }
 
     public bool TryConvertToExecutable(ITransactionOperationResolved resolvedInput,
@@ -217,16 +199,7 @@ public class TransactionOperationService : ITransactionOperationService
 
         return new HttpOperationTransactionExecutable() { PrepareRequestMessage = func };
     }
-
-
-    private static bool ValidateArguments(ITransactionOperationUnresolved unresolvedInput,
-        IReadOnlyDictionary<string, object>? providedValues)
-    {
-        return unresolvedInput.Arguments is null ||
-               unresolvedInput.Arguments.All(requiredArgument =>
-                   providedValues?.ContainsKey(requiredArgument.Name) ?? false);
-    }
-
+    
     private ITransactionOperationResolved ResolveInternal(
         ITransactionOperationUnresolved unresolvedInput,
         Dictionary<string, object> providedValues)
@@ -248,7 +221,7 @@ public class TransactionOperationService : ITransactionOperationService
             Headers = ResolveHeaders(unresolvedInput.Headers, unresolvedInput.Arguments, providedValues),
             HttpMethod = unresolvedInput.HttpMethod,
             RequestPayload = resolvedPayload,
-            Id = unresolvedInput.Id,
+            TemplateId = unresolvedInput.TemplateId,
             QueryParameters = unresolvedInput.QueryParameters,
             Type = unresolvedInput.Type,
             // TODO: ResponsePayload = ResolveResponsePayload(unresolvedInput.ResponsePayload),
@@ -466,23 +439,5 @@ public class TransactionOperationService : ITransactionOperationService
 
             throw;
         }
-    }
-
-    private Dictionary<string, object> GenerateDynamicVariables(DynamicVariable[] dynamicVariables)
-    {
-        var fixture = new Fixture();
-        return dynamicVariables.ToDictionary(dynamicVar => dynamicVar.Name, dynamicVar =>
-        {
-            return dynamicVar.Type switch
-            {
-                DynamicVariableType.UnsignedInt => fixture.Create<uint>(),
-                DynamicVariableType.SignedInt => fixture.Create<bool>()
-                    ? fixture.Create<int>()
-                    : -1 * fixture.Create<int>(),
-                DynamicVariableType.String => (object)fixture.Create<string>(),
-                DynamicVariableType.Guid => Guid.NewGuid(),
-                _ => throw new ArgumentOutOfRangeException()
-            };
-        });
     }
 }

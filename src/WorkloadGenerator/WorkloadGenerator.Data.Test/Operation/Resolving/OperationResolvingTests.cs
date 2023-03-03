@@ -96,13 +96,4 @@ public class OperationResolvingTests
 
     private static IEnumerable<string> GetFilesFromDirectory(string relativePath)
         => Directory.GetFiles(Path.Combine(Directory.GetCurrentDirectory(), relativePath));
-
-    private readonly JsonSerializerOptions _jsonSerializerOptions = new()
-    {
-        PropertyNameCaseInsensitive = true,
-        Converters =
-        {
-            new JsonStringEnumConverter(JsonNamingPolicy.CamelCase)
-        }
-    };
 }

@@ -1,0 +1,19 @@
+{
+  "id": "add-items-to-basket",
+  "arguments": [
+    {
+      "name": "user-id",
+      "type": "guid"
+    }
+  ],
+  "operations": [
+    {
+      "operationTemplateId": "catalog-get-items",
+      "id": "op-1"
+    },
+    {
+      "operationRefId": "basket-add-item",
+      "id": "op-2",
+    }
+  ]
+}

@@ -1,0 +1,19 @@
+{
+  "templateId": "update-catalog-item-price",
+  "dynamicVariables": [
+    {
+      "name": "new-price",
+      "type": "unsignedInt"
+    }
+  ],
+  "operations": [
+    {
+      "operationReferenceId": "catalog-get-items",
+      "id": "op-1"
+    },
+    {
+      "operationReferenceId": "catalog-update-price",
+      "id": "op-2"
+    }
+  ]
+}

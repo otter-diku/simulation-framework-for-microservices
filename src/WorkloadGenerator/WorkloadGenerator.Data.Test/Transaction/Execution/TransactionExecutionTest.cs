@@ -1,5 +1,4 @@
 using System.Text.Json;
-using System.Text.Json.Nodes;
 using Microsoft.Extensions.Logging.Abstractions;
 using WorkloadGenerator.Data.Models;
 using WorkloadGenerator.Data.Models.Operation;
@@ -30,7 +29,7 @@ public class TransactionExecutionTest
         var operations = new Dictionary<string, HttpOperationInputUnresolved>();
         var op = new HttpOperationInputUnresolved()
         {
-            Id = "operation-1",
+            TemplateId = "operation-1",
             HttpMethod = HttpMethod.Post,
             Type = OperationType.Http,
             RequestPayload = new HttpOperationRequestPayloadUnresolved()
@@ -57,16 +56,15 @@ public class TransactionExecutionTest
         };
         operations.Add("operation-1", op);
 
-        var transaction = new TransactionInput()
+        var transaction = new TransactionInputUnresolved()
         {
-            Id = "transaction-1",
-            Operations = new List<TransactionInput.Operation>()
+            TemplateId = "transaction-1",
+            Operations = new List<OperationReference>()
             {
                 new()
                 {
                     Id = "op-1",
-                    OperationReferenceId = "operation-1",
-                    ProvidedValues = Array.Empty<TransactionInput.Operation.ProvidedValue>()
+                    OperationReferenceId = "operation-1"
                 }
             }
         };

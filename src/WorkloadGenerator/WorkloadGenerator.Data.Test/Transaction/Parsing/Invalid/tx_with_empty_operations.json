@@ -1,0 +1,10 @@
+{
+  "templateId": "add-items-to-basket",
+  "arguments": [
+    {
+      "name": "user-id",
+      "type": "string"
+    }
+  ],
+  "operations": []
+}
