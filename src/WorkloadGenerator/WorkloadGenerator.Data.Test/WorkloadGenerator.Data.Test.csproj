@@ -65,4 +65,10 @@
         </Reference>
     </ItemGroup>
 
+    <ItemGroup>
+      <Folder Include="Workload\Parsing\Invalid" />
+      <Folder Include="Workload\Parsing\Valid" />
+      <Folder Include="Workload\Resolving" />
+    </ItemGroup>
+
 </Project>

@@ -9,7 +9,7 @@ public class TransactionReference
 
     public int Count { get; set; }
 
-    public List<GeneratedData>? Data { get; set; }
+    public List<GeneratorReference>? Data { get; set; }
 
 }
 

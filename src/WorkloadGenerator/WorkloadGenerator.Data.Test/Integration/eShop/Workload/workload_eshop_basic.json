@@ -32,7 +32,7 @@
       "data": [
         {
           "name":  "user-id",
-          "generator": "userId"
+          "generatorReferenceId": "userId"
         }
       ]
     },

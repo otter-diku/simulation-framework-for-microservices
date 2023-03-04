@@ -7,8 +7,9 @@ public abstract class WorkloadInputBase
 {
     public string Id { get; set; }
     
-    public List<GeneratorBase>? Generators { get; set; }
     public List<TransactionReference> Transactions { get; set; }
+    
+    public List<GeneratorBase<object>>? Generators { get; set; }
     
 }
 
