@@ -42,9 +42,9 @@ public class TransactionRunnerService
             }
 
             _transactionOperationService.TryResolve(operation, providedValues, out var resolved);
-            _transactionOperationService.TryConvertToExecutable(resolved, out var transactionOperationbaseExecutable);
+            _transactionOperationService.TryConvertToExecutable(resolved, out var transactionOperationBaseExecutable);
 
-            var result = await ExecuteOperation(transactionOperationbaseExecutable);
+            var result = await ExecuteOperation(transactionOperationBaseExecutable);
 
             var returnValues = await ExtractReturnValues(operation, result);
 

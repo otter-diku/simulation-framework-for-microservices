@@ -1,6 +1,6 @@
 namespace WorkloadGenerator.Data.Models.Generator;
 
-public class NumberGenerator : GeneratorBase<int>
+public class NumberGenerator : GeneratorBase, IGenerator
 {
     
     private Int64 lastVal;
@@ -17,7 +17,7 @@ public class NumberGenerator : GeneratorBase<int>
         return this.lastVal;
     }
 
-    public override int Next()
+    public object Next()
     {
         var next = random.Next();
         lastVal = next;

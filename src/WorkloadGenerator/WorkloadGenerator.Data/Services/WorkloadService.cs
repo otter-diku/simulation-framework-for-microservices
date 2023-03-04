@@ -14,6 +14,7 @@ public class WorkloadService : IWorkloadService
     public WorkloadService(ILogger<WorkloadService> logger)
     {
         _logger = logger;
+        _workloadInputUnresolvedValidator = new WorkloadInputUnresolvedValidator();
     }
     
     private readonly JsonSerializerOptions _jsonSerializerOptions = new()
@@ -92,25 +93,25 @@ public class WorkloadService : IWorkloadService
     {
         var providedValues = new Dictionary<string, object>();
         
-        var generators = new Dictionary<string, GeneratorBase<object>>();
-        if (workload.Generators is not null)
-        {
-            workload.Generators
-                .ForEach(g => generators.Add(g.Id,g));
-        }
-        var tx = workload.TransactionReferences
-            .GetValueOrDefault(transactionRefId, null);
-        
-        // generate all values for the transaction
-        if (tx is not null && tx.Data is not null)
-        {
-            foreach (var genRef in tx.Data)
-            {
-                providedValues.Add(tx.TransactionReferenceId,
-                    generators[genRef.GeneratorReferenceId].Next());
-            }
-        }
-
+        // var generators = new Dictionary<string, IGenerator>();
+        // if (workload.Generators is not null)
+        // {
+        //     workload.Generators
+        //         .ForEach(g => generators.Add(g.Id, g));
+        // }
+        // var tx = workload.TransactionReferences
+        //     .GetValueOrDefault(transactionRefId, null);
+        //
+        // // generate all values for the transaction
+        // if (tx is not null && tx.Data is not null)
+        // {
+        //     foreach (var genRef in tx.Data)
+        //     {
+        //         providedValues.Add(tx.TransactionReferenceId,
+        //             generators[genRef.GeneratorReferenceId].Next());
+        //     }
+        // }
+        //
         return providedValues;
     }
 }

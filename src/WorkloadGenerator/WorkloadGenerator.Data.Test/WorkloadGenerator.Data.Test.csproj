@@ -53,6 +53,12 @@
         <None Update="Transaction\Resolving\Valid\Arguments\*.json">
           <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
         </None>
+        <None Update="Workload\Parsing\Valid\*.json">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </None>
+        <None Update="Workload\Parsing\Valid\*.json">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </None>        
     </ItemGroup>
 
     <ItemGroup>
@@ -66,8 +72,6 @@
     </ItemGroup>
 
     <ItemGroup>
-      <Folder Include="Workload\Parsing\Invalid" />
-      <Folder Include="Workload\Parsing\Valid" />
       <Folder Include="Workload\Resolving" />
     </ItemGroup>
 

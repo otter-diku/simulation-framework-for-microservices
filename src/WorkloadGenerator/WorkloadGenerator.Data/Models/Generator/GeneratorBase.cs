@@ -1,14 +1,12 @@
 namespace WorkloadGenerator.Data.Models.Generator;
 
-public abstract class GeneratorBase<T>
+public class GeneratorBase
 {
     public string Id { get; set; }
 
     public GeneratorType Type { get; set; }
     
     public DistributionType Distribution { get; set; }
-
-    public abstract T Next();
 
 }
 

@@ -1,0 +1,13 @@
+{
+  "id": "workload-id",
+  "transactions": [
+    {
+      "transactionReferenceId": "tx-1",
+      "count": 10000
+    },
+    {
+      "transactionReferenceId": "tx-2",
+      "count": 1000
+    }
+  ]
+}

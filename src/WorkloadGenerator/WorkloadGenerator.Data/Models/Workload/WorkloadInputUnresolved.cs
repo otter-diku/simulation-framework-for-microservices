@@ -22,7 +22,7 @@ public class WorkloadInputUnresolvedValidator : AbstractValidator<WorkloadInputU
                         txRef.Data.TrueForAll(
                             genRef => 
                                 input.Generators.Select(g => g.Id).ToHashSet().Contains(genRef.GeneratorReferenceId) 
-                            )));
+                    )));
         });        
     }
 }
