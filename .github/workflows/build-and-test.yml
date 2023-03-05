@@ -1,0 +1,38 @@
+name: build and test
+
+on:
+  push:
+  pull_request:
+    branches: [ main ]
+    paths:
+    - '**.cs'
+    - '**.csproj'
+
+env:
+  DOTNET_VERSION: '7.0.102' # The .NET SDK version to use
+  SNL_PATH: 'src/MicroservicesSimulationFramework/MicroservicesSimulationFramework.sln'
+
+jobs:
+  build-and-test:
+
+    name: build-and-test-${{matrix.os}}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest]
+
+    steps:
+    - uses: actions/checkout@v3
+    - name: Setup .NET Core
+      uses: actions/setup-dotnet@v3
+      with:
+        dotnet-version: ${{ env.DOTNET_VERSION }}
+
+    - name: Install dependencies
+      run: dotnet restore ${{ env.SNL_PATH }}
+      
+    - name: Build
+      run: dotnet build --configuration Release ${{ env.SNL_PATH }}
+    
+    - name: Test
+      run: dotnet test --no-restore --verbosity normal ${{ env.SNL_PATH }}
