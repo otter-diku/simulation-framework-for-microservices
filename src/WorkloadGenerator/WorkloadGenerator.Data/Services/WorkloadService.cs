@@ -89,29 +89,47 @@ public class WorkloadService : IWorkloadService
         return false;
     }
 
+
+    private IGenerator CreateGenerator(GeneratorBase generatorBase)
+    {
+        switch (generatorBase.Type)
+        {
+            case GeneratorType.UnsignedInt:
+                return new NumberGenerator();
+            case GeneratorType.SignedInt:
+                return new NumberGenerator();
+            case GeneratorType.String:
+                return new StringGenerator();
+            case GeneratorType.Guid:
+                return new GuidGenerator();
+            default:
+                throw new ArgumentOutOfRangeException();
+        }
+    }
+    
     public Dictionary<string, object> GenerateData(WorkloadInputResolved workload, string transactionRefId)
     {
         var providedValues = new Dictionary<string, object>();
         
-        // var generators = new Dictionary<string, IGenerator>();
-        // if (workload.Generators is not null)
-        // {
-        //     workload.Generators
-        //         .ForEach(g => generators.Add(g.Id, g));
-        // }
-        // var tx = workload.TransactionReferences
-        //     .GetValueOrDefault(transactionRefId, null);
-        //
-        // // generate all values for the transaction
-        // if (tx is not null && tx.Data is not null)
-        // {
-        //     foreach (var genRef in tx.Data)
-        //     {
-        //         providedValues.Add(tx.TransactionReferenceId,
-        //             generators[genRef.GeneratorReferenceId].Next());
-        //     }
-        // }
-        //
+        var generators = new Dictionary<string, IGenerator>();
+        if (workload.Generators is not null)
+        {
+            workload.Generators
+                .ForEach(g => generators.Add(g.Id, CreateGenerator(g)));
+        }
+        var tx = workload.TransactionReferences
+            .GetValueOrDefault(transactionRefId, null);
+        
+        // generate all values for the transaction
+        if (tx is not null && tx.Data is not null)
+        {
+            foreach (var genRef in tx.Data)
+            {
+                providedValues.Add(tx.TransactionReferenceId,
+                    generators[genRef.GeneratorReferenceId].Next());
+            }
+        }
+        
         return providedValues;
     }
 }

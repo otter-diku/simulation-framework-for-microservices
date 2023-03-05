@@ -56,7 +56,7 @@
         <None Update="Workload\Parsing\Valid\*.json">
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
         </None>
-        <None Update="Workload\Parsing\Valid\*.json">
+        <None Update="Workload\Parsing\Invalid\*.json">
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
         </None>        
     </ItemGroup>

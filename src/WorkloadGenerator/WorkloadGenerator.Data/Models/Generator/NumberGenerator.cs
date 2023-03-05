@@ -7,6 +7,8 @@ public class NumberGenerator : GeneratorBase, IGenerator
 
     private Random random;
 
+    public GeneratorType Type => GeneratorType.UnsignedInt;
+
     public NumberGenerator()
     {
         this.random = new Random();

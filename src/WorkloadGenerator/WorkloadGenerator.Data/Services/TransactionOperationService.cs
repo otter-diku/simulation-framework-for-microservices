@@ -111,11 +111,11 @@ public class TransactionOperationService : ITransactionOperationService
     }
 
     public bool TryConvertToExecutable(ITransactionOperationResolved resolvedInput,
-        out TransactionOperationExecutableBase transactionOperationbaseExecutable)
+        out TransactionOperationExecutableBase transactionOperationBaseExecutable)
     {
         try
         {
-            transactionOperationbaseExecutable = resolvedInput switch
+            transactionOperationBaseExecutable = resolvedInput switch
             {
                 HttpOperationInputResolved httpOperationInputResolved => ConvertToExecutableHttpOperation(
                     httpOperationInputResolved),
@@ -129,7 +129,7 @@ public class TransactionOperationService : ITransactionOperationService
         catch (Exception e)
         {
             _logger.LogWarning(e, "Failed converting to executable");
-            transactionOperationbaseExecutable = null!;
+            transactionOperationBaseExecutable = null!;
             return false;
         }
     }
