@@ -1,5 +1,8 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using WorkloadGenerator.Data.Models.Operation;
+using WorkloadGenerator.Data.Models.Transaction;
+using WorkloadGenerator.Data.Models.Workload;
 using WorkloadGenerator.Server;
 using WorkloadGenerator.Grains;
 using WorkloadGenerator.Grains.Interfaces;
@@ -25,6 +28,16 @@ public class WorkloadCoordinator : IDisposable
     {
         _silo = await WorkloadGeneratorServer.StartSiloAsync();
         _client = _silo.Services.GetService<IClusterClient>()!;
+    }
+
+    public void RunWorkload(
+        WorkloadInputUnresolved workloadToRun, 
+        Dictionary<string, TransactionInputUnresolved> transactions,
+        Dictionary<string, ITransactionOperationUnresolved> operations)
+    {
+        // need to complete transactions that are specified (counts)
+        // need algorithm to select next transaction + number of concurrent transactions
+        // running
     }
 
     public void StartExecution(int numTransactions)
@@ -73,4 +86,6 @@ public class WorkloadCoordinator : IDisposable
     {
         _silo.Dispose();
     }
+
+    
 }

@@ -9,13 +9,14 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="FluentValidation" Version="11.5.1"/>
-        <PackageReference Include="Microsoft.Orleans.Server" Version="7.1.0"/>
+        <PackageReference Include="FluentValidation" Version="11.5.1" />
+        <PackageReference Include="Microsoft.Orleans.Server" Version="7.1.0" />
     </ItemGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\..\WorkloadGenerator\WorkloadGenerator.Coordinator\WorkloadGenerator.Coordinator.csproj"/>
-        <ProjectReference Include="..\..\WorkloadGenerator\WorkloadGenerator.Server\WorkloadGenerator.Server.csproj"/>
+        <ProjectReference Include="..\..\WorkloadGenerator\WorkloadGenerator.Coordinator\WorkloadGenerator.Coordinator.csproj" />
+        <ProjectReference Include="..\..\WorkloadGenerator\WorkloadGenerator.Data\WorkloadGenerator.Data.csproj" />
+        <ProjectReference Include="..\..\WorkloadGenerator\WorkloadGenerator.Server\WorkloadGenerator.Server.csproj" />
     </ItemGroup>
 
 </Project>
