@@ -2,6 +2,12 @@
   "templateId": "operation-id",
   "type": "http",
   "httpMethod": "get",
+  "queryParameters": [
+    {
+      "key": "parameter-1",
+      "value": "3"
+    }
+  ],  
   "arguments": [
     {
       "name": "arg1",

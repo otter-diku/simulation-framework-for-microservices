@@ -1,5 +1,5 @@
 {
-  "id": "update-catalog-item-price",
+  "templateId": "update-catalog-item-price",
   "arguments": [
     {
       "name": "product-id",
