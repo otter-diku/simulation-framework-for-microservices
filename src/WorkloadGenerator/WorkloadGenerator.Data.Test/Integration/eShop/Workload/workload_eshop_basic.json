@@ -28,7 +28,7 @@
   "transactions": [
     {
       "transactionReferenceId": "add-items-to-basket",
-      "count": 10000,
+      "count": 100,
       "data": [
         {
           "name":  "user-id",
@@ -38,7 +38,7 @@
     },
     {
       "transactionReferenceId": "update-catalog-item-price",
-      "count": 1000
+      "count": 100
     }
   ]
 }

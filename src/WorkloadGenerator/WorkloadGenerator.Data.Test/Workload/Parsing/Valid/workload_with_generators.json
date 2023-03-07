@@ -1,5 +1,6 @@
 {
   "id": "workload-id",
+  "maxConcurrentTransactions": 30,
   "generators": [
     {
       "id": "userId",

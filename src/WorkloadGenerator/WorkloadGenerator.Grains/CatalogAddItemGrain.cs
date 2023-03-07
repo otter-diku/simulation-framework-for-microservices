@@ -8,7 +8,7 @@ using Utilities;
 namespace WorkloadGenerator.Grains;
 
 [StatelessWorker]
-public class CatalogAddItemGrain : Grain, IWorkerGrain
+public class CatalogAddItemGrain : Grain, ITransactionGrain
 {
     private HttpClient? _client;
 
@@ -23,7 +23,7 @@ public class CatalogAddItemGrain : Grain, IWorkerGrain
     {
         _client = new HttpClient();
         Console.WriteLine("Starting CatalogAddItem Transaction.");
-        var item = Data.DataGenerator.GenerateCatalogItem(10, 20);
+        var item = EshopData.DataGenerator.GenerateCatalogItem(10, 20);
 
         Console.WriteLine("Generated item: " + JsonSerializer.Serialize(item));
         var content = new StringContent(JsonSerializer.Serialize(item), System.Text.Encoding.UTF8, "application/json");

@@ -13,6 +13,9 @@
         <Reference Include="Microsoft.Extensions.Logging.Abstractions">
             <HintPath>..\..\..\..\..\.nuget\packages\microsoft.extensions.logging.abstractions\7.0.0\lib\net7.0\Microsoft.Extensions.Logging.Abstractions.dll</HintPath>
         </Reference>
+        <Reference Include="Orleans.Serialization.Abstractions">
+          <HintPath>..\..\..\..\..\.nuget\packages\microsoft.orleans.serialization.abstractions\7.1.0\lib\net7.0\Orleans.Serialization.Abstractions.dll</HintPath>
+        </Reference>
     </ItemGroup>
 
     <ItemGroup>

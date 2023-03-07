@@ -11,7 +11,7 @@ using Newtonsoft.Json.Linq;
 namespace WorkloadGenerator.Grains;
 
 [StatelessWorker]
-public class BasketAddItemGrain : Grain, IWorkerGrain
+public class BasketAddItemGrain : Grain, ITransactionGrain
 {
     public Task Init()
     {
@@ -25,7 +25,7 @@ public class BasketAddItemGrain : Grain, IWorkerGrain
 
         // randomly draw catalog items from 
         var rnd = new Random();
-        var numItemsToBuy = rnd.Next(Data.DataGenerator.LargestGeneratedCatalogItemId);
+        var numItemsToBuy = rnd.Next(EshopData.DataGenerator.LargestGeneratedCatalogItemId);
         var res = await _client.GetAsync(Constants.CatalogItemUrl
                                          + $"?pageSize={numItemsToBuy}&pageIndex=0");
 

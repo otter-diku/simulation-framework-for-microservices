@@ -37,7 +37,7 @@ if (jsonFiles is not null)
                 Console.WriteLine($"Error while parsing {o}");
                 return;
             }
-            operations.Add(o.Item1, parsedOp);
+            operations.Add(parsedOp.TemplateId, parsedOp);
         }
 
         var transactionService = new TransactionService(NullLogger<TransactionService>.Instance);
@@ -50,7 +50,7 @@ if (jsonFiles is not null)
                 Console.WriteLine($"Error while parsing {t}");
                 return;
             }
-            transactions.Add(t.Item1, parsedTx);
+            transactions.Add(parsedTx.TemplateId, parsedTx);
         }        
 
         var workloadService = new WorkloadService(NullLogger<WorkloadService>.Instance);
@@ -89,11 +89,11 @@ if (jsonFiles is not null)
         WorkloadInputUnresolved workloadToRun = null;
         if (parseResult && selected < workloadNum)
         {
-            workloadToRun = workloads[workloadFiles[selected].Item1];
+            workloadToRun = workloads[workloadFiles[selected-1].Item1];
         }
-        
+
         var workloadCoordinator = new WorkloadCoordinator();
-        
+        await workloadCoordinator.Init();
         workloadCoordinator.RunWorkload(workloadToRun, transactions, operations);
 }
 

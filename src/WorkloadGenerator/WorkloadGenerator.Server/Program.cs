@@ -1,5 +1,6 @@
 ﻿using Microsoft.Extensions.Hosting;
 using Orleans.Configuration;
+using Orleans.Serialization;
 using Utilities;
 
 namespace WorkloadGenerator.Server
@@ -12,6 +13,7 @@ namespace WorkloadGenerator.Server
                 .UseOrleans(siloBuilder =>
                 {
                     siloBuilder
+                            
                         .UseLocalhostClustering() // the silo membership table will be maintained in-memory
                         .Configure<ClusterOptions>(options =>
                         {
@@ -24,6 +26,14 @@ namespace WorkloadGenerator.Server
                             options.GatewayPort = Constants.GatewayPort; // client-to-silo communication
                         })
                         .UseDashboard(_ => { }); // localhost:8080
+                    siloBuilder.Services.AddSerializer(serializerBuilder =>
+                    {
+                        serializerBuilder.AddJsonSerializer(
+                            isSupported: type =>
+                                type.Namespace.StartsWith("WorkloadGenerator.Data.Models")
+                                || type.Namespace.StartsWith("WorkloadGenerator.Coordinator")
+                            );
+                    });                        
                 });
 
             var server = builder.Build();

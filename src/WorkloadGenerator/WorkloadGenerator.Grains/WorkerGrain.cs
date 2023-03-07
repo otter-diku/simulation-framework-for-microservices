@@ -1,0 +1,47 @@
+using Microsoft.Extensions.Logging.Abstractions;
+using WorkloadGenerator.Data.Models.Generator;
+using WorkloadGenerator.Data.Models.Operation;
+using WorkloadGenerator.Data.Models.Transaction;
+using WorkloadGenerator.Data.Models.Workload;
+using WorkloadGenerator.Data.Services;
+using WorkloadGenerator.Grains.Interfaces;
+
+namespace WorkloadGenerator.Grains;
+
+public class WorkerGrain : IWorkerGrain
+{
+    public async void ExecuteTransaction(
+        WorkloadInputUnresolved workload,
+        TransactionInputUnresolved tx,
+        Dictionary<string, ITransactionOperationUnresolved> operations,
+        IHttpClientFactory httpClientFactory)
+    {
+        try
+        {
+            var transactionOperationService =
+                new TransactionOperationService(NullLogger<TransactionOperationService>.Instance);
+            var runnerService = new TransactionRunnerService(
+                transactionOperationService,
+                httpClientFactory,
+                NullLogger<TransactionRunnerService>.Instance
+            );
+
+            // generate provided values needed by transaction
+            var providedValues = new Dictionary<string, object>();
+
+            var txRef =
+                workload.Transactions.First(t => t.TransactionReferenceId == tx.TemplateId);
+            foreach (var genRef in txRef.Data)
+            {
+                var generatorInput = workload.Generators.First(g => g.Id == genRef.GeneratorReferenceId);
+                var generator = GeneratorFactory.GetGenerator(generatorInput.Type);
+                providedValues.Add(genRef.Name, generator.Next());
+            }
+
+            await runnerService.Run(tx, providedValues, operations);
+        }
+        finally
+        {
+        }
+    }
+}

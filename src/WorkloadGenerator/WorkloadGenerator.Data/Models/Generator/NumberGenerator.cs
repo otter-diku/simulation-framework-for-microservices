@@ -7,11 +7,14 @@ public class NumberGenerator : GeneratorBase, IGenerator
 
     private Random _random;
 
+    private bool _unsigned;
+
     public GeneratorType Type => GeneratorType.UnsignedInt;
 
-    public NumberGenerator()
+    public NumberGenerator(bool unsigned)
     {
-        this._random = new Random();
+        _unsigned = unsigned;
+        _random = new Random();
     }
 
     public Int64 LastValue()

@@ -59,6 +59,39 @@ public class TransactionRunnerService
             }
         }
     }
+    
+    public async Task Run(
+        TransactionInputUnresolved transaction,
+        Dictionary<string, object> providedValues,
+        Dictionary<string, ITransactionOperationUnresolved> operationsDictionary)
+    {
+        // generate dynamic variable for transaction.DynamicVariables
+        for (var i = 0; i < transaction.Operations.Count; i++)
+        {
+            var opRefId = transaction.Operations[i].OperationReferenceId;
+            if (!operationsDictionary.TryGetValue(opRefId, out var operation))
+            {
+                throw new Exception($"Could not find operation with ID {opRefId}");
+            }
+
+            _transactionOperationService.TryResolve(operation, providedValues, out var resolved);
+            _transactionOperationService.TryConvertToExecutable(resolved, out var transactionOperationBaseExecutable);
+
+            var result = await ExecuteOperation(transactionOperationBaseExecutable);
+
+            var returnValues = await ExtractReturnValues(operation, result);
+
+            // Todo: this simply adds new return values to all provided Values,
+            // if we really only want to pass what the next operation uses it gets more tricky
+            foreach (var p in returnValues)
+            {
+                if (!providedValues.ContainsKey(p.Key))
+                {
+                    providedValues.Add(p.Key, p.Value);
+                }
+            }
+        }
+    }    
 
     private async Task<Dictionary<string, object>> ExtractReturnValues(
         HttpOperationInputUnresolved operation,
@@ -76,6 +109,32 @@ public class TransactionRunnerService
 
         return new Dictionary<string, object>();
     }
+    
+    private async Task<Dictionary<string, object>> ExtractReturnValues(
+        ITransactionOperationUnresolved operation,
+        object result)
+    {
+
+        try
+        {
+            var op = (HttpOperationInputUnresolved)operation;
+            if (op.Response is not null)
+            {
+                return result switch
+                {
+                    HttpResponseMessage responseMessage => await ExtractReturnValuesFromHttpMessage(op.Response,
+                        responseMessage),
+                    _ => throw new ArgumentOutOfRangeException(nameof(result), result, null)
+                };
+            }            
+        }
+        catch
+        {
+            // ignored
+        }
+
+        return new Dictionary<string, object>();
+    }    
 
     private async Task<Dictionary<string, object>> ExtractReturnValuesFromHttpMessage(
         HttpOperationResponseInput? httpOperationResponseInput,
