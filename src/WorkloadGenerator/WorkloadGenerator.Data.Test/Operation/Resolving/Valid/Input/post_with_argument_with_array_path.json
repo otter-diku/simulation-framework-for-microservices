@@ -1,0 +1,20 @@
+{
+  "templateId": "operation-id",
+  "type": "http",
+  "httpMethod": "post",
+  "arguments": [
+    {
+      "name": "items",
+      "type": "array"
+    }
+  ],
+  "requestPayload": {
+    "type": "json",
+    "content": {
+      "itemId": "{{@@items[1].id@@}}",
+      "itemName": "{{@@items[1].name@@}}",
+      "itemPrice": "{{@@items[1].price@@}}"
+    }
+  },
+  "url": "https://httpbin.org/anything/"
+}

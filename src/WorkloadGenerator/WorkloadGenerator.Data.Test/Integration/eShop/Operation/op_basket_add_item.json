@@ -37,7 +37,7 @@
       "items": [
         {
           "id": "1",
-          "productId": "{{item-1@@$.id@@}}",
+          "productId": "{{@@item-1.id@@}}",
           "productName": "{{@@item-1.name@@}}",
           "unitPrice": "{{@@item-1.price@@}}",
           "oldUnitPrice": "{{@@item-1.price@@}}",
