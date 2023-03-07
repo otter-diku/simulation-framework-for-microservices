@@ -85,7 +85,7 @@ For this we use the notion of **generators** which have an associated distributi
 for providing transactions with data that matches the desired workload characteristic.
 
 Workload files consist of possibly multiple generators and a list of transactions which have
-and associated count (i.e. number of executions).
+an associated count (i.e. number of executions).
 
 An example workload file looks as follows:
 

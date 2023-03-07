@@ -3,26 +3,26 @@ namespace WorkloadGenerator.Data.Models.Generator;
 public class NumberGenerator : GeneratorBase, IGenerator
 {
     
-    private Int64 lastVal;
+    private Int64 _lastVal;
 
-    private Random random;
+    private Random _random;
 
     public GeneratorType Type => GeneratorType.UnsignedInt;
 
     public NumberGenerator()
     {
-        this.random = new Random();
+        this._random = new Random();
     }
 
-    public Int64 lastValue()
+    public Int64 LastValue()
     {
-        return this.lastVal;
+        return this._lastVal;
     }
 
     public object Next()
     {
-        var next = random.Next();
-        lastVal = next;
+        var next = _random.Next();
+        _lastVal = next;
         return next;
     }
 }
