@@ -40,7 +40,7 @@ public class TransactionService : ITransactionService
         catch (Exception exception)
         {
             _logger.LogInformation(exception, 
-                "Failed trying to deserialize input data for operation");
+                "Failed trying to deserialize input data for transaction");
 
             return false;
         }

@@ -53,6 +53,12 @@
         <None Update="Transaction\Resolving\Valid\Arguments\*.json">
           <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
         </None>
+        <None Update="Workload\Parsing\Valid\*.json">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </None>
+        <None Update="Workload\Parsing\Invalid\*.json">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </None>        
     </ItemGroup>
 
     <ItemGroup>
@@ -63,6 +69,10 @@
         <Reference Include="Microsoft.Extensions.Logging.Abstractions">
             <HintPath>..\..\..\..\..\.nuget\packages\microsoft.extensions.logging.abstractions\7.0.0\lib\net7.0\Microsoft.Extensions.Logging.Abstractions.dll</HintPath>
         </Reference>
+    </ItemGroup>
+
+    <ItemGroup>
+      <Folder Include="Workload\Resolving" />
     </ItemGroup>
 
 </Project>

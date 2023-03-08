@@ -4,24 +4,30 @@
   "httpMethod": "post",
   "arguments": [
     {
-      "name": "buyerId",
-      "required": true,
-      "type": "guid"
+      "name": "user-id",
+      "type": "string"
     },
     {
+      "name": "buyerId",
+      "type": "string"
+    },    
+    {
       "name": "item-1",
-      "required": true,
       "type": "object"
     },
     {
       "name": "item-2",
-      "required": true,
       "type": "object"
     },
     {
       "name": "item-3",
-      "required": true,
       "type": "object"
+    }
+  ],
+  "headers": [
+    {
+      "key": "user-id",
+      "value": "{{user-id}}"
     }
   ],
   "requestPayload": {

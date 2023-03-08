@@ -12,5 +12,5 @@ public interface ITransactionOperationService
         Dictionary<string, object> providedValues, out ITransactionOperationResolved resolvedInput);
 
     bool TryConvertToExecutable(ITransactionOperationResolved resolvedInput,
-        out TransactionOperationExecutableBase transactionOperationbaseExecutable);
+        out TransactionOperationExecutableBase transactionOperationBaseExecutable);
 }

@@ -19,7 +19,7 @@ public class TransactionOperationService : ITransactionOperationService
     private readonly ILogger<TransactionOperationService> _logger;
 
     // for payloads we need to replace the quotes since we might be replacing this string with a number/array/null/boolean
-    // e.g. "key1": "{{arg1}}" => "key1": false 
+    // e.g. "key1": "{{arg1}}" => "key1": false
     // the reason we need the quotes in the first place, is because `"key1": @arg1` is not a valid JSON
     private readonly Regex _argumentReplaceRegex = new("\"{{([^}]*)}}\"");
 
@@ -111,11 +111,11 @@ public class TransactionOperationService : ITransactionOperationService
     }
 
     public bool TryConvertToExecutable(ITransactionOperationResolved resolvedInput,
-        out TransactionOperationExecutableBase transactionOperationbaseExecutable)
+        out TransactionOperationExecutableBase transactionOperationBaseExecutable)
     {
         try
         {
-            transactionOperationbaseExecutable = resolvedInput switch
+            transactionOperationBaseExecutable = resolvedInput switch
             {
                 HttpOperationInputResolved httpOperationInputResolved => ConvertToExecutableHttpOperation(
                     httpOperationInputResolved),
@@ -129,7 +129,7 @@ public class TransactionOperationService : ITransactionOperationService
         catch (Exception e)
         {
             _logger.LogWarning(e, "Failed converting to executable");
-            transactionOperationbaseExecutable = null!;
+            transactionOperationBaseExecutable = null!;
             return false;
         }
     }
@@ -199,7 +199,7 @@ public class TransactionOperationService : ITransactionOperationService
 
         return new HttpOperationTransactionExecutable() { PrepareRequestMessage = func };
     }
-    
+
     private ITransactionOperationResolved ResolveInternal(
         ITransactionOperationUnresolved unresolvedInput,
         Dictionary<string, object> providedValues)
@@ -267,7 +267,7 @@ public class TransactionOperationService : ITransactionOperationService
 
         if (payload is not JsonPayloadResolved jsonPayload)
         {
-            // TODO: We only support JSON payloads to be used when being referenced by other fields 
+            // TODO: We only support JSON payloads to be used when being referenced by other fields
             return resolvedUrl;
         }
 
@@ -347,6 +347,26 @@ public class TransactionOperationService : ITransactionOperationService
             var resolvedPayloadText = _argumentReplaceRegex.Replace(payloadContentText, (match) =>
             {
                 var variableName = match.Groups[1].Value;
+
+
+                // resolve path on argument, example {{@@item1[0].price@@}}
+                if (variableName.StartsWith("@@"))
+                {
+                    var wholePath = variableName.Replace("@", "");
+                    var argumentName = string.Concat(wholePath.TakeWhile((c) => c != '[' && c != '.'));
+                    var argumentPath = string.Concat(wholePath.Skip(argumentName.Length));
+
+                    var rootElement = inputUnresolved.Arguments!.SingleOrDefault(a => a.Name == argumentName);
+                    if (rootElement is not null)
+                    {
+                        var jsonDocument = JsonDocument.Parse(((JsonElement)providedValues[argumentName]).GetRawText());
+                        var jsonElement = jsonDocument.SelectElement("$" + argumentPath);
+                        if (jsonElement.HasValue)
+                        {
+                            return jsonElement.Value.GetRawText();
+                        }
+                    }
+                }
 
                 var argument = inputUnresolved.Arguments!.SingleOrDefault(a => a.Name == variableName);
                 if (argument is not null)

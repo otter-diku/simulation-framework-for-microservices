@@ -1,0 +1,15 @@
+{
+  "templateId": "add-catalog-item",
+  "dynamicVariables": [
+    {
+      "name": "product-id",
+      "type": "unsignedInt"
+    }
+  ],
+  "operations": [
+    {
+      "operationReferenceId": "catalog-add-item",
+      "id": "op-1"
+    }
+  ]
+}
