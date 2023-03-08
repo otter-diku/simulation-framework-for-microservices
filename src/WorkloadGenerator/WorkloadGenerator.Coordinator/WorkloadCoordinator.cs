@@ -1,5 +1,7 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
+using Orleans.Configuration;
 using WorkloadGenerator.Data.Models.Operation;
 using WorkloadGenerator.Data.Models.Transaction;
 using WorkloadGenerator.Data.Models.Workload;
@@ -18,7 +20,7 @@ public class WorkloadCoordinator : IDisposable
 {
     private IHost _silo;
     private IClusterClient _client;
-    private DefaultHttpClientFactory _httpClientFactory; 
+    private DefaultHttpClientFactory _httpClientFactory;
 
     public WorkloadCoordinator()
     { 
@@ -79,6 +81,14 @@ public class WorkloadCoordinator : IDisposable
         }
 
         await Task.WhenAll(tasks);
+    }
+
+    public void PrintStream()
+    {
+        // TODO: there seems to be an option to have these as rewindable streams
+        // but by default they seem to act like message queues so we really
+        // want to use Kafka in the end -> to allow for stream processing on the system!
+        var streamProvider = _client.GetStreamProvider("StreamProvider");
     }
 
     public void StartExecution(int numTransactions)

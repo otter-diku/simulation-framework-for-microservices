@@ -17,7 +17,7 @@
   "transactions": [
     {
       "transactionReferenceId": "add-catalog-item",
-      "count": 2,
+      "count": 100,
       "data": [
         {
           "name":  "product-id",
@@ -27,7 +27,7 @@
     },
     {
       "transactionReferenceId": "update-catalog-item-price",
-      "count": 2,
+      "count": 100,
       "data": [
         {
           "name":  "product-id",

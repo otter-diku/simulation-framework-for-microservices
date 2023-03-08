@@ -5,6 +5,7 @@ using System.Text.Json.Nodes;
 using System.Text.RegularExpressions;
 using System.Transactions;
 using Microsoft.Extensions.Logging;
+using Utilities;
 using WorkloadGenerator.Data.Models;
 using WorkloadGenerator.Data.Models.Generator;
 using WorkloadGenerator.Data.Models.Operation;
@@ -61,7 +62,7 @@ public class TransactionRunnerService
     //         }
     //     }
     // }
-    
+
     public async Task Run(
         TransactionInputUnresolved transaction,
         Dictionary<string, object> providedValues,
@@ -75,14 +76,14 @@ public class TransactionRunnerService
             {
                 throw new Exception($"Could not find operation with ID {opRefId}");
             }
-    
+
             _transactionOperationService.TryResolve(operation, providedValues, out var resolved);
             _transactionOperationService.TryConvertToExecutable(resolved, out var transactionOperationBaseExecutable);
-    
+
             var result = await ExecuteOperation(transactionOperationBaseExecutable);
-    
+
             var returnValues = await ExtractReturnValues(operation, result);
-    
+
             // Todo: this simply adds new return values to all provided Values,
             // if we really only want to pass what the next operation uses it gets more tricky
             foreach (var p in returnValues)
@@ -92,8 +93,16 @@ public class TransactionRunnerService
                     providedValues.Add(p.Key, p.Value);
                 }
             }
+
+
+            // TODO: need to write this to Kafka cluster instead
+            StreamWriter logFile = new StreamWriter(Constants.logFile, true);
+            logFile.WriteLine($"[{DateTime.Now}]: Tx: {transaction.TemplateId}, Op: {opRefId}:");
+            logFile.WriteLine($"Result: {((HttpResponseMessage)result).ToString()}");
+            logFile.WriteLine("----------------------------------------------------------------");
+            logFile.Close();
         }
-    }    
+    }
 
     private async Task<Dictionary<string, object>> ExtractReturnValues(
         HttpOperationInputUnresolved operation,
@@ -111,7 +120,7 @@ public class TransactionRunnerService
 
         return new Dictionary<string, object>();
     }
-    
+
     private async Task<Dictionary<string, object>> ExtractReturnValues(
         ITransactionOperationUnresolved operation,
         object result)
@@ -128,7 +137,7 @@ public class TransactionRunnerService
                         responseMessage),
                     _ => throw new ArgumentOutOfRangeException(nameof(result), result, null)
                 };
-            }            
+            }
         }
         catch
         {
@@ -136,7 +145,7 @@ public class TransactionRunnerService
         }
 
         return new Dictionary<string, object>();
-    }    
+    }
 
     private async Task<Dictionary<string, object>> ExtractReturnValuesFromHttpMessage(
         HttpOperationResponseInput? httpOperationResponseInput,

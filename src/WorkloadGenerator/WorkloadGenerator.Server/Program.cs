@@ -13,7 +13,6 @@ namespace WorkloadGenerator.Server
                 .UseOrleans(siloBuilder =>
                 {
                     siloBuilder
-                            
                         .UseLocalhostClustering() // the silo membership table will be maintained in-memory
                         .Configure<ClusterOptions>(options =>
                         {
@@ -25,6 +24,8 @@ namespace WorkloadGenerator.Server
                             options.SiloPort = Constants.SiloPort; // silo-to-silo communication
                             options.GatewayPort = Constants.GatewayPort; // client-to-silo communication
                         })
+                        .AddMemoryStreams("StreamProvider")
+                        .AddMemoryGrainStorage("PubSubStore")
                         .UseDashboard(_ => { }); // localhost:8080
                     siloBuilder.Services.AddSerializer(serializerBuilder =>
                     {
