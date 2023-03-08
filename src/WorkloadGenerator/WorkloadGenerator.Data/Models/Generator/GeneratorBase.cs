@@ -7,5 +7,7 @@ public class GeneratorBase
     public virtual GeneratorType Type { get; set; }
     
     public DistributionType Distribution { get; set; }
+    
+    public object? Constant { get; set; }
 
 }

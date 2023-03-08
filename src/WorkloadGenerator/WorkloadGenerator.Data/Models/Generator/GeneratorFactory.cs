@@ -2,9 +2,9 @@ namespace WorkloadGenerator.Data.Models.Generator;
 
 public class GeneratorFactory
 {
-    public static IGenerator GetGenerator(GeneratorType generatorType)
+    public static IGenerator GetGenerator(GeneratorBase generatorBase)
     {
-        switch (generatorType)
+        switch (generatorBase.Type)
         {
             case GeneratorType.UnsignedInt:
                 return new NumberGenerator(true);
@@ -14,8 +14,10 @@ public class GeneratorFactory
                 return new StringGenerator();
             case GeneratorType.Guid:
                 return new GuidGenerator();
+            case GeneratorType.Constant:
+                return new ConstantGenerator(generatorBase.Constant);
             default:
-                throw new ArgumentOutOfRangeException(nameof(generatorType), generatorType, null);
+                throw new ArgumentOutOfRangeException(nameof(generatorBase), generatorBase, null);
         }
     }
 }

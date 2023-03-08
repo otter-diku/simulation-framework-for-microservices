@@ -4,9 +4,9 @@ using WorkloadGenerator.Data.Models.Workload;
 
 namespace WorkloadGenerator.Grains.Interfaces;
 
-public interface IWorkerGrain : IGrainWithGuidKey
+public interface IWorkerGrain : IGrainWithIntegerKey
 {
-    public void ExecuteTransaction(
+    Task ExecuteTransaction(
         WorkloadInputUnresolved workload,
         TransactionInputUnresolved tx,
         Dictionary<string, ITransactionOperationUnresolved> operations,

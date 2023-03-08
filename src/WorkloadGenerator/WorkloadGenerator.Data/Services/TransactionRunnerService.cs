@@ -6,6 +6,7 @@ using System.Text.RegularExpressions;
 using System.Transactions;
 using Microsoft.Extensions.Logging;
 using WorkloadGenerator.Data.Models;
+using WorkloadGenerator.Data.Models.Generator;
 using WorkloadGenerator.Data.Models.Operation;
 using WorkloadGenerator.Data.Models.Operation.Http;
 using WorkloadGenerator.Data.Models.Transaction;
@@ -27,38 +28,39 @@ public class TransactionRunnerService
         _logger = logger;
     }
 
-    public async Task Run(
-        TransactionInputUnresolved transaction,
-        Dictionary<string, object> providedValues,
-        Dictionary<string, HttpOperationInputUnresolved> operationsDictionary)
-    {
-        // generate dynamic variable for transaction.DynamicVariables
-        for (var i = 0; i < transaction.Operations.Count; i++)
-        {
-            var opRefId = transaction.Operations[i].OperationReferenceId;
-            if (!operationsDictionary.TryGetValue(opRefId, out var operation))
-            {
-                throw new Exception($"Could not find operation with ID {opRefId}");
-            }
-
-            _transactionOperationService.TryResolve(operation, providedValues, out var resolved);
-            _transactionOperationService.TryConvertToExecutable(resolved, out var transactionOperationBaseExecutable);
-
-            var result = await ExecuteOperation(transactionOperationBaseExecutable);
-
-            var returnValues = await ExtractReturnValues(operation, result);
-
-            // Todo: this simply adds new return values to all provided Values,
-            // if we really only want to pass what the next operation uses it gets more tricky
-            foreach (var p in returnValues)
-            {
-                if (!providedValues.ContainsKey(p.Key))
-                {
-                    providedValues.Add(p.Key, p.Value);
-                }
-            }
-        }
-    }
+    // public async Task Run(
+    //     TransactionInputUnresolved transaction,
+    //     Dictionary<string, object> providedValues,
+    //     Dictionary<string, HttpOperationInputUnresolved> operationsDictionary)
+    // {
+    //     // generate dynamic variable for transaction.DynamicVariables
+    //     for (var i = 0; i < transaction.Operations.Count; i++)
+    //     {
+    //         var opRefId = transaction.Operations[i].OperationReferenceId;
+    //         if (!operationsDictionary.TryGetValue(opRefId, out var operation))
+    //         {
+    //             throw new Exception($"Could not find operation with ID {opRefId}");
+    //         }
+    //
+    //         _transactionOperationService.TryResolve(operation, providedValues, out var resolved);
+    //         _transactionOperationService.TryConvertToExecutable(resolved, out var transactionOperationBaseExecutable);
+    //
+    //         var result = await ExecuteOperation(transactionOperationBaseExecutable);
+    //         Console.WriteLine($"Operation {operation.TemplateId} got the following response {(HttpResponseMessage)result}");
+    //
+    //         var returnValues = await ExtractReturnValues(operation, result);
+    //
+    //         // Todo: this simply adds new return values to all provided Values,
+    //         // if we really only want to pass what the next operation uses it gets more tricky
+    //         foreach (var p in returnValues)
+    //         {
+    //             if (!providedValues.ContainsKey(p.Key))
+    //             {
+    //                 providedValues.Add(p.Key, p.Value);
+    //             }
+    //         }
+    //     }
+    // }
     
     public async Task Run(
         TransactionInputUnresolved transaction,
@@ -73,14 +75,14 @@ public class TransactionRunnerService
             {
                 throw new Exception($"Could not find operation with ID {opRefId}");
             }
-
+    
             _transactionOperationService.TryResolve(operation, providedValues, out var resolved);
             _transactionOperationService.TryConvertToExecutable(resolved, out var transactionOperationBaseExecutable);
-
+    
             var result = await ExecuteOperation(transactionOperationBaseExecutable);
-
+    
             var returnValues = await ExtractReturnValues(operation, result);
-
+    
             // Todo: this simply adds new return values to all provided Values,
             // if we really only want to pass what the next operation uses it gets more tricky
             foreach (var p in returnValues)

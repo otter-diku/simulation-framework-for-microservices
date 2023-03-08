@@ -1,0 +1,39 @@
+{
+  "id": "workload-id",
+  "generators": [
+    {
+      "id": "productId",
+      "type": "unsignedInt",
+      "distribution": "uniform",
+      "min": 1,
+      "max": 1000
+    },
+    {
+      "id": "productIdPriceUpdate",
+      "type": "constant",
+      "constant": 2
+    }    
+  ],
+  "transactions": [
+    {
+      "transactionReferenceId": "add-catalog-item",
+      "count": 2,
+      "data": [
+        {
+          "name":  "product-id",
+          "generatorReferenceId": "productId"
+        }
+      ]
+    },
+    {
+      "transactionReferenceId": "update-catalog-item-price",
+      "count": 2,
+      "data": [
+        {
+          "name":  "product-id",
+          "generatorReferenceId": "productIdPriceUpdate"
+        }
+      ]
+    }
+  ]
+}

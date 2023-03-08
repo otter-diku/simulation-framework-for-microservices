@@ -10,38 +10,32 @@ namespace WorkloadGenerator.Grains;
 
 public class WorkerGrain : IWorkerGrain
 {
-    public async void ExecuteTransaction(
+    public async Task ExecuteTransaction(
         WorkloadInputUnresolved workload,
         TransactionInputUnresolved tx,
         Dictionary<string, ITransactionOperationUnresolved> operations,
         IHttpClientFactory httpClientFactory)
     {
-        try
+        var transactionOperationService =
+            new TransactionOperationService(NullLogger<TransactionOperationService>.Instance);
+        var runnerService = new TransactionRunnerService(
+            transactionOperationService,
+            httpClientFactory,
+            NullLogger<TransactionRunnerService>.Instance
+        );
+
+        // generate provided values needed by transaction
+        var providedValues = new Dictionary<string, object>();
+
+        var txRef =
+            workload.Transactions.First(t => t.TransactionReferenceId == tx.TemplateId);
+        foreach (var genRef in txRef.Data)
         {
-            var transactionOperationService =
-                new TransactionOperationService(NullLogger<TransactionOperationService>.Instance);
-            var runnerService = new TransactionRunnerService(
-                transactionOperationService,
-                httpClientFactory,
-                NullLogger<TransactionRunnerService>.Instance
-            );
-
-            // generate provided values needed by transaction
-            var providedValues = new Dictionary<string, object>();
-
-            var txRef =
-                workload.Transactions.First(t => t.TransactionReferenceId == tx.TemplateId);
-            foreach (var genRef in txRef.Data)
-            {
-                var generatorInput = workload.Generators.First(g => g.Id == genRef.GeneratorReferenceId);
-                var generator = GeneratorFactory.GetGenerator(generatorInput.Type);
-                providedValues.Add(genRef.Name, generator.Next());
-            }
-
-            await runnerService.Run(tx, providedValues, operations);
+            var generatorInput = workload.Generators.First(g => g.Id == genRef.GeneratorReferenceId);
+            var generator = GeneratorFactory.GetGenerator(generatorInput);
+            providedValues.Add(genRef.Name, generator.Next());
         }
-        finally
-        {
-        }
+
+        await runnerService.Run(tx, providedValues, operations);
     }
 }

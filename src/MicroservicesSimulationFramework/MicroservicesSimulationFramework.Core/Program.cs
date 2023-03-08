@@ -1,5 +1,7 @@
 ﻿// See https://aka.ms/new-console-template for more information
 
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using WorkloadGenerator.Data.Services;
 using Utilities;
@@ -94,7 +96,10 @@ if (jsonFiles is not null)
 
         var workloadCoordinator = new WorkloadCoordinator();
         await workloadCoordinator.Init();
-        workloadCoordinator.RunWorkload(workloadToRun, transactions, operations);
+        await workloadCoordinator.RunWorkload(workloadToRun, transactions, operations);
+        
+       Console.WriteLine("Workload generation finished. Press Enter to terminate");
+       Console.ReadLine();
 }
 
 

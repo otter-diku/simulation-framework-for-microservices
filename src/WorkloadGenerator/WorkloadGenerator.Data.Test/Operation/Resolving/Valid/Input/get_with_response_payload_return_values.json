@@ -1,0 +1,18 @@
+{
+  "templateId": "operation-id",
+  "type": "http",
+  "httpMethod": "get",
+  "response": {
+    "payload": {
+      "type": "json",
+      "returnValues": [
+        {
+          "key": "val1",
+          "value": "response.payload.key1.key3[1]",
+          "type": "object"
+        }
+      ]
+    }
+  },
+  "url": "https://httpbin.org/anything/"
+}

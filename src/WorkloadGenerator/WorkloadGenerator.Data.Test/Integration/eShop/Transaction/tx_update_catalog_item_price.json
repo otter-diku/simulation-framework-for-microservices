@@ -3,14 +3,8 @@
   "arguments": [
     {
       "name": "product-id",
-      "type": "string"
+      "type": "number"
     }    
-  ],
-  "dynamicVariables": [
-    {
-      "name": "new-price",
-      "type": "unsignedInt"
-    }
   ],
   "operations": [
     {

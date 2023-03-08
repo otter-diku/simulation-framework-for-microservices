@@ -32,7 +32,7 @@ public class WorkloadCoordinator : IDisposable
         _httpClientFactory = new DefaultHttpClientFactory();        
     }
 
-    public void RunWorkload(
+    public async Task RunWorkload(
         WorkloadInputUnresolved workloadToRun, 
         Dictionary<string, TransactionInputUnresolved> transactions,
         Dictionary<string, ITransactionOperationUnresolved> operations)
@@ -60,20 +60,25 @@ public class WorkloadCoordinator : IDisposable
 
         var semaphore = new SemaphoreSlim(maxRate);
         // while there are still xacts to execute start new workers
-        
+
+        var tasks = new List<Task>();
         while (txStack.Count != 0)
         {
             // semaphore.Wait();
             var nextTx = txStack.Pop();
-            var worker = _client.GetGrain<IWorkerGrain>(new Guid(),
+            var worker = _client.GetGrain<IWorkerGrain>(txStack.Count,
                 grainClassNamePrefix: "WorkloadGenerator.Grains.WorkerGrain");
             var tx = transactions[nextTx];
             var txOpsRefs = tx.Operations.Select(o => o.OperationReferenceId).ToHashSet();
             var txOps = 
                 operations.Where(o => txOpsRefs.Contains(o.Key))
                     .ToDictionary(x => x.Key, x => x.Value);
-            worker.ExecuteTransaction(workloadToRun, transactions[nextTx], txOps, _httpClientFactory);
+            Console.WriteLine($"Starting tx: {nextTx}");
+            var task = worker.ExecuteTransaction(workloadToRun, transactions[nextTx], txOps, _httpClientFactory);
+            tasks.Add(task);
         }
+
+        await Task.WhenAll(tasks);
     }
 
     public void StartExecution(int numTransactions)
