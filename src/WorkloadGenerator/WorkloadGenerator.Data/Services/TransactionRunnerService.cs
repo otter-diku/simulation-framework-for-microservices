@@ -76,10 +76,21 @@ public class TransactionRunnerService
             {
                 throw new Exception($"Could not find operation with ID {opRefId}");
             }
-
-            _transactionOperationService.TryResolve(operation, providedValues, out var resolved);
-            _transactionOperationService.TryConvertToExecutable(resolved, out var transactionOperationBaseExecutable);
-
+            
+            var didResolve = _transactionOperationService.TryResolve(operation, providedValues, out var resolved);
+            if (!didResolve)
+            {
+                Console.WriteLine($"Failed to resolve Tx: {transaction.TemplateId}, Op: {opRefId}");
+                return;
+            }
+            var didConvert = _transactionOperationService.TryConvertToExecutable(resolved, out var transactionOperationBaseExecutable);
+            if (!didConvert)
+            {
+                Console.WriteLine($"Failed to convert Tx: {transaction.TemplateId}, Op: {opRefId}");
+                return;
+            }            
+            
+            
             var result = await ExecuteOperation(transactionOperationBaseExecutable);
 
             var returnValues = await ExtractReturnValues(operation, result);

@@ -2,22 +2,27 @@
   "templateId": "catalog-get-items",
   "type": "http",
   "httpMethod": "get",
-  "returnValues": [
-    {
-      "key": "item-1",
-      "value": "$.data[0]",
-      "type": "object"
-    },
-    {
-      "key": "item-2",
-      "value": "$.data[1]",
-      "type": "object"
-    },
-    {
-      "key": "item-3",
-      "value": "$.data[2]",
-      "type": "object"
+  "response": {
+    "payload": {
+      "type": "json",  
+      "returnValues": [
+        {
+          "key": "item-1",
+          "value": "$.data[0]",
+          "type": "object"
+        },
+        {
+          "key": "item-2",
+          "value": "$.data[1]",
+          "type": "object"
+        },
+        {
+          "key": "item-3",
+          "value": "$.data[2]",
+          "type": "object"
+        }
+      ]
     }
-  ],
+  },
   "url": "http://localhost:5101/catalog-api/api/v1/Catalog/items?pageSize=3&pageIndex=0"
 }

@@ -21,26 +21,6 @@
   ],
   "transactions": [
     {
-      "transactionReferenceId": "add-catalog-item",
-      "count": 100,
-      "data": [
-        {
-          "name":  "product-id",
-          "generatorReferenceId": "productId"
-        }
-      ]
-    },
-    {
-      "transactionReferenceId": "update-catalog-item-price",
-      "count": 50,
-      "data": [
-        {
-          "name":  "product-id",
-          "generatorReferenceId": "productIdPriceUpdate"
-        }
-      ]
-    },
-    {
       "transactionReferenceId": "checkout-basket",
       "count": 1,
       "data": [
@@ -49,6 +29,6 @@
           "generatorReferenceId": "userId"
         }
       ]
-    }
+    }  
   ]
 }
