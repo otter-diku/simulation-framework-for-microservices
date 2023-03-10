@@ -42,7 +42,7 @@
     },
     {
       "transactionReferenceId": "checkout-basket",
-      "count": 1,
+      "count": 10,
       "data": [
         {
           "name":  "user-id",

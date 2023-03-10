@@ -96,10 +96,12 @@ if (jsonFiles is not null)
 
         var workloadCoordinator = new WorkloadCoordinator();
         await workloadCoordinator.Init();
-        await workloadCoordinator.RunWorkload(workloadToRun, transactions, operations);
         
-       Console.WriteLine("Workload generation finished. Press Enter to terminate");
-       Console.ReadLine();
+        await workloadCoordinator.RunWorkload(workloadToRun, transactions, operations);
+        // await workloadCoordinator.ScheduleWorkload(workloadToRun, transactions, operations);
+        
+        Console.WriteLine("Workload generation finished. Press Enter to terminate");
+        Console.ReadLine();
 }
 
 

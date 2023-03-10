@@ -1,10 +1,14 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 using Orleans.Configuration;
+using WorkloadGenerator.Data.Models;
+using WorkloadGenerator.Data.Models.Generator;
 using WorkloadGenerator.Data.Models.Operation;
 using WorkloadGenerator.Data.Models.Transaction;
 using WorkloadGenerator.Data.Models.Workload;
+using WorkloadGenerator.Data.Services;
 using WorkloadGenerator.Server;
 using WorkloadGenerator.Grains;
 using WorkloadGenerator.Grains.Interfaces;
@@ -31,7 +35,8 @@ public class WorkloadCoordinator : IDisposable
     {
         _silo = await WorkloadGeneratorServer.StartSiloAsync();
         _client = _silo.Services.GetService<IClusterClient>()!;
-        _httpClientFactory = new DefaultHttpClientFactory();        
+        _httpClientFactory = new DefaultHttpClientFactory();
+
     }
 
     public async Task RunWorkload(
@@ -60,13 +65,10 @@ public class WorkloadCoordinator : IDisposable
             maxRate = (int)workloadToRun.MaxConcurrentTransactions;
         }
 
-        var semaphore = new SemaphoreSlim(maxRate);
-        // while there are still xacts to execute start new workers
-
         var tasks = new List<Task>();
+        // Here we simply spawn a worker grain for each transaction and wait for their completion
         while (txStack.Count != 0)
         {
-            // semaphore.Wait();
             var nextTx = txStack.Pop();
             var worker = _client.GetGrain<IWorkerGrain>(txStack.Count,
                 grainClassNamePrefix: "WorkloadGenerator.Grains.WorkerGrain");
@@ -82,14 +84,66 @@ public class WorkloadCoordinator : IDisposable
 
         await Task.WhenAll(tasks);
     }
-
-    public void PrintStream()
+    
+public async Task ScheduleWorkload(
+        WorkloadInputUnresolved workloadToRun, 
+        Dictionary<string, TransactionInputUnresolved> transactions,
+        Dictionary<string, ITransactionOperationUnresolved> operations)
     {
-        // TODO: there seems to be an option to have these as rewindable streams
-        // but by default they seem to act like message queues so we really
-        // want to use Kafka in the end -> to allow for stream processing on the system!
-        var streamProvider = _client.GetStreamProvider("StreamProvider");
-    }
+        var txCounts = workloadToRun.Transactions.Select(t => t.Count);
+        var txToExecute = new List<string>();
+        foreach (var txRef in workloadToRun.Transactions)
+        {
+            txToExecute.AddRange(Enumerable.Repeat<string>(txRef.TransactionReferenceId, txRef.Count));
+        }
+        // TODO: shuffle list for now use guid but probably not optimal
+        var txStack = new Stack<string>(txToExecute.OrderBy(a => Guid.NewGuid()));
+
+        
+        var maxRate = 10;
+        if (workloadToRun.MaxConcurrentTransactions is not null)
+        {
+            maxRate = (int) workloadToRun.MaxConcurrentTransactions;
+        }
+        
+        // init Scheduler here, which will spawn workerGrains and create queue
+        var workloadScheduler = new WorkloadScheduler(maxRate, _client, _httpClientFactory);
+        workloadScheduler.Init();
+
+        while (txStack.Count != 0)
+        {
+            var nextTx = txStack.Pop();
+            var tx = transactions[nextTx];
+
+            var txOpsRefs = tx.Operations.Select(o => o.OperationReferenceId).ToHashSet();
+            var txOps =
+                operations.Where(o => txOpsRefs.Contains(o.Key))
+                    .ToDictionary(x => x.Key, x => x.Value);
+
+            // Generate providedValues with Generators
+            var providedValues = new Dictionary<string, object>();
+            var txRef =
+                workloadToRun.Transactions.First(t => t.TransactionReferenceId == tx.TemplateId);
+            foreach (var genRef in txRef.Data)
+            {
+                var generatorInput = workloadToRun.Generators.First(g => g.Id == genRef.GeneratorReferenceId);
+                var generator = GeneratorFactory.GetGenerator(generatorInput);
+                providedValues.Add(genRef.Name, generator.Next());
+            }
+
+            // Submit transaction to scheduler
+            Console.WriteLine($"Submit tx: {nextTx} to scheduler");
+            var executableTx = new ExecutableTransaction()
+            {
+                Transaction = tx,
+                Operations = operations,
+                ProvidedValues = providedValues
+            };
+            workloadScheduler.SubmitTransaction(executableTx);
+        }
+
+        await workloadScheduler.WaitForEmptyQueue();
+    }    
 
     public void StartExecution(int numTransactions)
     {
@@ -138,7 +192,7 @@ public class WorkloadCoordinator : IDisposable
         _silo.Dispose();
     }
 
-    public sealed class DefaultHttpClientFactory : IHttpClientFactory, IDisposable
+    private sealed class DefaultHttpClientFactory : IHttpClientFactory, IDisposable
     {
         private readonly Lazy<HttpMessageHandler> _handlerLazy = new(() => new HttpClientHandler());
 
