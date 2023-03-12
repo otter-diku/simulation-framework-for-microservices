@@ -99,10 +99,13 @@ public class TransactionRunnerService
             // if we really only want to pass what the next operation uses it gets more tricky
             foreach (var p in returnValues)
             {
-                if (!providedValues.ContainsKey(p.Key))
-                {
-                    providedValues.Add(p.Key, p.Value);
-                }
+                // TODO: we probably want to just override providedValues
+                // for example when reusing same operation in a transaction 
+                // if (!providedValues.ContainsKey(p.Key))
+                // {
+                //     providedValues.Add(p.Key, p.Value);
+                // }
+                providedValues[p.Key] = p.Value;
             }
 
 

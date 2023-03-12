@@ -1,0 +1,116 @@
+{
+  "id": "workload-id",
+  "generators": [
+    {
+      "id": "productId",
+      "type": "unsignedInt",
+      "distribution": "uniform",
+      "min": 1,
+      "max": 1000
+    },
+    {
+      "id": "productIdPriceUpdate1",
+      "type": "constant",
+      "constant": 2
+    },
+    {
+      "id": "productIdPriceUpdate2",
+      "type": "constant",
+      "constant": 3
+    },
+    {
+      "id": "productIdPriceUpdate3",
+      "type": "constant",
+      "constant": 4
+    },
+    {
+      "id": "userId",
+      "type": "constant",
+      "constant": "1000-00000-00000000"
+    }
+  ],
+  "transactions": [
+    {
+      "transactionReferenceId": "update-catalog-item-price",
+      "count": 20,
+      "data": [
+        {
+          "name":  "product-id",
+          "generatorReferenceId": "productIdPriceUpdate1"
+        }
+      ]
+    },
+    {
+      "transactionReferenceId": "update-catalog-item-price",
+      "count": 20,
+      "data": [
+        {
+          "name":  "product-id",
+          "generatorReferenceId": "productIdPriceUpdate2"
+        }
+      ]
+    },
+    {
+      "transactionReferenceId": "update-catalog-item-price",
+      "count": 20,
+      "data": [
+        {
+          "name":  "product-id",
+          "generatorReferenceId": "productIdPriceUpdate3"
+        }
+      ]
+    },
+    {
+      "transactionReferenceId": "add-basket-item",
+      "count": 10,
+      "data": [
+        {
+          "name":  "user-id",
+          "generatorReferenceId": "userId"
+        },
+        {
+          "name":  "product-id",
+          "generatorReferenceId": "productIdPriceUpdate3"
+        }
+      ]
+    },
+    {
+      "transactionReferenceId": "add-basket-item",
+      "count": 10,
+      "data": [
+        {
+          "name":  "user-id",
+          "generatorReferenceId": "userId"
+        },
+        {
+          "name":  "product-id",
+          "generatorReferenceId": "productIdPriceUpdate1"
+        }
+      ]
+    },
+    {
+      "transactionReferenceId": "add-basket-item",
+      "count": 10,
+      "data": [
+        {
+          "name":  "user-id",
+          "generatorReferenceId": "userId"
+        },
+        {
+          "name":  "product-id",
+          "generatorReferenceId": "productIdPriceUpdate2"
+        }
+      ]
+    },
+    {
+      "transactionReferenceId": "checkout-basket",
+      "count": 10,
+      "data": [
+        {
+          "name":  "user-id",
+          "generatorReferenceId": "userId"
+        }
+      ]
+    }    
+  ]
+}

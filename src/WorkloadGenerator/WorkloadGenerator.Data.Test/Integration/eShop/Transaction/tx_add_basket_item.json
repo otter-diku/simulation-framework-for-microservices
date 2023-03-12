@@ -1,0 +1,23 @@
+{
+  "templateId": "add-basket-item",
+  "arguments": [
+    {
+      "name": "user-id",
+      "type": "string"
+    },
+    {
+      "name": "product-id",
+      "type": "number"
+    }    
+  ],
+  "operations": [
+    {
+      "operationReferenceId": "catalog-get-item-by-id",
+      "id": "op-1"
+    },    
+    {
+      "operationReferenceId": "basket-add-single-item",
+      "id": "op-2"
+    }
+  ]
+}

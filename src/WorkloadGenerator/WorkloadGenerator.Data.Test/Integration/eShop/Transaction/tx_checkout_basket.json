@@ -8,16 +8,8 @@
   ],
   "operations": [
     {
-      "operationReferenceId": "catalog-get-items",
-      "id": "op-1"
-    },
-    {
-      "operationReferenceId": "basket-add-item",
-      "id": "op-2"
-    },
-    {
       "operationReferenceId": "basket-checkout",
-      "id": "op-2"
+      "id": "op-1"
     }    
   ]
 }

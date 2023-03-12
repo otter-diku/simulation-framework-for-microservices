@@ -16,13 +16,13 @@
     {
       "id": "userId",
       "type": "constant",
-      "constant": "1000-00000-00000000"
+      "constant": "10000000-0000-0000-0000-000000000000"
     }    
   ],
   "transactions": [
     {
       "transactionReferenceId": "add-catalog-item",
-      "count": 100,
+      "count": 10,
       "data": [
         {
           "name":  "product-id",
@@ -32,7 +32,7 @@
     },
     {
       "transactionReferenceId": "update-catalog-item-price",
-      "count": 50,
+      "count": 10,
       "data": [
         {
           "name":  "product-id",
@@ -41,7 +41,7 @@
       ]
     },
     {
-      "transactionReferenceId": "checkout-basket",
+      "transactionReferenceId": "add-item-and-checkout-basket",
       "count": 10,
       "data": [
         {
