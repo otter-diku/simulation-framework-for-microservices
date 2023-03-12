@@ -8,7 +8,7 @@ env:
 jobs:
   dotnet-format:
 
-    name: build-and-test-${{matrix.os}}
+    name: format-${{matrix.os}}
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
