@@ -14,6 +14,11 @@ jobs:
       matrix:
         os: [ubuntu-latest]
 
+    permissions:
+      # Give the default GITHUB_TOKEN write permission to commit and push the
+      # added or changed files to the repository.
+      contents: write
+
     steps:
     - uses: actions/checkout@v3
     - name: Setup .NET Core
@@ -21,5 +26,12 @@ jobs:
       with:
         dotnet-version: ${{ env.DOTNET_VERSION }}
 
+    - name: Check Formatting
+      run: dotnet format --verify-no-changes ${{ env.SLN_PATH }}
+      continue-on-error: true
+
     - name: Format code
-      run: dotnet format --verify-no-changes
+      run: dotnet format ${{ env.SLN_PATH }}
+
+      # Commit all changed files back to the repository
+    - uses: stefanzweifel/git-auto-commit-action@v4
