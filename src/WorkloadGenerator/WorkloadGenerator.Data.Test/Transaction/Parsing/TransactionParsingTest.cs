@@ -22,7 +22,7 @@ public class TransactionParsingTest
         var result = sut.TryParseInput(input, out var parsed);
         Assert.False(result);
     }
-    
+
     private class ValidOperationInputCases : IEnumerable
     {
         public IEnumerator GetEnumerator()
@@ -30,7 +30,7 @@ public class TransactionParsingTest
             return TransactionParsingTest.GetEnumerator("Transaction/Parsing/Valid");
         }
     }
-    
+
     private class InvalidOperationInputCases : IEnumerable
     {
         public IEnumerator GetEnumerator()
@@ -39,7 +39,7 @@ public class TransactionParsingTest
         }
     }
 
-    
+
     private static IEnumerator GetEnumerator(string relativePath)
     {
         return GetFilesFromDirectory(relativePath)

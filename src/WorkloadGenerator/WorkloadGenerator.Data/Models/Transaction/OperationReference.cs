@@ -4,7 +4,7 @@ namespace WorkloadGenerator.Data.Models.Transaction;
 
 public class OperationReference
 {
-    public string OperationReferenceId { get; set; } 
+    public string OperationReferenceId { get; set; }
     public string Id { get; set; } = null!;
 }
 

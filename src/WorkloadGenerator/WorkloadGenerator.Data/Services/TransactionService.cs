@@ -25,7 +25,7 @@ public class TransactionService : ITransactionService
             new JsonStringEnumConverter(JsonNamingPolicy.CamelCase)
         }
     };
-    
+
     public bool TryParseInput(string json, out TransactionInputUnresolved transactionInputUnresolved)
     {
         transactionInputUnresolved = null!;
@@ -34,20 +34,20 @@ public class TransactionService : ITransactionService
             transactionInputUnresolved =
                 JsonSerializer.Deserialize<TransactionInputUnresolved>(json, _jsonSerializerOptions);
 
-            return transactionInputUnresolved is not null 
+            return transactionInputUnresolved is not null
                    && _transactionInputUnresolvedValidator.Validate(transactionInputUnresolved).IsValid;
         }
         catch (Exception exception)
         {
-            _logger.LogInformation(exception, 
+            _logger.LogInformation(exception,
                 "Failed trying to deserialize input data for transaction");
 
             return false;
         }
     }
 
-    public bool TryResolve(TransactionInputUnresolved unresolved, 
-        Dictionary<string, object> providedValues, 
+    public bool TryResolve(TransactionInputUnresolved unresolved,
+        Dictionary<string, object> providedValues,
         HashSet<string> operationReferenceIds,
         out TransactionInputResolved resolved)
     {
@@ -73,13 +73,13 @@ public class TransactionService : ITransactionService
             Operations = unresolved.Operations,
             ProvidedValues = localProvidedValues
         };
-        
+
         return true;
     }
 
     private bool ValidateOperationReferenceIds(List<OperationReference> unresolvedOperations, HashSet<string> operationReferenceIds)
     {
-        var unknownOperationReference = 
+        var unknownOperationReference =
             unresolvedOperations.FirstOrDefault(op => !operationReferenceIds.Contains(op.OperationReferenceId));
 
         if (unknownOperationReference is null)

@@ -2,7 +2,7 @@ namespace WorkloadGenerator.Data.Models.Generator;
 
 public class NumberGenerator : GeneratorBase, IGenerator
 {
-    
+
     private Int64 _lastVal;
 
     private Random _random;

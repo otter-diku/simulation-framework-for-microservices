@@ -23,8 +23,8 @@ public class WorkloadParsingTest
         var result = sut.TryParseInput(input, out var parsed);
         Assert.False(result);
     }
-    
-    
+
+
     private class ValidOperationInputCases : IEnumerable
     {
         public IEnumerator GetEnumerator()
@@ -32,7 +32,7 @@ public class WorkloadParsingTest
             return WorkloadParsingTest.GetEnumerator("Workload/Parsing/Valid");
         }
     }
-    
+
     private class InvalidOperationInputCases : IEnumerable
     {
         public IEnumerator GetEnumerator()
@@ -41,7 +41,7 @@ public class WorkloadParsingTest
         }
     }
 
-    
+
     private static IEnumerator GetEnumerator(string relativePath)
     {
         return GetFilesFromDirectory(relativePath)

@@ -82,14 +82,10 @@ public class TransactionExecutionTest
         var providedValues = new Dictionary<string, object>();
         await sut.Run(transaction, providedValues, operations);
 
-        Assert.AreEqual(JsonSerializer.Serialize((JsonElement)providedValues["val1"]),
-            JsonSerializer.Serialize(JsonDocument.Parse(payloadString).RootElement));
-        Assert.AreEqual(JsonSerializer.Serialize((JsonElement)providedValues["val2"]),
-            "[\"look\",\"what\",\"we\",\"have\",\"done\"]");
-        Assert.AreEqual(JsonSerializer.Serialize((JsonElement)providedValues["val3"]),
-            "42");
-        Assert.AreEqual(JsonSerializer.Serialize((JsonElement)providedValues["val4"]),
-            "\"we\"");
+        Assert.That(JsonSerializer.Serialize(JsonDocument.Parse(payloadString).RootElement), Is.EqualTo(JsonSerializer.Serialize((JsonElement)providedValues["val1"])));
+        Assert.That(            JsonSerializer.Serialize((JsonElement)providedValues["val2"]), Is.EqualTo("[\"look\",\"what\",\"we\",\"have\",\"done\"]"));
+        Assert.That(            JsonSerializer.Serialize((JsonElement)providedValues["val3"]), Is.EqualTo("42"));
+        Assert.That(            JsonSerializer.Serialize((JsonElement)providedValues["val4"]), Is.EqualTo("\"we\""));
     }
 
 

@@ -6,7 +6,7 @@ namespace WorkloadGenerator.Data.Models.Workload;
 
 public class WorkloadInputUnresolved : WorkloadInputBase
 {
-    
+
 }
 
 public class WorkloadInputUnresolvedValidator : AbstractValidator<WorkloadInputUnresolved>

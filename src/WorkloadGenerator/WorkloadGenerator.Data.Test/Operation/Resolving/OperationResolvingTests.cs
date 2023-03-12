@@ -40,8 +40,7 @@ public class OperationResolvingTests
                 PropertyNameCaseInsensitive = true
             });
 
-        Assert.AreEqual(JsonSerializer.Serialize(resolved as HttpOperationInputResolved),
-            JsonSerializer.Serialize(expectedResolved));
+        Assert.That(JsonSerializer.Serialize(expectedResolved), Is.EqualTo(JsonSerializer.Serialize(resolved as HttpOperationInputResolved)));
     }
 
     [Test]
@@ -71,7 +70,7 @@ public class OperationResolvingTests
 
         var httpRequestOperationResolved = resolved as HttpOperationInputResolved;
         var json = httpRequestOperationResolved.RequestPayload as JsonPayloadResolved;
-        Assert.AreEqual(json.Content["key1"].GetValue<int>(), 42);
+        Assert.That(json.Content["key1"].GetValue<int>(), Is.EqualTo(42));
         Assert.That(json.Content["key2"].GetValue<int>(), Is.Positive);
     }
 

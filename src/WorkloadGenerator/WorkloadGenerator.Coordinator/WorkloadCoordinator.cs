@@ -17,8 +17,8 @@ public class WorkloadCoordinator : IDisposable
     private IClusterClient _client;
 
     public WorkloadCoordinator()
-    { 
-        
+    {
+
     }
 
     public async Task Init()
