@@ -83,9 +83,9 @@ public class TransactionExecutionTest
         await sut.Run(transaction, providedValues, operations);
 
         Assert.That(JsonSerializer.Serialize(JsonDocument.Parse(payloadString).RootElement), Is.EqualTo(JsonSerializer.Serialize((JsonElement)providedValues["val1"])));
-        Assert.That(            JsonSerializer.Serialize((JsonElement)providedValues["val2"]), Is.EqualTo("[\"look\",\"what\",\"we\",\"have\",\"done\"]"));
-        Assert.That(            JsonSerializer.Serialize((JsonElement)providedValues["val3"]), Is.EqualTo("42"));
-        Assert.That(            JsonSerializer.Serialize((JsonElement)providedValues["val4"]), Is.EqualTo("\"we\""));
+        Assert.That(JsonSerializer.Serialize((JsonElement)providedValues["val2"]), Is.EqualTo("[\"look\",\"what\",\"we\",\"have\",\"done\"]"));
+        Assert.That(JsonSerializer.Serialize((JsonElement)providedValues["val3"]), Is.EqualTo("42"));
+        Assert.That(JsonSerializer.Serialize((JsonElement)providedValues["val4"]), Is.EqualTo("\"we\""));
     }
 
 
