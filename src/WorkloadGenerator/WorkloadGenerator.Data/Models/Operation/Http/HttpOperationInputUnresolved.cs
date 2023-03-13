@@ -24,7 +24,7 @@ public class HttpOperationInputUnresolvedValidator : AbstractValidator<HttpOpera
     public HttpOperationInputUnresolvedValidator()
     {
         Include(new HttpOperationInputBaseValidator());
-        
+
         RuleFor(operation => operation.TemplateId)
             .NotEmpty()
             .WithMessage($"{nameof(ITransactionOperationUnresolved)} ID needs to be a non-empty string");

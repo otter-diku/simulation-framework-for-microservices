@@ -90,10 +90,10 @@ public class WorkloadCoordinator : IDisposable
         await Task.WhenAll(tasks);
     }
 
-public async Task ScheduleWorkload(
-        WorkloadInputUnresolved workloadToRun,
-        Dictionary<string, TransactionInputUnresolved> transactions,
-        Dictionary<string, ITransactionOperationUnresolved> operations)
+    public async Task ScheduleWorkload(
+            WorkloadInputUnresolved workloadToRun,
+            Dictionary<string, TransactionInputUnresolved> transactions,
+            Dictionary<string, ITransactionOperationUnresolved> operations)
     {
         var txCounts = workloadToRun.Transactions.Select(t => t.Count);
         var txToExecute = new List<string>();
@@ -108,7 +108,7 @@ public async Task ScheduleWorkload(
         var maxRate = 10;
         if (workloadToRun.MaxConcurrentTransactions is not null)
         {
-            maxRate = (int) workloadToRun.MaxConcurrentTransactions;
+            maxRate = (int)workloadToRun.MaxConcurrentTransactions;
         }
 
         // init Scheduler here, which will spawn workerGrains and create queue

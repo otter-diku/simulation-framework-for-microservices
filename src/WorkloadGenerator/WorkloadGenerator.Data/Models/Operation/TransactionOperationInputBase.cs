@@ -4,7 +4,7 @@ namespace WorkloadGenerator.Data.Models.Operation;
 
 public class TransactionOperationInputBase
 {
-    
+
 
     public virtual OperationType Type { get; set; }
 }

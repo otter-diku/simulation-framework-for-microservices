@@ -11,7 +11,7 @@ public class WorkGrain : IWorkGrain
 {
     private ConcurrentQueue<ExecutableTransaction> _transactionQueue;
     private TransactionRunnerService _runnerService;
-    
+
     public Task Init(IHttpClientFactory httpClientFactory, ConcurrentQueue<ExecutableTransaction> transactionQueue)
     {
         var transactionOperationService =
@@ -21,7 +21,7 @@ public class WorkGrain : IWorkGrain
             httpClientFactory,
             NullLogger<TransactionRunnerService>.Instance
         );
-        
+
         _transactionQueue = transactionQueue;
         return Task.CompletedTask;
     }
@@ -33,7 +33,7 @@ public class WorkGrain : IWorkGrain
         {
             if (_transactionQueue.TryDequeue(out var execTx))
             {
-                await _runnerService.Run(execTx.Transaction, execTx.ProvidedValues, execTx.Operations);    
+                await _runnerService.Run(execTx.Transaction, execTx.ProvidedValues, execTx.Operations);
             }
         }
     }
