@@ -10,6 +10,7 @@ using WorkloadGenerator.Data.Models;
 using WorkloadGenerator.Data.Models.Generator;
 using WorkloadGenerator.Data.Models.Operation;
 using WorkloadGenerator.Data.Models.Operation.Http;
+using WorkloadGenerator.Data.Models.Operation.Sleep;
 using WorkloadGenerator.Data.Models.Transaction;
 
 namespace WorkloadGenerator.Data.Services;
@@ -76,7 +77,7 @@ public class TransactionRunnerService
             {
                 throw new Exception($"Could not find operation with ID {opRefId}");
             }
-            
+
             var didResolve = _transactionOperationService.TryResolve(operation, providedValues, out var resolved);
             if (!didResolve)
             {
@@ -88,10 +89,15 @@ public class TransactionRunnerService
             {
                 Console.WriteLine($"Failed to convert Tx: {transaction.TemplateId}, Op: {opRefId}");
                 return;
-            }            
-            
-            
+            }
+
+
             var result = await ExecuteOperation(transactionOperationBaseExecutable);
+
+            if (result is null) {
+                // sleep operation
+                continue;
+            }
 
             var returnValues = await ExtractReturnValues(operation, result);
 
@@ -100,7 +106,7 @@ public class TransactionRunnerService
             foreach (var p in returnValues)
             {
                 // TODO: we probably want to just override providedValues
-                // for example when reusing same operation in a transaction 
+                // for example when reusing same operation in a transaction
                 // if (!providedValues.ContainsKey(p.Key))
                 // {
                 //     providedValues.Add(p.Key, p.Value);
@@ -260,8 +266,10 @@ public class TransactionRunnerService
     }
 
     private async Task<object> ExecuteSleepOperation(
-        TransactionOperationExecutableBase transactionOperationbaseExecutable)
+        TransactionOperationExecutableBase transactionOperationBaseExecutable)
     {
-        throw new NotImplementedException();
+        var executable = (SleepOperationTransactionExecutable)transactionOperationBaseExecutable;
+        await executable.Sleep();
+        return null;
     }
 }

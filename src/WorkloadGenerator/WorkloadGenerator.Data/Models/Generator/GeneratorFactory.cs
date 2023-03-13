@@ -7,9 +7,9 @@ public class GeneratorFactory
         switch (generatorBase.Type)
         {
             case GeneratorType.UnsignedInt:
-                return new NumberGenerator(true);
+                return new NumberGenerator(true, generatorBase.Min, generatorBase.Max);
             case GeneratorType.SignedInt:
-                return new NumberGenerator(false);
+                return new NumberGenerator(false, generatorBase.Min, generatorBase.Max);
             case GeneratorType.String:
                 return new StringGenerator();
             case GeneratorType.Guid:
