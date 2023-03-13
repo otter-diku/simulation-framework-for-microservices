@@ -8,6 +8,10 @@
       "type": "string"
     },
     {
+      "name": "buyerId",
+      "type": "string"
+    },    
+    {
       "name": "item-1",
       "type": "object"
     },

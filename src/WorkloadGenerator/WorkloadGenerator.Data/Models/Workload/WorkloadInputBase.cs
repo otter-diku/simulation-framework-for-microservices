@@ -20,5 +20,17 @@ public class WorkloadInputBaseValidator : AbstractValidator<WorkloadInputBase>
         RuleFor(w => w.Id).NotEmpty();
         RuleFor(w => w.Transactions).NotEmpty();
         RuleForEach(w => w.Transactions).SetValidator(new TransactionReferenceValidator());
+        When(input => input.Generators is not null, () =>
+        {
+            // check that all generators referenced by transactions exist
+            RuleFor(input => input).Must(input =>
+            {
+                var generatorIds = input.Generators.Select(g => g.Id).ToHashSet();
+                var genRefIds = input.Transactions
+                    .SelectMany(t => t.Data)
+                    .Select(g => g.GeneratorReferenceId).ToList();
+                return genRefIds.TrueForAll(g => generatorIds.Contains(g));
+            });
+        });   
     }
 }
