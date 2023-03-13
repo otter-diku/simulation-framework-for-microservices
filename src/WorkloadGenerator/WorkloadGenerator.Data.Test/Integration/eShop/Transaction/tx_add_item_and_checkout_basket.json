@@ -1,0 +1,23 @@
+{
+  "templateId": "add-item-and-checkout-basket",
+  "arguments": [
+    {
+      "name": "user-id",
+      "type": "string"
+    }
+  ],
+  "operations": [
+    {
+      "operationReferenceId": "catalog-get-items",
+      "id": "op-1"
+    },
+    {
+      "operationReferenceId": "basket-add-item",
+      "id": "op-2"
+    },
+    {
+      "operationReferenceId": "basket-checkout",
+      "id": "op-3"
+    }    
+  ]
+}

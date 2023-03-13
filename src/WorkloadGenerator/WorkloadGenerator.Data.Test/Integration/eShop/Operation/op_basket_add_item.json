@@ -33,7 +33,7 @@
   "requestPayload": {
     "type": "json",
     "content": {
-      "buyerId": "{{buyerId}}",
+      "buyerId": "{{user-id}}",
       "items": [
         {
           "id": "1",
@@ -41,7 +41,7 @@
           "productName": "{{@@item-1.name@@}}",
           "unitPrice": "{{@@item-1.price@@}}",
           "oldUnitPrice": "{{@@item-1.price@@}}",
-          "quantity": "{{@@item-1.availableStock@@}}",
+          "quantity": "1",
           "pictureUrl": ""
         },
         {
@@ -50,7 +50,7 @@
           "productName": "{{@@item-2.name@@}}",
           "unitPrice": "{{@@item-2.price@@}}",
           "oldUnitPrice": "{{@@item-2.price@@}}",
-          "quantity": "{{@@item-2.availableStock@@}}",
+          "quantity": "1",
           "pictureUrl": ""
         },
         {
@@ -59,11 +59,11 @@
           "productName": "{{@@item-3.name@@}}",
           "unitPrice": "{{@@item-3.price@@}}",
           "oldUnitPrice": "{{@@item-3.price@@}}",
-          "quantity": "{{@@item-3.availableStock@@}}",
+          "quantity": "1",
           "pictureUrl": ""
         }        
       ]
     }
   },
-  "url": "http://localhost:5101/catalog-api/api/v1/Basket"
+  "url": "http://localhost:5103/basket-api/api/v1/Basket"
 }

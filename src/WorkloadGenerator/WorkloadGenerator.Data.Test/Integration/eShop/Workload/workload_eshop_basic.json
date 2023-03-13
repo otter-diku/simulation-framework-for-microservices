@@ -2,43 +2,56 @@
   "id": "workload-id",
   "generators": [
     {
-      "id": "userId",
-      "type": "string",
-      "sampleSpace": [
-        "1000-00000-00000000",
-        "1000-00000-00000001",
-        "1000-00000-00000002",
-        "1000-00000-00000003",
-        "1000-00000-00000004",
-        "1000-00000-00000005",
-        "1000-00000-00000006",
-        "1000-00000-00000007",
-        "1000-00000-00000008"
-      ],
-      "distribution": "zipfian"
-    },
-    {
       "id": "productId",
       "type": "unsignedInt",
       "distribution": "uniform",
       "min": 1,
       "max": 1000
+    },
+    {
+      "id": "productIdPriceUpdate",
+      "type": "constant",
+      "constant": 2
+    },
+    {
+      "id": "userId",
+      "type": "constant",
+      "constant": "10000000-0000-0000-0000-000000000000"
     }
   ],
   "transactions": [
     {
-      "transactionReferenceId": "add-items-to-basket",
-      "count": 10000,
+      "id": "tx1",
+      "transactionReferenceId": "add-catalog-item",
+      "count": 10,
+      "data": [
+        {
+          "name":  "product-id",
+          "generatorReferenceId": "productId"
+        }
+      ]
+    },
+    {
+      "id": "tx2",
+      "transactionReferenceId": "update-catalog-item-price",
+      "count": 10,
+      "data": [
+        {
+          "name":  "product-id",
+          "generatorReferenceId": "productIdPriceUpdate"
+        }
+      ]
+    },
+    {
+      "id": "tx3",
+      "transactionReferenceId": "add-item-and-checkout-basket",
+      "count": 10,
       "data": [
         {
           "name":  "user-id",
           "generatorReferenceId": "userId"
         }
       ]
-    },
-    {
-      "transactionReferenceId": "update-catalog-item-price",
-      "count": 1000
     }
   ]
 }

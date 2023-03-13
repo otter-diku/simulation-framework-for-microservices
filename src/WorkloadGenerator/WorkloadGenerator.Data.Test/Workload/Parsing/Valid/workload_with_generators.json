@@ -1,5 +1,6 @@
 {
   "id": "workload-id",
+  "maxConcurrentTransactions": 30,
   "generators": [
     {
       "id": "userId",
@@ -16,6 +17,7 @@
   ],
   "transactions": [
     {
+      "id": "tx-1",
       "transactionReferenceId": "add-items-to-basket",
       "count": 10000,
       "data": [
@@ -26,6 +28,7 @@
       ]
     },
     {
+      "id": "tx-2",
       "transactionReferenceId": "update-catalog-item-price",
       "count": 1000
     }

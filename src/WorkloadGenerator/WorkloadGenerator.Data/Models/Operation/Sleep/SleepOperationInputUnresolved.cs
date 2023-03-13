@@ -14,6 +14,8 @@ public class SleepOperationInputUnresolved : SleepOperationInputBase, ITransacti
         var validator = new SleepOperationInputUnresolvedValidator();
         validator.ValidateAndThrow(this);
     }
+
+    public string TemplateId { get; set; }
 }
 
 public class SleepOperationInputUnresolvedValidator : AbstractValidator<SleepOperationInputUnresolved>
@@ -21,5 +23,9 @@ public class SleepOperationInputUnresolvedValidator : AbstractValidator<SleepOpe
     public SleepOperationInputUnresolvedValidator()
     {
         Include(new SleepOperationInputBaseValidator());
+        
+        RuleFor(operation => operation.TemplateId)
+            .NotEmpty()
+            .WithMessage($"{nameof(ITransactionOperationUnresolved)} ID needs to be a non-empty string");        
     }
 }

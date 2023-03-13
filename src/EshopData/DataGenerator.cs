@@ -1,6 +1,6 @@
 ﻿using Data.Model;
 
-namespace Data
+namespace EshopData
 {
     public static class DataGenerator
     {

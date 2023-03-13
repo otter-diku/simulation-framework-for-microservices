@@ -232,7 +232,32 @@ public class TransactionOperationService : ITransactionOperationService
     private ITransactionOperationResolved ResolveSleepOperation(SleepOperationInputUnresolved sleepOperation,
         Dictionary<string, object> providedValues)
     {
-        throw new NotImplementedException();
+        Decimal duration;
+        if (sleepOperation.Arguments is { Length: > 0 })
+        {
+            try
+            {
+                duration = Decimal.Parse(ResolveParameterizedString(sleepOperation.Duration, sleepOperation.Arguments, providedValues));
+            }
+            catch (Exception exception)
+            {
+                _logger.LogWarning(exception,
+                    $"Failed trying resolve duration: {sleepOperation.Duration} for sleep operation.");
+                throw;
+            }
+        }
+        else
+        {
+            duration = Decimal.Parse(sleepOperation.Duration);
+        }
+
+        // Console.WriteLine($"Create Sleep operation with duration {duration}");
+        return new SleepOperationInputResolved()
+        {
+            Duration = duration,
+            TemplateId = sleepOperation.TemplateId,
+            Units = sleepOperation.Units
+        };
     }
 
     private List<Header>? ResolveHeaders(

@@ -1,5 +1,7 @@
-﻿using Microsoft.Extensions.Hosting;
+﻿using System.Text.Json;
+using Microsoft.Extensions.Hosting;
 using Orleans.Configuration;
+using Orleans.Serialization;
 using Utilities;
 
 namespace WorkloadGenerator.Server
@@ -23,7 +25,17 @@ namespace WorkloadGenerator.Server
                             options.SiloPort = Constants.SiloPort; // silo-to-silo communication
                             options.GatewayPort = Constants.GatewayPort; // client-to-silo communication
                         })
+                        .AddMemoryStreams("StreamProvider")
+                        .AddMemoryGrainStorage("PubSubStore")
                         .UseDashboard(_ => { }); // localhost:8080
+                    siloBuilder.Services.AddSerializer(serializerBuilder =>
+                    {
+                        serializerBuilder.AddJsonSerializer(
+                            isSupported: type =>
+                                type.Namespace.StartsWith("WorkloadGenerator.Data.Models")
+                                || type.Namespace.StartsWith("WorkloadGenerator.Coordinator")
+                            );
+                    });                        
                 });
 
             var server = builder.Build();

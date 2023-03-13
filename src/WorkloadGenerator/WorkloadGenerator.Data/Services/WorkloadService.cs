@@ -95,9 +95,9 @@ public class WorkloadService : IWorkloadService
         switch (generatorBase.Type)
         {
             case GeneratorType.UnsignedInt:
-                return new NumberGenerator();
+                return new NumberGenerator(true);
             case GeneratorType.SignedInt:
-                return new NumberGenerator();
+                return new NumberGenerator(false);
             case GeneratorType.String:
                 return new StringGenerator();
             case GeneratorType.Guid:

@@ -6,11 +6,11 @@ namespace WorkloadGenerator.Data.Models.Workload;
 public abstract class WorkloadInputBase
 {
     public string Id { get; set; }
-
+    
     public List<TransactionReference> Transactions { get; set; }
 
     public List<GeneratorBase>? Generators { get; set; }
-
+    public int? MaxConcurrentTransactions { get; set; }
 }
 
 public class WorkloadInputBaseValidator : AbstractValidator<WorkloadInputBase>
@@ -31,6 +31,6 @@ public class WorkloadInputBaseValidator : AbstractValidator<WorkloadInputBase>
                     .Select(g => g.GeneratorReferenceId).ToList();
                 return genRefIds.TrueForAll(g => generatorIds.Contains(g));
             });
-        });
+        });   
     }
 }

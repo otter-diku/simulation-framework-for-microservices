@@ -1,12 +1,15 @@
-﻿using Orleans;
-using Orleans.Concurrency;
+using WorkloadGenerator.Data.Models.Operation;
+using WorkloadGenerator.Data.Models.Transaction;
+using WorkloadGenerator.Data.Models.Workload;
 
-namespace WorkloadGenerator.Grains.Interfaces
+namespace WorkloadGenerator.Grains.Interfaces;
+
+public interface IWorkerGrain : IGrainWithIntegerKey
 {
-    public interface IWorkerGrain : IGrainWithIntegerKey
-    {
-        Task Init();
-
-        Task ExecuteTransaction();
-    }
+    Task ExecuteTransaction(
+        WorkloadInputUnresolved workload,
+        TransactionReference txRef,
+        TransactionInputUnresolved tx,
+        Dictionary<string, ITransactionOperationUnresolved> operations,
+        IHttpClientFactory httpClientFactory);
 }

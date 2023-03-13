@@ -13,6 +13,9 @@
         <Reference Include="Microsoft.Extensions.Logging.Abstractions">
             <HintPath>..\..\..\..\..\.nuget\packages\microsoft.extensions.logging.abstractions\7.0.0\lib\net7.0\Microsoft.Extensions.Logging.Abstractions.dll</HintPath>
         </Reference>
+        <Reference Include="Orleans.Serialization.Abstractions">
+          <HintPath>..\..\..\..\..\.nuget\packages\microsoft.orleans.serialization.abstractions\7.1.0\lib\net7.0\Orleans.Serialization.Abstractions.dll</HintPath>
+        </Reference>
     </ItemGroup>
 
     <ItemGroup>
@@ -20,6 +23,10 @@
         <PackageReference Include="FluentValidation" Version="11.5.1" />
         <PackageReference Include="JsonDocumentPath" Version="1.0.3" />
         <PackageReference Include="Microsoft.Extensions.Http" Version="7.0.0" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\..\Utilities\Utilities.csproj" />
     </ItemGroup>
 
 </Project>

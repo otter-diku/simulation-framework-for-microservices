@@ -20,7 +20,6 @@ public class HttpOperationInputBaseValidator : AbstractValidator<HttpOperationIn
 {
     public HttpOperationInputBaseValidator()
     {
-        Include(new TransactionOperationInputBaseValidator());
 
         RuleFor(httpOp => httpOp.HttpMethod)
             .IsInEnum();

@@ -7,6 +7,6 @@ public class StringGenerator : GeneratorBase, IGenerator
 
     public object Next()
     {
-        throw new NotImplementedException();
+        return "1000-00000-00000000";
     }
 }

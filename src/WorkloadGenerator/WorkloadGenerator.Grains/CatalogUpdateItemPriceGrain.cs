@@ -2,13 +2,12 @@ using System.Net.Http.Json;
 using Utilities;
 using Orleans.Concurrency;
 using WorkloadGenerator.Grains.Interfaces;
-using Data;
 using Data.Model;
 
 namespace WorkloadGenerator.Grains;
 
 [StatelessWorker]
-public class CatalogUpdateItemPriceGrain : Grain, IWorkerGrain
+public class CatalogUpdateItemPriceGrain : Grain, ITransactionGrain
 {
     public Task Init()
     {
@@ -22,7 +21,7 @@ public class CatalogUpdateItemPriceGrain : Grain, IWorkerGrain
 
         // randomly draw item from catalog
         var rnd = new Random();
-        var itemId = rnd.Next(Data.DataGenerator.LargestGeneratedCatalogItemId);
+        var itemId = rnd.Next(EshopData.DataGenerator.LargestGeneratedCatalogItemId);
 
         CatalogItem catalogItem;
         var res = await _client.GetAsync(Constants.CatalogItemUrl + "/" + itemId);

@@ -1,0 +1,27 @@
+{
+  "templateId": "update-catalog-price-sleep",
+  "arguments": [
+    {
+      "name": "product-id",
+      "type": "number"
+    },
+    {
+      "name": "sleep-time",
+      "type": "number"
+    }    
+  ],
+  "operations": [
+    {
+      "operationReferenceId": "catalog-get-item-by-id",
+      "id": "op-1"
+    },
+    {
+      "operationReferenceId": "sleep-in-sec",
+      "id": "op-2"
+    },
+    {
+      "operationReferenceId": "catalog-update-price",
+      "id": "op-3"
+    }
+  ]
+}

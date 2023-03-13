@@ -14,5 +14,15 @@ public class WorkloadInputUnresolvedValidator : AbstractValidator<WorkloadInputU
     public WorkloadInputUnresolvedValidator()
     {
         Include(new WorkloadInputBaseValidator());
+        When(input => input.Generators is not null, () =>
+        {
+            // check that all generators referenced by transactions exist
+            RuleFor(input => input).Must(input => input.Transactions
+                    .TrueForAll(txRef =>
+                        txRef.Data.TrueForAll(
+                            genRef => 
+                                input.Generators.Select(g => g.Id).ToHashSet().Contains(genRef.GeneratorReferenceId) 
+                    )));
+        });        
     }
 }
