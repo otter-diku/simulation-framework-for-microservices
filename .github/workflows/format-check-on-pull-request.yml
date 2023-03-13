@@ -26,10 +26,6 @@ jobs:
       with:
         dotnet-version: ${{ env.DOTNET_VERSION }}
 
-    - name: Check Formatting
-      run: dotnet format --verify-no-changes ${{ env.SLN_PATH }}
-      continue-on-error: true
-
     - name: Format code
       run: dotnet format ${{ env.SLN_PATH }}
 
