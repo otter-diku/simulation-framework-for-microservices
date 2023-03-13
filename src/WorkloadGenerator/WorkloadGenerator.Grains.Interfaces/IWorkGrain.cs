@@ -10,5 +10,5 @@ public interface IWorkGrain : IGrainWithIntegerKey
 {
     public Task Init(IHttpClientFactory httpClientFactory, ConcurrentQueue<ExecutableTransaction> transactionQueue);
 
-    public void Start();
+    public Task Start();
 }

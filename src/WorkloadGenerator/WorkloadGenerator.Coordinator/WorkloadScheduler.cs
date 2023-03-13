@@ -16,10 +16,10 @@ namespace WorkloadGenerator.Coordinator;
 /// </summary>
 public class WorkloadScheduler
 {
-    private int _maxConcurrentTransactions;
-    private IClusterClient _client;
-    private ConcurrentQueue<ExecutableTransaction> _transactionQueue;
-    private IHttpClientFactory _httpClientFactory;
+    private readonly int _maxConcurrentTransactions;
+    private readonly IClusterClient _client;
+    private readonly ConcurrentQueue<ExecutableTransaction> _transactionQueue;
+    private readonly IHttpClientFactory _httpClientFactory;
 
     public WorkloadScheduler(int maxConcurrentTransactions, IClusterClient client, IHttpClientFactory httpClientFactory)
     {
@@ -30,15 +30,15 @@ public class WorkloadScheduler
         _transactionQueue = new ConcurrentQueue<ExecutableTransaction>();
     }
 
-    public async void Init()
+    public async Task Init()
     {
-        for (int i = 0; i < _maxConcurrentTransactions; i++)
+        for (var i = 0; i < _maxConcurrentTransactions; i++)
         {
             var worker = _client.GetGrain<IWorkGrain>(i,
                 grainClassNamePrefix: "WorkloadGenerator.Grains.WorkGrain");
             
             await worker.Init(_httpClientFactory, _transactionQueue);
-            worker.Start();
+            await worker.Start();
         }
     }
     
@@ -55,6 +55,4 @@ public class WorkloadScheduler
 
         return Task.CompletedTask;
     }
-
-
 }

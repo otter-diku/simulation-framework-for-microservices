@@ -27,7 +27,7 @@ public class WorkGrain : IWorkGrain
     }
 
     // TODO: could make reentrant and once transaction queue is empty we can dispose the grain gracefully from scheduler
-    public async void Start()
+    public async Task Start()
     {
         while (true)
         {
