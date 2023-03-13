@@ -1,0 +1,15 @@
+{
+  "templateId": "checkout-basket",
+  "arguments": [
+    {
+      "name": "user-id",
+      "type": "string"
+    }
+  ],
+  "operations": [
+    {
+      "operationReferenceId": "basket-checkout",
+      "id": "op-1"
+    }    
+  ]
+}

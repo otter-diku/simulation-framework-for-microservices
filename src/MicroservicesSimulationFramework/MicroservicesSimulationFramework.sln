@@ -12,7 +12,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Utilities", "..\Utilities\U
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WorkloadGenerator.Coordinator", "..\WorkloadGenerator\WorkloadGenerator.Coordinator\WorkloadGenerator.Coordinator.csproj", "{ACE32CDD-75E8-4C01-947A-A90BA17BA435}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Data", "..\Data\Data.csproj", "{49E9E8DC-3127-4DED-A496-0CD9E316ACDA}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EshopData", "..\EshopData\EshopData.csproj", "{49E9E8DC-3127-4DED-A496-0CD9E316ACDA}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WorkloadGenerator.Data", "..\WorkloadGenerator\WorkloadGenerator.Data\WorkloadGenerator.Data.csproj", "{7E15658A-DBE4-4863-A330-2F6307F88AFA}"
 EndProject

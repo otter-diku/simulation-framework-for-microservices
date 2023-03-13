@@ -1,13 +1,9 @@
-using System.Diagnostics;
-using System.Runtime.InteropServices.JavaScript;
 using System.Text.Json;
-using System.Text.Json.Nodes;
-using System.Text.RegularExpressions;
-using System.Transactions;
 using Microsoft.Extensions.Logging;
-using WorkloadGenerator.Data.Models;
+using Utilities;
 using WorkloadGenerator.Data.Models.Operation;
 using WorkloadGenerator.Data.Models.Operation.Http;
+using WorkloadGenerator.Data.Models.Operation.Sleep;
 using WorkloadGenerator.Data.Models.Transaction;
 
 namespace WorkloadGenerator.Data.Services;
@@ -30,7 +26,7 @@ public class TransactionRunnerService
     public async Task Run(
         TransactionInputUnresolved transaction,
         Dictionary<string, object> providedValues,
-        Dictionary<string, HttpOperationInputUnresolved> operationsDictionary)
+        Dictionary<string, ITransactionOperationUnresolved> operationsDictionary)
     {
         // generate dynamic variable for transaction.DynamicVariables
         for (var i = 0; i < transaction.Operations.Count; i++)
@@ -41,10 +37,26 @@ public class TransactionRunnerService
                 throw new Exception($"Could not find operation with ID {opRefId}");
             }
 
-            _transactionOperationService.TryResolve(operation, providedValues, out var resolved);
-            _transactionOperationService.TryConvertToExecutable(resolved, out var transactionOperationBaseExecutable);
+            var didResolve = _transactionOperationService.TryResolve(operation, providedValues, out var resolved);
+            if (!didResolve)
+            {
+                Console.WriteLine($"Failed to resolve Tx: {transaction.TemplateId}, Op: {opRefId}");
+                return;
+            }
+            var didConvert = _transactionOperationService.TryConvertToExecutable(resolved, out var transactionOperationBaseExecutable);
+            if (!didConvert)
+            {
+                Console.WriteLine($"Failed to convert Tx: {transaction.TemplateId}, Op: {opRefId}");
+                return;
+            }
+
 
             var result = await ExecuteOperation(transactionOperationBaseExecutable);
+
+            if (result is null) {
+                // sleep operation
+                continue;
+            }
 
             var returnValues = await ExtractReturnValues(operation, result);
 
@@ -52,11 +64,21 @@ public class TransactionRunnerService
             // if we really only want to pass what the next operation uses it gets more tricky
             foreach (var p in returnValues)
             {
-                if (!providedValues.ContainsKey(p.Key))
-                {
-                    providedValues.Add(p.Key, p.Value);
-                }
+                // TODO: we probably want to just override providedValues
+                // for example when reusing same operation in a transaction
+                // if (!providedValues.ContainsKey(p.Key))
+                // {
+                //     providedValues.Add(p.Key, p.Value);
+                // }
+                providedValues[p.Key] = p.Value;
             }
+
+
+            // TODO: need to write this to Kafka cluster instead
+            await using var logFile = new StreamWriter(Path.Combine(Directory.GetCurrentDirectory(), Constants.LogFile), true);
+            await logFile.WriteLineAsync($"[{DateTime.Now}]: Tx: {transaction.TemplateId}, Op: {opRefId}:");
+            await logFile.WriteLineAsync($"Result: {((HttpResponseMessage)result).ToString()}");
+            await logFile.WriteLineAsync("----------------------------------------------------------------");
         }
     }
 
@@ -72,6 +94,32 @@ public class TransactionRunnerService
                     responseMessage),
                 _ => throw new ArgumentOutOfRangeException(nameof(result), result, null)
             };
+        }
+
+        return new Dictionary<string, object>();
+    }
+
+    private async Task<Dictionary<string, object>> ExtractReturnValues(
+        ITransactionOperationUnresolved operation,
+        object result)
+    {
+
+        try
+        {
+            var op = (HttpOperationInputUnresolved)operation;
+            if (op.Response is not null)
+            {
+                return result switch
+                {
+                    HttpResponseMessage responseMessage => await ExtractReturnValuesFromHttpMessage(op.Response,
+                        responseMessage),
+                    _ => throw new ArgumentOutOfRangeException(nameof(result), result, null)
+                };
+            }
+        }
+        catch
+        {
+            // ignored
         }
 
         return new Dictionary<string, object>();
@@ -176,8 +224,10 @@ public class TransactionRunnerService
     }
 
     private async Task<object> ExecuteSleepOperation(
-        TransactionOperationExecutableBase transactionOperationbaseExecutable)
+        TransactionOperationExecutableBase transactionOperationBaseExecutable)
     {
-        throw new NotImplementedException();
+        var executable = (SleepOperationTransactionExecutable)transactionOperationBaseExecutable;
+        await executable.Sleep();
+        return null;
     }
 }

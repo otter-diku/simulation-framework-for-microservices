@@ -2,10 +2,12 @@
   "id": "workload-id",
   "transactions": [
     {
+      "id": "tx1",
       "transactionReferenceId": "tx-1",
       "count": 10000
     },
     {
+      "id": "tx2",
       "transactionReferenceId": "tx-2",
       "count": 1000
     }

@@ -7,6 +7,7 @@
         public const string ClusterId = "LocalTestCluster";
         public const string ServiceId = "WorkloadGenerator";
 
+        public const string LogFile = "log.txt";
 
         public const string AliceUserId = "10000000-0000-0000-0000-000000000000";
         public const string BobUserId = "20000000-0000-0000-0000-000000000000";

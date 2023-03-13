@@ -1,6 +1,6 @@
 namespace WorkloadGenerator.Data.Models.Operation;
 
-public interface ITransactionOperationUnresolved
+public interface ITransactionOperationUnresolved : ITransactionOperation
 {
     void ValidateAndThrow();
 

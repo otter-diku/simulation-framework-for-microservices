@@ -15,6 +15,8 @@ public class HttpOperationInputUnresolved : HttpOperationInputBase, ITransaction
         var validator = new HttpOperationInputUnresolvedValidator();
         validator.ValidateAndThrow(this);
     }
+
+    public string TemplateId { get; set; }
 }
 
 public class HttpOperationInputUnresolvedValidator : AbstractValidator<HttpOperationInputUnresolved>
@@ -22,6 +24,10 @@ public class HttpOperationInputUnresolvedValidator : AbstractValidator<HttpOpera
     public HttpOperationInputUnresolvedValidator()
     {
         Include(new HttpOperationInputBaseValidator());
+        
+        RuleFor(operation => operation.TemplateId)
+            .NotEmpty()
+            .WithMessage($"{nameof(ITransactionOperationUnresolved)} ID needs to be a non-empty string");
 
         When(input => input.Arguments is not null && input.DynamicVariables is not null, () =>
         {

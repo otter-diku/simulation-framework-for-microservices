@@ -1,0 +1,45 @@
+{
+  "templateId": "basket-checkout",
+  "type": "http",
+  "httpMethod": "post",
+  "arguments": [
+    {
+      "name": "user-id",
+      "type": "string"
+    }
+  ],
+  "dynamicVariables": [
+    {
+      "name": "x-requestid",
+      "type": "guid"
+    }
+  ],
+  "headers": [
+    {
+      "key": "user-id",
+      "value": "{{user-id}}"
+    },
+    {
+      "key": "x-requestid",
+      "value": "{{x-requestid}}"
+    }      
+  ],
+  "requestPayload": {
+    "type": "json",
+    "content": {
+      "city": "string",
+      "street": "string",
+      "state": "string",
+      "country": "string",
+      "zipCode": "string",
+      "cardNumber": "string",
+      "cardHolderName": "string",
+      "cardExpiration": "2028-03-09T08:33:48.160Z",
+      "cardSecurityNumber": "424",
+      "cardTypeId": 1,
+      "buyer": "{{user-id}}",
+      "requestId": "{{x-requestid}}"
+    }
+  },
+  "url": "http://localhost:5103/basket-api/api/v1/Basket/checkout" 
+}

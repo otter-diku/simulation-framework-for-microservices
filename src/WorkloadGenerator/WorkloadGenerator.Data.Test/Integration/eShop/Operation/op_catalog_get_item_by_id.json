@@ -8,12 +8,17 @@
       "type": "number"
     }
   ],
-  "returnValues": [
-    {
-      "key": "item-1",
-      "value": "$",
-      "type": "object"
+  "response": {
+    "payload": {
+      "type": "json",
+      "returnValues": [
+        {
+          "key": "item-1",
+          "value": "$",
+          "type": "object"
+        }
+      ]
     }
-  ],
+  },  
   "url": "http://localhost:5101/catalog-api/api/v1/Catalog/items/{{product-id}}"
 }

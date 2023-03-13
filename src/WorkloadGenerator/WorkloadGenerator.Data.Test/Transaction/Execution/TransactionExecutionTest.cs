@@ -26,7 +26,7 @@ public class TransactionExecutionTest
           }
         }
         """;
-        var operations = new Dictionary<string, HttpOperationInputUnresolved>();
+        var operations = new Dictionary<string, ITransactionOperationUnresolved>();
         var op = new HttpOperationInputUnresolved()
         {
             TemplateId = "operation-1",

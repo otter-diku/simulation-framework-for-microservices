@@ -1,0 +1,35 @@
+{
+  "templateId": "add-item-and-checkout-basket-with-sleeps",
+  "arguments": [
+    {
+      "name": "user-id",
+      "type": "string"
+    },
+    {
+      "name": "sleep-time",
+      "type": "number"
+    }
+  ],
+  "operations": [
+    {
+      "operationReferenceId": "catalog-get-items",
+      "id": "op-1"
+    },
+    {
+      "operationReferenceId": "sleep-in-sec",
+      "id": "sleep-1"
+    },    
+    {
+      "operationReferenceId": "basket-add-item",
+      "id": "op-2"
+    },
+    {
+      "operationReferenceId": "sleep-in-sec",
+      "id": "sleep-2"
+    },    
+    {
+      "operationReferenceId": "basket-checkout",
+      "id": "op-3"
+    }    
+  ]
+}

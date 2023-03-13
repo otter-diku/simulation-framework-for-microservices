@@ -8,6 +8,12 @@
       "type": "object"
     }
   ],
+  "dynamicVariables": [
+    {
+      "name": "new-price",
+      "type": "unsignedInt"
+    }
+  ],  
   "requestPayload": {
     "type": "json",
     "content": {
@@ -18,9 +24,9 @@
       "pictureFileName": "{{@@item-1.pictureFileName@@}}",
       "pictureUri": "{{@@item-1.pictureUri@@}}",
       "catalogTypeId": "{{@@item-1.catalogTypeId@@}}",
-      "catalogType": "{{@@item-1.catalogType@@}}",
+      "catalogType": null,
       "catalogBrandId": "{{@@item-1.catalogBrandId@@}}",
-      "catalogBrand": "{{@@item-1.catalogBrand@@}}}",
+      "catalogBrand": null,
       "availableStock": "{{@@item-1.availableStock@@}}",
       "restockThreshold": "{{@@item-1.restockThreshold@@}}",
       "maxStockThreshold": "{{@@item-1.maxStockThreshold@@}}",

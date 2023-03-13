@@ -1,0 +1,6 @@
+{
+  "templateId": "sleep-2-sec",
+  "type": "sleep",
+  "duration": "2",
+  "units": "seconds"
+}
