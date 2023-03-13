@@ -17,10 +17,11 @@
       "id": "userId",
       "type": "constant",
       "constant": "10000000-0000-0000-0000-000000000000"
-    }    
+    }
   ],
   "transactions": [
     {
+      "id": "tx1",
       "transactionReferenceId": "add-catalog-item",
       "count": 10,
       "data": [
@@ -31,6 +32,7 @@
       ]
     },
     {
+      "id": "tx2",
       "transactionReferenceId": "update-catalog-item-price",
       "count": 10,
       "data": [
@@ -41,6 +43,7 @@
       ]
     },
     {
+      "id": "tx3",
       "transactionReferenceId": "add-item-and-checkout-basket",
       "count": 10,
       "data": [

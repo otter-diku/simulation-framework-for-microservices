@@ -13,6 +13,7 @@ public class WorkerGrain : IWorkerGrain
 {
     public async Task ExecuteTransaction(
         WorkloadInputUnresolved workload,
+        TransactionReference txRef,
         TransactionInputUnresolved tx,
         Dictionary<string, ITransactionOperationUnresolved> operations,
         IHttpClientFactory httpClientFactory)
@@ -28,8 +29,6 @@ public class WorkerGrain : IWorkerGrain
         // generate provided values needed by transaction
         var providedValues = new Dictionary<string, object>();
 
-        var txRef =
-            workload.Transactions.First(t => t.TransactionReferenceId == tx.TemplateId);
         foreach (var genRef in txRef.Data)
         {
             var generatorInput = workload.Generators.First(g => g.Id == genRef.GeneratorReferenceId);

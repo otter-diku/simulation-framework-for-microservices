@@ -4,6 +4,8 @@ namespace WorkloadGenerator.Data.Models.Workload;
 
 public class TransactionReference
 {
+    public string Id { get; set; }
+
     public string TransactionReferenceId { get; set; } 
 
     public int Count { get; set; }
@@ -17,6 +19,7 @@ public class TransactionReferenceValidator : AbstractValidator<TransactionRefere
 {
     public TransactionReferenceValidator()
     {
+        RuleFor(txRef => txRef.Id).NotEmpty();
         RuleFor(txRef => txRef.TransactionReferenceId)
             .NotEmpty();
         RuleFor(txRef => txRef.Count)

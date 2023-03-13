@@ -8,6 +8,7 @@ public interface IWorkerGrain : IGrainWithIntegerKey
 {
     Task ExecuteTransaction(
         WorkloadInputUnresolved workload,
+        TransactionReference txRef,
         TransactionInputUnresolved tx,
         Dictionary<string, ITransactionOperationUnresolved> operations,
         IHttpClientFactory httpClientFactory);

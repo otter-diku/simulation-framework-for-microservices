@@ -27,8 +27,8 @@ public class WorkloadCoordinator : IDisposable
     private DefaultHttpClientFactory _httpClientFactory;
 
     public WorkloadCoordinator()
-    { 
-        
+    {
+
     }
 
     public async Task Init()
@@ -40,21 +40,21 @@ public class WorkloadCoordinator : IDisposable
     }
 
     public async Task RunWorkload(
-        WorkloadInputUnresolved workloadToRun, 
+        WorkloadInputUnresolved workloadToRun,
         Dictionary<string, TransactionInputUnresolved> transactions,
         Dictionary<string, ITransactionOperationUnresolved> operations)
     {
         // need to complete transactions that are specified (counts)
         // need algorithm to select next transaction + number of concurrent transactions
         // running
-        
+
         // spawn worker threads according to numbers with timers?
         // then start them
         var txCounts = workloadToRun.Transactions.Select(t => t.Count);
         var txToExecute = new List<string>();
         foreach (var txRef in workloadToRun.Transactions)
         {
-            txToExecute.AddRange(Enumerable.Repeat<string>(txRef.TransactionReferenceId, txRef.Count));
+            txToExecute.AddRange(Enumerable.Repeat<string>(txRef.Id, txRef.Count));
         }
         // TODO: shuffle list for now use guid but probably not optimal
         var txStack = new Stack<string>(txToExecute.OrderBy(a => Guid.NewGuid()));
@@ -69,24 +69,29 @@ public class WorkloadCoordinator : IDisposable
         // Here we simply spawn a worker grain for each transaction and wait for their completion
         while (txStack.Count != 0)
         {
-            var nextTx = txStack.Pop();
+            var nextId = txStack.Pop();
+            var txRef =
+                workloadToRun.Transactions.Find(tr => tr.Id == nextId);
+
+
             var worker = _client.GetGrain<IWorkerGrain>(txStack.Count,
                 grainClassNamePrefix: "WorkloadGenerator.Grains.WorkerGrain");
-            var tx = transactions[nextTx];
+            var tx = transactions[txRef.TransactionReferenceId];
             var txOpsRefs = tx.Operations.Select(o => o.OperationReferenceId).ToHashSet();
-            var txOps = 
+            var txOps =
                 operations.Where(o => txOpsRefs.Contains(o.Key))
                     .ToDictionary(x => x.Key, x => x.Value);
-            Console.WriteLine($"Starting tx: {nextTx}");
-            var task = worker.ExecuteTransaction(workloadToRun, transactions[nextTx], txOps, _httpClientFactory);
+            Console.WriteLine($"Starting tx: {txRef.Id}");
+            var task = worker.ExecuteTransaction(workloadToRun, txRef,
+                transactions[txRef.TransactionReferenceId], txOps, _httpClientFactory);
             tasks.Add(task);
         }
 
         await Task.WhenAll(tasks);
     }
-    
+
 public async Task ScheduleWorkload(
-        WorkloadInputUnresolved workloadToRun, 
+        WorkloadInputUnresolved workloadToRun,
         Dictionary<string, TransactionInputUnresolved> transactions,
         Dictionary<string, ITransactionOperationUnresolved> operations)
     {
@@ -99,13 +104,13 @@ public async Task ScheduleWorkload(
         // TODO: shuffle list for now use guid but probably not optimal
         var txStack = new Stack<string>(txToExecute.OrderBy(a => Guid.NewGuid()));
 
-        
+
         var maxRate = 10;
         if (workloadToRun.MaxConcurrentTransactions is not null)
         {
             maxRate = (int) workloadToRun.MaxConcurrentTransactions;
         }
-        
+
         // init Scheduler here, which will spawn workerGrains and create queue
         var workloadScheduler = new WorkloadScheduler(maxRate, _client, _httpClientFactory);
         workloadScheduler.Init();
@@ -143,7 +148,7 @@ public async Task ScheduleWorkload(
         }
 
         await workloadScheduler.WaitForEmptyQueue();
-    }    
+    }
 
     public void StartExecution(int numTransactions)
     {
@@ -173,7 +178,7 @@ public async Task ScheduleWorkload(
 
     private List<TransactionType> GenerateTransactionDistribution(int numTransactions)
     {
-        // want to use config to have certain distribution of xacts 
+        // want to use config to have certain distribution of xacts
         var values = Enum.GetValues(typeof(TransactionType));
         var random = new Random();
 
@@ -205,6 +210,6 @@ public async Task ScheduleWorkload(
                 _handlerLazy.Value.Dispose();
             }
         }
-    }    
-    
+    }
+
 }

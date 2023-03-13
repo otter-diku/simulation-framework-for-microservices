@@ -5,7 +5,7 @@ public class EShopIntegrationTest
     [Test] 
     public void ParseTransactionTest()
     {
-        var json = File.ReadAllText("Integration/eShop/Transaction/tx_add_items_to_basket.json");
+        // var json = File.ReadAllText("Integration/eShop/Transaction/tx_add_items_to_basket.json");
         
     }
 }
