@@ -53,7 +53,8 @@ public class TransactionRunnerService
 
             var result = await ExecuteOperation(transactionOperationBaseExecutable);
 
-            if (result is null) {
+            if (result is null)
+            {
                 // sleep operation
                 continue;
             }

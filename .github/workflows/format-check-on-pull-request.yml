@@ -1,0 +1,37 @@
+name: Format check on pull request
+on: pull_request
+
+env:
+  DOTNET_VERSION: '7.0.102' # The .NET SDK version to use
+  SLN_PATH: 'src/MicroservicesSimulationFramework/MicroservicesSimulationFramework.sln'
+
+jobs:
+  dotnet-format:
+
+    name: format-${{matrix.os}}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest]
+
+    permissions:
+      # Give the default GITHUB_TOKEN write permission to commit and push the
+      # added or changed files to the repository.
+      contents: write
+
+    steps:
+    - uses: actions/checkout@v3
+    - name: Setup .NET Core
+      uses: actions/setup-dotnet@v3
+      with:
+        dotnet-version: ${{ env.DOTNET_VERSION }}
+
+    - name: Format code
+      run: dotnet format ${{ env.SLN_PATH }}
+
+      # Commit all changed files back to the repository
+    - uses: stefanzweifel/git-auto-commit-action@v4
+      with:
+        # Optional. Commit message for the created commit.
+        # Defaults to "Apply automatic changes"
+        commit_message: Apply formatting changes.

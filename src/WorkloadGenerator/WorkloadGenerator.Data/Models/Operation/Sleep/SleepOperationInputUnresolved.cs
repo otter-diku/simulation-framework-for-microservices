@@ -23,9 +23,9 @@ public class SleepOperationInputUnresolvedValidator : AbstractValidator<SleepOpe
     public SleepOperationInputUnresolvedValidator()
     {
         Include(new SleepOperationInputBaseValidator());
-        
+
         RuleFor(operation => operation.TemplateId)
             .NotEmpty()
-            .WithMessage($"{nameof(ITransactionOperationUnresolved)} ID needs to be a non-empty string");        
+            .WithMessage($"{nameof(ITransactionOperationUnresolved)} ID needs to be a non-empty string");
     }
 }

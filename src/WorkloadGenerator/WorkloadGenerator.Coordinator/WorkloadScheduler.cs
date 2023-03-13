@@ -25,8 +25,8 @@ public class WorkloadScheduler
     {
         _maxConcurrentTransactions = maxConcurrentTransactions;
         _client = client;
-        _httpClientFactory = httpClientFactory; 
-        
+        _httpClientFactory = httpClientFactory;
+
         _transactionQueue = new ConcurrentQueue<ExecutableTransaction>();
     }
 
@@ -36,12 +36,12 @@ public class WorkloadScheduler
         {
             var worker = _client.GetGrain<IWorkGrain>(i,
                 grainClassNamePrefix: "WorkloadGenerator.Grains.WorkGrain");
-            
+
             await worker.Init(_httpClientFactory, _transactionQueue);
             await worker.Start();
         }
     }
-    
+
     public void SubmitTransaction(ExecutableTransaction executableTransaction)
     {
         _transactionQueue.Enqueue(executableTransaction);

@@ -9,14 +9,14 @@ namespace WorkloadGenerator.Data.Services;
 public class WorkloadService : IWorkloadService
 {
     private readonly ILogger<WorkloadService> _logger;
-    private readonly WorkloadInputUnresolvedValidator _workloadInputUnresolvedValidator;    
-    
+    private readonly WorkloadInputUnresolvedValidator _workloadInputUnresolvedValidator;
+
     public WorkloadService(ILogger<WorkloadService> logger)
     {
         _logger = logger;
         _workloadInputUnresolvedValidator = new WorkloadInputUnresolvedValidator();
     }
-    
+
     private readonly JsonSerializerOptions _jsonSerializerOptions = new()
     {
         PropertyNameCaseInsensitive = true,
@@ -25,7 +25,7 @@ public class WorkloadService : IWorkloadService
             new JsonStringEnumConverter(JsonNamingPolicy.CamelCase)
         }
     };
-    
+
     public bool TryParseInput(string json, out WorkloadInputUnresolved workloadInputUnresolved)
     {
         workloadInputUnresolved = null!;
@@ -34,12 +34,12 @@ public class WorkloadService : IWorkloadService
             workloadInputUnresolved =
                 JsonSerializer.Deserialize<WorkloadInputUnresolved>(json, _jsonSerializerOptions);
 
-            return workloadInputUnresolved is not null 
+            return workloadInputUnresolved is not null
                    && _workloadInputUnresolvedValidator.Validate(workloadInputUnresolved).IsValid;
         }
         catch (Exception exception)
         {
-            _logger.LogInformation(exception, 
+            _logger.LogInformation(exception,
                 "Failed trying to deserialize input data for workload");
 
             return false;
@@ -52,7 +52,7 @@ public class WorkloadService : IWorkloadService
         out WorkloadInputResolved resolved)
     {
         resolved = null!;
-        
+
         if (!ValidateTransactionReferenceIds(unresolved.Transactions, transactionReferenceIds))
         {
             return false;
@@ -65,14 +65,14 @@ public class WorkloadService : IWorkloadService
                 .ToDictionary(x => x.TransactionReferenceId, x => x),
             Generators = unresolved.Generators
         };
-        
+
         return true;
     }
 
     private bool ValidateTransactionReferenceIds(List<TransactionReference> unresolvedTransactions,
         HashSet<string> transactionReferenceIds)
     {
-        var unknownTransactionReference = 
+        var unknownTransactionReference =
             unresolvedTransactions.FirstOrDefault(tx
                 => !transactionReferenceIds.Contains(tx.TransactionReferenceId));
 
@@ -106,11 +106,11 @@ public class WorkloadService : IWorkloadService
                 throw new ArgumentOutOfRangeException();
         }
     }
-    
+
     public Dictionary<string, object> GenerateData(WorkloadInputResolved workload, string transactionRefId)
     {
         var providedValues = new Dictionary<string, object>();
-        
+
         var generators = new Dictionary<string, IGenerator>();
         if (workload.Generators is not null)
         {
@@ -119,7 +119,7 @@ public class WorkloadService : IWorkloadService
         }
         var tx = workload.TransactionReferences
             .GetValueOrDefault(transactionRefId, null);
-        
+
         // generate all values for the transaction
         if (tx is not null && tx.Data is not null)
         {
@@ -129,7 +129,7 @@ public class WorkloadService : IWorkloadService
                     generators[genRef.GeneratorReferenceId].Next());
             }
         }
-        
+
         return providedValues;
     }
 }

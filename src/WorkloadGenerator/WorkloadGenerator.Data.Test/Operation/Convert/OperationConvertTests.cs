@@ -22,7 +22,7 @@ public class OperationConvertTests
                 HttpMethod = HttpMethod.Post,
                 TemplateId = "some-string",
                 RequestPayload = new JsonPayloadResolved()
-                    { Content = JsonNode.Parse(JsonSerializer.Serialize(new TestClass() { ItemId = 42 })) },
+                { Content = JsonNode.Parse(JsonSerializer.Serialize(new TestClass() { ItemId = 42 })) },
                 QueryParameters = new List<QueryParameter>() { new() { Key = "a", Value = "b" } },
                 Type = OperationType.Http,
                 Url = "http://example.com"
@@ -37,14 +37,14 @@ public class OperationConvertTests
         var httpOperationExecutable = executable as HttpOperationTransactionExecutable;
         httpOperationExecutable.PrepareRequestMessage(httpMessage);
 
-        Assert.AreEqual(httpMessage.RequestUri.AbsoluteUri, "http://example.com/?a=b");
-        Assert.AreEqual(httpMessage.Method.ToString().ToLower(), HttpMethod.Post.ToString().ToLower());
-        Assert.AreEqual(httpMessage.RequestUri.Query, "?a=b");
+        Assert.That(httpMessage.RequestUri.AbsoluteUri, Is.EqualTo("http://example.com/?a=b"));
+        Assert.That(HttpMethod.Post.ToString().ToLower(), Is.EqualTo(httpMessage.Method.ToString().ToLower()));
+        Assert.That(httpMessage.RequestUri.Query, Is.EqualTo("?a=b"));
         Assert.True(httpMessage.Headers.TryGetValues("header1", out var val));
-        Assert.AreEqual(val.Single(), "value1");
-        Assert.AreEqual(httpMessage.Content.Headers.ContentType.ToString(), "application/json; charset=utf-8");
+        Assert.That(val.Single(), Is.EqualTo("value1"));
+        Assert.That(httpMessage.Content.Headers.ContentType.ToString(), Is.EqualTo("application/json; charset=utf-8"));
         var content = await httpMessage.Content.ReadAsStringAsync();
-        Assert.AreEqual(JsonSerializer.Deserialize<TestClass>(content).ItemId, 42);
+        Assert.That(JsonSerializer.Deserialize<TestClass>(content).ItemId, Is.EqualTo(42));
     }
 
     [Test]
@@ -70,11 +70,11 @@ public class OperationConvertTests
         var httpOperationExecutable = executable as HttpOperationTransactionExecutable;
         httpOperationExecutable.PrepareRequestMessage(httpMessage);
 
-        Assert.AreEqual(httpMessage.RequestUri.AbsoluteUri, "http://example.com/?a=b");
-        Assert.AreEqual(httpMessage.Method.ToString().ToLower(), HttpMethod.Get.ToString().ToLower());
-        Assert.AreEqual(httpMessage.RequestUri.Query, "?a=b");
+        Assert.That(httpMessage.RequestUri.AbsoluteUri, Is.EqualTo("http://example.com/?a=b"));
+        Assert.That(HttpMethod.Get.ToString().ToLower(), Is.EqualTo(httpMessage.Method.ToString().ToLower()));
+        Assert.That(httpMessage.RequestUri.Query, Is.EqualTo("?a=b"));
         Assert.True(httpMessage.Headers.TryGetValues("header1", out var val));
-        Assert.AreEqual(val.Single(), "value1");
+        Assert.That(val.Single(), Is.EqualTo("value1"));
         Assert.IsNull(httpMessage.Content);
     }
 

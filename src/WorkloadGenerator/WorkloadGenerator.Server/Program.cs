@@ -35,7 +35,7 @@ namespace WorkloadGenerator.Server
                                 type.Namespace.StartsWith("WorkloadGenerator.Data.Models")
                                 || type.Namespace.StartsWith("WorkloadGenerator.Coordinator")
                             );
-                    });                        
+                    });
                 });
 
             var server = builder.Build();

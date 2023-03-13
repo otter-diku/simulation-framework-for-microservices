@@ -12,7 +12,7 @@ public class Utilities
                arguments.All(requiredArgument =>
                    providedValues?.ContainsKey(requiredArgument.Name) ?? false);
     }
-    
+
     public static Dictionary<string, object> AddDynamicValues(DynamicVariable[]? dynamicVariables,
         Dictionary<string, object> providedValues)
     {

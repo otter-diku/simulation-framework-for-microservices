@@ -25,21 +25,21 @@ public class TransactionResolvingTest
             ? default
             : JsonSerializer.Deserialize<Dictionary<string, object>>(arguments);
 
-        var operationReferenceIds = 
+        var operationReferenceIds =
             parsedInput.Operations.Select(o => o.OperationReferenceId).ToHashSet();
         var isResolvedSuccessful = sut.TryResolve(parsedInput, parsedArguments, operationReferenceIds, out var resolved);
-        
+
         Assert.IsTrue(isResolvedSuccessful);
         Assert.IsInstanceOf<TransactionInputResolved>(resolved);
 
         if (parsedInput.Arguments is not null)
         {
-            Assert.True(parsedInput.Arguments.All(a => resolved.ProvidedValues.ContainsKey(a.Name)));    
+            Assert.True(parsedInput.Arguments.All(a => resolved.ProvidedValues.ContainsKey(a.Name)));
         }
 
         if (parsedInput.DynamicVariables is not null)
         {
-            Assert.True(parsedInput.DynamicVariables.All(dv => resolved.ProvidedValues.ContainsKey(dv.Name)));    
+            Assert.True(parsedInput.DynamicVariables.All(dv => resolved.ProvidedValues.ContainsKey(dv.Name)));
         }
     }
 

@@ -58,15 +58,15 @@ public class TransactionOperationService : ITransactionOperationService
             switch (baseInput.Type)
             {
                 case OperationType.Http:
-                {
-                    unresolvedInput = Parse<HttpOperationInputUnresolved>(json);
-                    return true;
-                }
+                    {
+                        unresolvedInput = Parse<HttpOperationInputUnresolved>(json);
+                        return true;
+                    }
                 case OperationType.Sleep:
-                {
-                    unresolvedInput = Parse<SleepOperationInputUnresolved>(json);
-                    return true;
-                }
+                    {
+                        unresolvedInput = Parse<SleepOperationInputUnresolved>(json);
+                        return true;
+                    }
                 default:
                     throw new ArgumentOutOfRangeException();
             }

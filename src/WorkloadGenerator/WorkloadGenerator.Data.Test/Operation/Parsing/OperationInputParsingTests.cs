@@ -23,7 +23,6 @@ public class OperationInputTests
         Assert.False(result);
     }
 
-
     private class InvalidOperationInputCases : IEnumerable
     {
         public IEnumerator GetEnumerator()

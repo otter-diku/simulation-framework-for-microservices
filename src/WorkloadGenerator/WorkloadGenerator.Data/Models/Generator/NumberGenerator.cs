@@ -2,7 +2,7 @@ namespace WorkloadGenerator.Data.Models.Generator;
 
 public class NumberGenerator : GeneratorBase, IGenerator
 {
-    
+
     private Int64 _lastVal;
 
     private Random _random;
@@ -20,7 +20,7 @@ public class NumberGenerator : GeneratorBase, IGenerator
         _min = optionalMin;
         _max = optionalMax;
     }
-    
+
     public Int64 LastValue()
     {
         return this._lastVal;
@@ -35,7 +35,7 @@ public class NumberGenerator : GeneratorBase, IGenerator
         }
         else
         {
-            next = _random.Next();            
+            next = _random.Next();
         }
         _lastVal = next;
         return next;

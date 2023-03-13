@@ -6,7 +6,7 @@ namespace WorkloadGenerator.Data.Models.Workload;
 
 public class WorkloadInputUnresolved : WorkloadInputBase
 {
-    
+
 }
 
 public class WorkloadInputUnresolvedValidator : AbstractValidator<WorkloadInputUnresolved>
@@ -20,9 +20,9 @@ public class WorkloadInputUnresolvedValidator : AbstractValidator<WorkloadInputU
             RuleFor(input => input).Must(input => input.Transactions
                     .TrueForAll(txRef =>
                         txRef.Data.TrueForAll(
-                            genRef => 
-                                input.Generators.Select(g => g.Id).ToHashSet().Contains(genRef.GeneratorReferenceId) 
+                            genRef =>
+                                input.Generators.Select(g => g.Id).ToHashSet().Contains(genRef.GeneratorReferenceId)
                     )));
-        });        
+        });
     }
 }
