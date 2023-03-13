@@ -1,5 +1,5 @@
 run_eshop_workloads:
-	cd src/MicroservicesSimulationFramework/MicroservicesSimulationFramework.Core && dotnet run /home/pt/repos/simulation-framework-for-microservices/src/WorkloadGenerator/WorkloadGenerator.Data.Test/Integration/eShop
+	cd src/MicroservicesSimulationFramework/MicroservicesSimulationFramework.Core && dotnet run $(shell dirname $(realpath $(firstword $(MAKEFILE_LIST))))/src/WorkloadGenerator/WorkloadGenerator.Data.Test/Integration/eShop
 
 
 test_eshop:
