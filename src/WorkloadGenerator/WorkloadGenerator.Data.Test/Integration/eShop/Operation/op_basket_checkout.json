@@ -32,7 +32,7 @@
       "state": "string",
       "country": "string",
       "zipCode": "string",
-      "cardNumber": "string",
+      "cardNumber": "123457182756574",
       "cardHolderName": "string",
       "cardExpiration": "2028-03-09T08:33:48.160Z",
       "cardSecurityNumber": "424",
