@@ -14,12 +14,11 @@ namespace WorkloadGenerator.Client2;
 /// </summary>
 public class WorkloadCoordinator
 {
-    private IClusterClient _client;
-    private IHttpClientFactory _httpClientFactory;
+    private WorkloadScheduler _workloadScheduler;
 
-    public WorkloadCoordinator(IClusterClient clusterClient)
+    public WorkloadCoordinator(WorkloadScheduler workloadScheduler)
     {
-        _client = clusterClient;
+        _workloadScheduler = workloadScheduler;
     }
 
     // public async Task RunWorkload(
@@ -77,9 +76,8 @@ public class WorkloadCoordinator
             Dictionary<string, ITransactionOperationUnresolved> operations)
     {
         var txStack = GetTransactionsToExecute(workloadToRun);
-        var maxRate = GetMaxRate(workloadToRun);
-        var workloadScheduler = await CreateWorkloadScheduler(maxRate);
-        
+        // var maxRate = GetMaxRate(workloadToRun);
+
         // init Scheduler here, which will spawn workerGrains and create queue
 
         while (txStack.Count != 0)
@@ -95,11 +93,11 @@ public class WorkloadCoordinator
             // Submit transaction to scheduler
             Console.WriteLine($"Submit tx: {executableTx.Transaction.TemplateId} to scheduler");
 
-            await workloadScheduler.SubmitTransaction(executableTx);
+            await _workloadScheduler.SubmitTransaction(executableTx);
         }
 
         Console.ReadKey();
-        await workloadScheduler.WaitForEmptyQueue();
+        await _workloadScheduler.WaitForEmptyQueue();
     }
 
     private static ExecutableTransaction CreateExecutableTransaction(WorkloadInputUnresolved workloadToRun,
@@ -127,13 +125,7 @@ public class WorkloadCoordinator
         };
         return executableTx;
     }
-
-    private async Task<WorkloadScheduler> CreateWorkloadScheduler(int maxRate)
-    {
-        var workloadScheduler = new WorkloadScheduler(maxRate, _client, _httpClientFactory);
-        await workloadScheduler.Init();
-        return workloadScheduler;
-    }
+    
 
     private static int GetMaxRate(WorkloadInputUnresolved workloadToRun)
     {

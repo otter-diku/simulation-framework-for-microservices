@@ -1,17 +1,14 @@
 ﻿using System.Text.Json;
 using System.Text.Json.Serialization;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Orleans;
 using Orleans.Configuration;
-using Orleans.Hosting;
 using Orleans.Serialization;
 using Utilities;
 using WorkloadGenerator.Data.Models.Operation;
 
 public static class WorkloadGeneratorClient2
 {
-    public static async Task<IClusterClient> StartClientAsync()
+    public static async Task<IHost> StartClientAsync()
     {
         var builder = new HostBuilder()
             .UseOrleansClient(clientBuilder =>
@@ -50,8 +47,6 @@ public static class WorkloadGeneratorClient2
 
         var host = builder.Build();
         await host.StartAsync();
-        
-        var clusterClient = host.Services.GetRequiredService<IClusterClient>();
-        return clusterClient;
+        return host;
     }
 }

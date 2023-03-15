@@ -5,24 +5,14 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging.Abstractions;
 using WorkloadGenerator.Data.Services;
 using Utilities;
+using WorkloadGenerator.Client;
 using WorkloadGenerator.Client2;
 using WorkloadGenerator.Data.Models.Operation;
 using WorkloadGenerator.Data.Models.Transaction;
 using WorkloadGenerator.Data.Models.Workload;
 using WorkloadGenerator.Server;
 
-using IHost host = Host.CreateDefaultBuilder(args)
-    .ConfigureServices(services =>
-    {
-        services.AddSingleton<TransactionRunnerService>();
-        services.AddHttpClient<TransactionRunnerService>();
-        services.AddSingleton<ITransactionOperationService, TransactionOperationService>();
-        services.AddSingleton<ITransactionService, TransactionService>();
-        services.AddSingleton<IWorkloadService, WorkloadService>();
-    })
-    .Build();
-
-
+var hostBuilder = Host.CreateDefaultBuilder(args);
 
 if (args.Length == 0)
 {
@@ -110,9 +100,29 @@ if (jsonFiles is not null)
     
     var _ = await WorkloadGeneratorServer.StartSiloAsync();
     
-    var clusterClient = await WorkloadGeneratorClient2.StartClientAsync();
+    var clientHost = await WorkloadGeneratorClient2.StartClientAsync();
+
     
-    var workloadCoordinator = new WorkloadCoordinator(clusterClient);
+    
+    var host = hostBuilder.ConfigureServices(services =>
+        {
+            services.AddSingleton<TransactionRunnerService>();
+            services.AddHttpClient<TransactionRunnerService>();
+            services.AddSingleton<ITransactionOperationService, TransactionOperationService>();
+            services.AddSingleton<ITransactionService, TransactionService>();
+            services.AddSingleton<IWorkloadService, WorkloadService>();
+            services.AddSingleton<WorkloadScheduler>(sp =>
+            {
+                var clusterClient = clientHost.Services.GetRequiredService<IClusterClient>();
+                return new WorkloadScheduler(clusterClient);
+            });
+        })
+        .Build();
+
+
+    // await host.RunAsync();
+    
+    var workloadCoordinator = new WorkloadCoordinator(host.Services.GetRequiredService<WorkloadScheduler>());
 
     // await workloadCoordinator.RunWorkload(workloadToRun, transactions, operations);
     await workloadCoordinator.ScheduleWorkload(workloadToRun, transactions, operations);

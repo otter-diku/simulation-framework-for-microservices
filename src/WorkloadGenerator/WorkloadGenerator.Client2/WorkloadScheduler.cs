@@ -1,5 +1,4 @@
 using System.Collections.Concurrent;
-using Orleans;
 using Orleans.Runtime;
 using Orleans.Streams;
 using WorkloadGenerator.Data.Models;
@@ -19,18 +18,17 @@ public class WorkloadScheduler
 {
     private readonly int _maxConcurrentTransactions;
     private readonly IClusterClient _client;
-    private readonly IHttpClientFactory _httpClientFactory;
     private ConcurrentDictionary<IWorkGrain, bool> _availableWorkers = new();
     private Dictionary<long,IAsyncStream<ExecutableTransaction>> _streams = new();
 
-    public WorkloadScheduler(int maxConcurrentTransactions, IClusterClient client, IHttpClientFactory httpClientFactory)
+    public WorkloadScheduler(IClusterClient client, int maxConcurrentTransactions = 1)
     {
         _maxConcurrentTransactions = maxConcurrentTransactions;
         _client = client;
-        _httpClientFactory = httpClientFactory;
+        Init();
     }
 
-    public async Task Init()
+    private void Init()
     {
         var streamProvider = _client.GetStreamProvider("StreamProvider");
         
