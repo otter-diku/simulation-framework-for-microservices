@@ -1,5 +1,6 @@
 {
   "id": "workload-id",
+  "maxConcurrentTransactions": 1,
   "generators": [
     {
       "id": "productId",
@@ -23,7 +24,7 @@
     {
       "id": "tx1",
       "transactionReferenceId": "add-catalog-item",
-      "count": 10,
+      "count": 2,
       "data": [
         {
           "name":  "product-id",
@@ -34,7 +35,7 @@
     {
       "id": "tx2",
       "transactionReferenceId": "update-catalog-item-price",
-      "count": 10,
+      "count": 2,
       "data": [
         {
           "name":  "product-id",
@@ -45,7 +46,7 @@
     {
       "id": "tx3",
       "transactionReferenceId": "add-item-and-checkout-basket",
-      "count": 10,
+      "count": 2,
       "data": [
         {
           "name":  "user-id",

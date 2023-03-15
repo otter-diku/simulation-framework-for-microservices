@@ -1,11 +1,11 @@
-﻿using WorkloadGenerator.Data.Models;
+﻿using WorkloadGenerator.Client;
+using WorkloadGenerator.Data.Models;
 using WorkloadGenerator.Data.Models.Generator;
 using WorkloadGenerator.Data.Models.Operation;
 using WorkloadGenerator.Data.Models.Transaction;
 using WorkloadGenerator.Data.Models.Workload;
-using WorkloadGenerator.Grains;
 
-namespace WorkloadGenerator.Coordinator;
+namespace WorkloadGenerator.Client2;
 
 /// <summary>
 /// This class is responsible for executing a given Workload / scenario
@@ -15,16 +15,11 @@ namespace WorkloadGenerator.Coordinator;
 public class WorkloadCoordinator
 {
     private IClusterClient _client;
-    private DefaultHttpClientFactory _httpClientFactory;
+    private IHttpClientFactory _httpClientFactory;
 
     public WorkloadCoordinator(IClusterClient clusterClient)
     {
         _client = clusterClient;
-    }
-
-    public async Task Init()
-    {
-        _httpClientFactory = new DefaultHttpClientFactory();
     }
 
     // public async Task RunWorkload(
@@ -85,24 +80,20 @@ public class WorkloadCoordinator
         var maxRate = GetMaxRate(workloadToRun);
         var workloadScheduler = await CreateWorkloadScheduler(maxRate);
         
-
         // init Scheduler here, which will spawn workerGrains and create queue
-        
 
         while (txStack.Count != 0)
         {
-            var tx = transactions[txStack.Pop()];
-
             // var txOpsRefs = tx.Operations.Select(o => o.OperationReferenceId).ToHashSet();
             // var txOps =
             //     operations.Where(o => txOpsRefs.Contains(o.Key))
             //         .ToDictionary(x => x.Key, x => x.Value);
             
             // Generate providedValues with Generators
-            var executableTx = CreateExecutableTransaction(workloadToRun, tx, operations);
+            var executableTx = CreateExecutableTransaction(workloadToRun, txStack.Pop(), transactions, operations);
 
             // Submit transaction to scheduler
-            Console.WriteLine($"Submit tx: {tx.TemplateId} to scheduler");
+            Console.WriteLine($"Submit tx: {executableTx.Transaction.TemplateId} to scheduler");
 
             await workloadScheduler.SubmitTransaction(executableTx);
         }
@@ -112,13 +103,14 @@ public class WorkloadCoordinator
     }
 
     private static ExecutableTransaction CreateExecutableTransaction(WorkloadInputUnresolved workloadToRun,
-        TransactionInputUnresolved tx,
-        Dictionary<string, ITransactionOperationUnresolved> operations)
+        string id,
+        Dictionary<string, TransactionInputUnresolved> transactionsByReferenceId,
+        Dictionary<string, ITransactionOperationUnresolved> operationsByReferenceId)
     {
         var providedValues = new Dictionary<string, object>();
         
         var txRef =
-            workloadToRun.Transactions.First(t => t.TransactionReferenceId == tx.TemplateId);
+            workloadToRun.Transactions.Find(t => t.Id == id);
         
         foreach (var genRef in txRef.Data)
         {
@@ -129,8 +121,8 @@ public class WorkloadCoordinator
 
         var executableTx = new ExecutableTransaction()
         {
-            Transaction = tx,
-            Operations = operations,
+            Transaction = transactionsByReferenceId[txRef.TransactionReferenceId],
+            Operations = operationsByReferenceId,
             ProvidedValues = providedValues
         };
         return executableTx;
@@ -159,69 +151,11 @@ public class WorkloadCoordinator
         var txToExecute = new List<string>();
         foreach (var txRef in workloadToRun.Transactions)
         {
-            txToExecute.AddRange(Enumerable.Repeat(txRef.TransactionReferenceId, txRef.Count));
+            txToExecute.AddRange(Enumerable.Repeat(txRef.Id, txRef.Count));
         }
 
         // TODO: shuffle list for now use guid but probably not optimal
         var txStack = new Stack<string>(txToExecute.OrderBy(a => Guid.NewGuid()));
         return txStack;
     }
-
-    public void StartExecution(int numTransactions)
-    {
-        // var xacts = GenerateTransactionDistribution(numTransactions);
-        // for (int i = 0; i < numTransactions; i++)
-        // {
-        //     if (xacts[i] == TransactionType.CatalogAddItem)
-        //     {
-        //         var worker = _client.GetGrain<IWorkerGrain>(i,
-        //             grainClassNamePrefix: "WorkloadGenerator.Grains.CatalogAddItemGrain");
-        //         worker.ExecuteTransaction().Wait();
-        //     }
-        //     else if (xacts[i] == TransactionType.CatalogUpdatePrice)
-        //     {
-        //         var worker = _client.GetGrain<IWorkerGrain>(i,
-        //             grainClassNamePrefix: "WorkloadGenerator.Grains.CatalogUpdateItemPriceGrain");
-        //         worker.ExecuteTransaction().Wait();
-        //     }
-        //     else if (xacts[i] == TransactionType.BasketAddItem)
-        //     {
-        //         var worker = _client.GetGrain<IWorkerGrain>(i,
-        //             grainClassNamePrefix: "WorkloadGenerator.Grains.BasketAddItemGrain");
-        //         worker.ExecuteTransaction().Wait();
-        //     }
-        // }
-    }
-
-    private List<TransactionType> GenerateTransactionDistribution(int numTransactions)
-    {
-        // want to use config to have certain distribution of xacts
-        var values = Enum.GetValues(typeof(TransactionType));
-        var random = new Random();
-
-        var xacts = new List<TransactionType>();
-        for (int i = 0; i < numTransactions; i++)
-        {
-            var randomXact = (TransactionType)values.GetValue(random.Next(values.Length))!;
-            xacts.Add(randomXact);
-        }
-
-        return xacts;
-    }
-
-    private sealed class DefaultHttpClientFactory : IHttpClientFactory, IDisposable
-    {
-        private readonly Lazy<HttpMessageHandler> _handlerLazy = new(() => new HttpClientHandler());
-
-        public HttpClient CreateClient(string name) => new(_handlerLazy.Value, disposeHandler: false);
-
-        public void Dispose()
-        {
-            if (_handlerLazy.IsValueCreated)
-            {
-                _handlerLazy.Value.Dispose();
-            }
-        }
-    }
-
 }

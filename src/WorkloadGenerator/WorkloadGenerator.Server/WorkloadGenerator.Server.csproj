@@ -16,6 +16,7 @@
 
     <ItemGroup>
         <ProjectReference Include="..\..\Utilities\Utilities.csproj" />
+        <ProjectReference Include="..\WorkloadGenerator.Data\WorkloadGenerator.Data.csproj" />
     </ItemGroup>
 
 </Project>

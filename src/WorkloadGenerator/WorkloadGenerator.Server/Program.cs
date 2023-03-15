@@ -1,8 +1,10 @@
 ﻿using System.Text.Json;
+using System.Text.Json.Serialization;
 using Microsoft.Extensions.Hosting;
 using Orleans.Configuration;
 using Orleans.Serialization;
 using Utilities;
+using WorkloadGenerator.Data.Models.Operation;
 
 namespace WorkloadGenerator.Server
 {
@@ -32,17 +34,24 @@ namespace WorkloadGenerator.Server
                     {
                         serializerBuilder.AddJsonSerializer(
                             isSupported: type =>
-                                type.Namespace.StartsWith("WorkloadGenerator.Data.Models")
-                                || type.Namespace.StartsWith("WorkloadGenerator.Coordinator")
+                                type.Namespace.StartsWith("WorkloadGenerator."),
+                            
+                            new JsonSerializerOptions(new JsonSerializerOptions()
+                            {
+                                PropertyNamingPolicy = JsonNamingPolicy.CamelCase, 
+                                PropertyNameCaseInsensitive = true,
+                                Converters =
+                                {
+                                    new JsonStringEnumConverter(JsonNamingPolicy.CamelCase),
+                                    new ITransactionOperationUnresolvedJsonConverter()
+                                }
+                            })
                             );
                     });
                 });
 
             var server = builder.Build();
             await server.StartAsync();
-            Console.WriteLine("*************************************************************************");
-            Console.WriteLine("    The Workload Generator server started. Press Enter to terminate...");
-            Console.WriteLine("*************************************************************************");
             return server;
         }
     }

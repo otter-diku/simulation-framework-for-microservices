@@ -1,14 +1,28 @@
 ﻿// See https://aka.ms/new-console-template for more information
 
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging.Abstractions;
 using WorkloadGenerator.Data.Services;
 using Utilities;
-using WorkloadGenerator.Coordinator;
+using WorkloadGenerator.Client2;
 using WorkloadGenerator.Data.Models.Operation;
 using WorkloadGenerator.Data.Models.Transaction;
 using WorkloadGenerator.Data.Models.Workload;
+using WorkloadGenerator.Server;
+
+using IHost host = Host.CreateDefaultBuilder(args)
+    .ConfigureServices(services =>
+    {
+        services.AddSingleton<TransactionRunnerService>();
+        services.AddHttpClient<TransactionRunnerService>();
+        services.AddSingleton<ITransactionOperationService, TransactionOperationService>();
+        services.AddSingleton<ITransactionService, TransactionService>();
+        services.AddSingleton<IWorkloadService, WorkloadService>();
+    })
+    .Build();
+
+
 
 if (args.Length == 0)
 {
@@ -93,18 +107,19 @@ if (jsonFiles is not null)
     {
         workloadToRun = workloads[workloadFiles[selected - 1].Item1];
     }
+    
+    var _ = await WorkloadGeneratorServer.StartSiloAsync();
+    
+    var clusterClient = await WorkloadGeneratorClient2.StartClientAsync();
+    
+    var workloadCoordinator = new WorkloadCoordinator(clusterClient);
 
-    var workloadCoordinator = new WorkloadCoordinator();
-    await workloadCoordinator.Init();
-
-    await workloadCoordinator.RunWorkload(workloadToRun, transactions, operations);
-    // await workloadCoordinator.ScheduleWorkload(workloadToRun, transactions, operations);
+    // await workloadCoordinator.RunWorkload(workloadToRun, transactions, operations);
+    await workloadCoordinator.ScheduleWorkload(workloadToRun, transactions, operations);
 
     Console.WriteLine("Workload generation finished. Press Enter to terminate");
     Console.ReadLine();
 }
-
-
 
 
 // var workloadCoordinator = new WorkloadCoordinator();

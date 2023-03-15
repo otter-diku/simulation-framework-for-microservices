@@ -1,10 +1,11 @@
 using System.Collections.Concurrent;
+using Orleans;
 using Orleans.Runtime;
 using Orleans.Streams;
 using WorkloadGenerator.Data.Models;
 using WorkloadGenerator.Grains.Interfaces;
 
-namespace WorkloadGenerator.Coordinator;
+namespace WorkloadGenerator.Client;
 
 /// <summary>
 /// The scheduler takes transactions and submits them to worker grains,
@@ -38,7 +39,6 @@ public class WorkloadScheduler
             var worker = _client.GetGrain<IWorkGrain>(i,
                 grainClassNamePrefix: "WorkloadGenerator.Grains.WorkGrain");
             
-            await worker.Init(_httpClientFactory);
             _availableWorkers.TryAdd(worker, true);
 
             var stream =
@@ -49,19 +49,12 @@ public class WorkloadScheduler
 
     public async Task SubmitTransaction(ExecutableTransaction executableTransaction)
     {
-        var availableWorker = _availableWorkers.First(w => w.Value);
+        var availableWorker = _availableWorkers.MaxBy(_ => Guid.NewGuid());
+        
         // TODO: will only make sense once we have 2-way communication
         // _availableWorkers[availableWorker.Key] = false;
 
         var stream = _streams[availableWorker.Key.GetPrimaryKeyLong()];
-        
-        // TODO: remove
-
-        var handles = await stream.GetAllSubscriptionHandles();
-        foreach (var handle in handles)
-        {
-            Console.WriteLine(handle);
-        }
 
         await stream.OnNextAsync(executableTransaction);
     }
