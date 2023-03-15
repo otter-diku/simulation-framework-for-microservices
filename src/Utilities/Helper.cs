@@ -10,7 +10,7 @@ public static class Helper
                 .GetFiles(path, "*.json")
                 .Select(file => (Path.GetFileName(file), File.ReadAllText(file)))
                 .ToList();
-            
+
             foreach (var directory in Directory.GetDirectories(path))
             {
                 result.AddRange(ReadAllJsonFiles(directory)!);

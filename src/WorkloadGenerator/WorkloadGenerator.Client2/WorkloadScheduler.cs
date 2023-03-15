@@ -18,7 +18,7 @@ public class WorkloadScheduler
 {
     private readonly IClusterClient _client;
     private ConcurrentDictionary<IWorkGrain, bool> _availableWorkers = new();
-    private Dictionary<long,IAsyncStream<ExecutableTransaction>> _streams = new();
+    private Dictionary<long, IAsyncStream<ExecutableTransaction>> _streams = new();
 
     public WorkloadScheduler(IClusterClient client)
     {
@@ -29,14 +29,14 @@ public class WorkloadScheduler
     {
         _availableWorkers = new ConcurrentDictionary<IWorkGrain, bool>();
         _streams = new Dictionary<long, IAsyncStream<ExecutableTransaction>>();
-        
+
         var streamProvider = _client.GetStreamProvider("StreamProvider");
-        
+
         for (var i = 0; i < maxConcurrentTransactions; i++)
         {
             var worker = _client.GetGrain<IWorkGrain>(i,
                 grainClassNamePrefix: "WorkloadGenerator.Grains.WorkGrain");
-            
+
             _availableWorkers.TryAdd(worker, true);
 
             var stream =
@@ -48,7 +48,7 @@ public class WorkloadScheduler
     public async Task SubmitTransaction(ExecutableTransaction executableTransaction)
     {
         var availableWorker = _availableWorkers.MaxBy(_ => Guid.NewGuid());
-        
+
         // TODO: will only make sense once we have 2-way communication
         // _availableWorkers[availableWorker.Key] = false;
 

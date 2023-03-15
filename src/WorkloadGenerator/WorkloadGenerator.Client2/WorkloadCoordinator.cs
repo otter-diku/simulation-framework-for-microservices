@@ -142,7 +142,7 @@ public class WorkloadCoordinator
         var transactionsToExecute = workloadToRun.Transactions
             .SelectMany(txRef => Enumerable.Repeat(txRef.Id, txRef.Count))
             .ToList();
-        
+
         // TODO: shuffle list for now use guid but probably not optimal
         return new Stack<string>(transactionsToExecute.OrderBy(a => Guid.NewGuid()));
     }
