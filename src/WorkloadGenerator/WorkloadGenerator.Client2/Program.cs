@@ -26,6 +26,7 @@ public static class WorkloadGeneratorClient2
                         options.GatewayPort = Constants.GatewayPort; // client-to-silo communication
                     })
                     .AddMemoryStreams("StreamProvider");
+
                 clientBuilder.Services.AddSerializer(serializerBuilder =>
                 {
                     serializerBuilder.AddJsonSerializer(

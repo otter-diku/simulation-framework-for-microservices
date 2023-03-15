@@ -16,23 +16,23 @@ namespace WorkloadGenerator.Client;
 /// </summary>
 public class WorkloadScheduler
 {
-    private readonly int _maxConcurrentTransactions;
     private readonly IClusterClient _client;
     private ConcurrentDictionary<IWorkGrain, bool> _availableWorkers = new();
     private Dictionary<long,IAsyncStream<ExecutableTransaction>> _streams = new();
 
-    public WorkloadScheduler(IClusterClient client, int maxConcurrentTransactions = 1)
+    public WorkloadScheduler(IClusterClient client)
     {
-        _maxConcurrentTransactions = maxConcurrentTransactions;
         _client = client;
-        Init();
     }
 
-    private void Init()
+    public void Init(int maxConcurrentTransactions)
     {
+        _availableWorkers = new ConcurrentDictionary<IWorkGrain, bool>();
+        _streams = new Dictionary<long, IAsyncStream<ExecutableTransaction>>();
+        
         var streamProvider = _client.GetStreamProvider("StreamProvider");
         
-        for (var i = 0; i < _maxConcurrentTransactions; i++)
+        for (var i = 0; i < maxConcurrentTransactions; i++)
         {
             var worker = _client.GetGrain<IWorkGrain>(i,
                 grainClassNamePrefix: "WorkloadGenerator.Grains.WorkGrain");
@@ -55,14 +55,5 @@ public class WorkloadScheduler
         var stream = _streams[availableWorker.Key.GetPrimaryKeyLong()];
 
         await stream.OnNextAsync(executableTransaction);
-    }
-
-    public Task WaitForEmptyQueue()
-    {
-        // while (_transactionQueue.Count != 0)
-        // {
-        // }
-
-        return Task.CompletedTask;
     }
 }

@@ -24,7 +24,7 @@
     {
       "id": "tx1",
       "transactionReferenceId": "add-catalog-item",
-      "count": 2,
+      "count": 20,
       "data": [
         {
           "name":  "product-id",
@@ -35,7 +35,7 @@
     {
       "id": "tx2",
       "transactionReferenceId": "update-catalog-item-price",
-      "count": 2,
+      "count": 20,
       "data": [
         {
           "name":  "product-id",
@@ -46,7 +46,7 @@
     {
       "id": "tx3",
       "transactionReferenceId": "add-item-and-checkout-basket",
-      "count": 2,
+      "count": 20,
       "data": [
         {
           "name":  "user-id",

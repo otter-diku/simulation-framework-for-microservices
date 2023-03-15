@@ -38,7 +38,7 @@ public class WorkGrain : Grain, IWorkGrain
         }
         catch (Exception e)
         {
-            Console.WriteLine("Failed, but returning as a hero");
+            Console.WriteLine($"Failed, but returning as a hero. Exception: {e.Message}");
         }
 
     }

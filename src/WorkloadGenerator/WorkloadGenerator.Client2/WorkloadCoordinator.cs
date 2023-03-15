@@ -14,7 +14,7 @@ namespace WorkloadGenerator.Client2;
 /// </summary>
 public class WorkloadCoordinator
 {
-    private WorkloadScheduler _workloadScheduler;
+    private readonly WorkloadScheduler _workloadScheduler;
 
     public WorkloadCoordinator(WorkloadScheduler workloadScheduler)
     {
@@ -75,11 +75,9 @@ public class WorkloadCoordinator
             Dictionary<string, TransactionInputUnresolved> transactions,
             Dictionary<string, ITransactionOperationUnresolved> operations)
     {
+        _workloadScheduler.Init(GetMaxRate(workloadToRun));
+
         var txStack = GetTransactionsToExecute(workloadToRun);
-        // var maxRate = GetMaxRate(workloadToRun);
-
-        // init Scheduler here, which will spawn workerGrains and create queue
-
         while (txStack.Count != 0)
         {
             // var txOpsRefs = tx.Operations.Select(o => o.OperationReferenceId).ToHashSet();
@@ -96,8 +94,9 @@ public class WorkloadCoordinator
             await _workloadScheduler.SubmitTransaction(executableTx);
         }
 
+        // TODO: we need to find a way of getting some information back from the grains to know that they are finished
+        Console.WriteLine("All transactions have been submitted to the scheduler");
         Console.ReadKey();
-        await _workloadScheduler.WaitForEmptyQueue();
     }
 
     private static ExecutableTransaction CreateExecutableTransaction(WorkloadInputUnresolved workloadToRun,
@@ -112,7 +111,7 @@ public class WorkloadCoordinator
         
         foreach (var genRef in txRef.Data)
         {
-            var generatorInput = workloadToRun.Generators.First(g => g.Id == genRef.GeneratorReferenceId);
+            var generatorInput = workloadToRun.Generators.Find(g => g.Id == genRef.GeneratorReferenceId);
             var generator = GeneratorFactory.GetGenerator(generatorInput);
             providedValues.Add(genRef.Name, generator.Next());
         }
@@ -140,14 +139,11 @@ public class WorkloadCoordinator
 
     private static Stack<string> GetTransactionsToExecute(WorkloadInputUnresolved workloadToRun)
     {
-        var txToExecute = new List<string>();
-        foreach (var txRef in workloadToRun.Transactions)
-        {
-            txToExecute.AddRange(Enumerable.Repeat(txRef.Id, txRef.Count));
-        }
-
+        var transactionsToExecute = workloadToRun.Transactions
+            .SelectMany(txRef => Enumerable.Repeat(txRef.Id, txRef.Count))
+            .ToList();
+        
         // TODO: shuffle list for now use guid but probably not optimal
-        var txStack = new Stack<string>(txToExecute.OrderBy(a => Guid.NewGuid()));
-        return txStack;
+        return new Stack<string>(transactionsToExecute.OrderBy(a => Guid.NewGuid()));
     }
 }

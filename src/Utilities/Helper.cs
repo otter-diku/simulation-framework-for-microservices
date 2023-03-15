@@ -2,30 +2,26 @@ namespace Utilities;
 
 public static class Helper
 {
-    public static List<(string, string)>? ReadAllJsonFiles(List<(string, string)> files, string path)
+    public static List<(string, string)> ReadAllJsonFiles(string path)
     {
         try
         {
-            foreach (string file in Directory.GetFiles(path, "*.json"))
+            var result = Directory
+                .GetFiles(path, "*.json")
+                .Select(file => (Path.GetFileName(file), File.ReadAllText(file)))
+                .ToList();
+            
+            foreach (var directory in Directory.GetDirectories(path))
             {
-                // Do something with the JSON file
-
-                files.Add((Path.GetFileName(file), File.ReadAllText(file)));
+                result.AddRange(ReadAllJsonFiles(directory)!);
             }
 
-            foreach (string dir in Directory.GetDirectories(path))
-            {
-                ReadAllJsonFiles(files, dir);
-            }
-
+            return result;
         }
         catch (Exception e)
         {
             Console.WriteLine(e.Message);
-            return null;
+            throw;
         }
-
-        return files;
     }
-
 }

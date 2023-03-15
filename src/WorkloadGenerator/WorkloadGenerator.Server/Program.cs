@@ -1,10 +1,12 @@
 ﻿using System.Text.Json;
 using System.Text.Json.Serialization;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Orleans.Configuration;
 using Orleans.Serialization;
 using Utilities;
 using WorkloadGenerator.Data.Models.Operation;
+using WorkloadGenerator.Data.Services;
 
 namespace WorkloadGenerator.Server
 {
@@ -26,6 +28,12 @@ namespace WorkloadGenerator.Server
                         {
                             options.SiloPort = Constants.SiloPort; // silo-to-silo communication
                             options.GatewayPort = Constants.GatewayPort; // client-to-silo communication
+                        })
+                        .ConfigureServices((sc) =>
+                        {
+                            sc.AddHttpClient<TransactionRunnerService>();
+                            sc.AddSingleton<TransactionRunnerService>();
+                            sc.AddSingleton<ITransactionOperationService, TransactionOperationService>();
                         })
                         .AddMemoryStreams("StreamProvider")
                         .AddMemoryGrainStorage("PubSubStore")
