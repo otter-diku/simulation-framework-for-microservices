@@ -19,7 +19,7 @@ public class TransactionService : ITransactionService
 
     private readonly JsonSerializerOptions _jsonSerializerOptions = new()
     {
-        
+
         PropertyNameCaseInsensitive = true,
         Converters =
         {

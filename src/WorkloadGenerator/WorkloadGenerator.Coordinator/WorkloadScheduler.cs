@@ -20,7 +20,7 @@ public class WorkloadScheduler
     private readonly IClusterClient _client;
     private readonly IHttpClientFactory _httpClientFactory;
     private ConcurrentDictionary<IWorkGrain, bool> _availableWorkers = new();
-    private Dictionary<long,IAsyncStream<ExecutableTransaction>> _streams = new();
+    private Dictionary<long, IAsyncStream<ExecutableTransaction>> _streams = new();
 
     public WorkloadScheduler(int maxConcurrentTransactions, IClusterClient client, IHttpClientFactory httpClientFactory)
     {
@@ -32,12 +32,12 @@ public class WorkloadScheduler
     public async Task Init()
     {
         var streamProvider = _client.GetStreamProvider("StreamProvider");
-        
+
         for (var i = 0; i < _maxConcurrentTransactions; i++)
         {
             var worker = _client.GetGrain<IWorkGrain>(i,
                 grainClassNamePrefix: "WorkloadGenerator.Grains.WorkGrain");
-            
+
             await worker.Init(_httpClientFactory);
             _availableWorkers.TryAdd(worker, true);
 
@@ -54,7 +54,7 @@ public class WorkloadScheduler
         // _availableWorkers[availableWorker.Key] = false;
 
         var stream = _streams[availableWorker.Key.GetPrimaryKeyLong()];
-        
+
         // TODO: remove
 
         var handles = await stream.GetAllSubscriptionHandles();

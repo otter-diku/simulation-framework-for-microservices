@@ -97,13 +97,13 @@ if (jsonFiles is not null)
     {
         workloadToRun = workloads[workloadFiles[selected - 1].Item1];
     }
-    
+
     var _ = await WorkloadGeneratorServer.StartSiloAsync();
-    
+
     var clientHost = await WorkloadGeneratorClient2.StartClientAsync();
 
-    
-    
+
+
     var host = hostBuilder.ConfigureServices(services =>
         {
             services.AddSingleton<TransactionRunnerService>();
@@ -121,7 +121,7 @@ if (jsonFiles is not null)
 
 
     // await host.RunAsync();
-    
+
     var workloadCoordinator = new WorkloadCoordinator(host.Services.GetRequiredService<WorkloadScheduler>());
 
     // await workloadCoordinator.RunWorkload(workloadToRun, transactions, operations);
