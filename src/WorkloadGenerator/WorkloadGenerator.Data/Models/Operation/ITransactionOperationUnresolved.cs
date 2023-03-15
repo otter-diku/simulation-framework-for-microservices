@@ -18,7 +18,7 @@ public interface ITransactionOperationUnresolved : ITransactionOperation
 public class ITransactionOperationUnresolvedJsonConverter : JsonConverter<ITransactionOperationUnresolved>
 {
     public override ITransactionOperationUnresolved? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
-    { 
+    {
         if (reader.TokenType != JsonTokenType.StartObject)
             throw new JsonException();
 
@@ -29,7 +29,7 @@ public class ITransactionOperationUnresolvedJsonConverter : JsonConverter<ITrans
         {
             throw new JsonException();
         }
-        
+
         var jsonString = jsonDocument.RootElement.GetRawText();
 
         if (string.Equals(typeProperty.GetString(), OperationType.Http.ToString(),

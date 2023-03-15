@@ -84,10 +84,10 @@ public class WorkloadCoordinator
         var txStack = GetTransactionsToExecute(workloadToRun);
         var maxRate = GetMaxRate(workloadToRun);
         var workloadScheduler = await CreateWorkloadScheduler(maxRate);
-        
+
 
         // init Scheduler here, which will spawn workerGrains and create queue
-        
+
 
         while (txStack.Count != 0)
         {
@@ -97,7 +97,7 @@ public class WorkloadCoordinator
             // var txOps =
             //     operations.Where(o => txOpsRefs.Contains(o.Key))
             //         .ToDictionary(x => x.Key, x => x.Value);
-            
+
             // Generate providedValues with Generators
             var executableTx = CreateExecutableTransaction(workloadToRun, tx, operations);
 
@@ -116,10 +116,10 @@ public class WorkloadCoordinator
         Dictionary<string, ITransactionOperationUnresolved> operations)
     {
         var providedValues = new Dictionary<string, object>();
-        
+
         var txRef =
             workloadToRun.Transactions.First(t => t.TransactionReferenceId == tx.TemplateId);
-        
+
         foreach (var genRef in txRef.Data)
         {
             var generatorInput = workloadToRun.Generators.First(g => g.Id == genRef.GeneratorReferenceId);

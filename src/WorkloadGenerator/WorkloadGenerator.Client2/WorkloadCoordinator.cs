@@ -84,7 +84,7 @@ public class WorkloadCoordinator
             // var txOps =
             //     operations.Where(o => txOpsRefs.Contains(o.Key))
             //         .ToDictionary(x => x.Key, x => x.Value);
-            
+
             // Generate providedValues with Generators
             var executableTx = CreateExecutableTransaction(workloadToRun, txStack.Pop(), transactions, operations);
 
@@ -105,10 +105,10 @@ public class WorkloadCoordinator
         Dictionary<string, ITransactionOperationUnresolved> operationsByReferenceId)
     {
         var providedValues = new Dictionary<string, object>();
-        
+
         var txRef =
             workloadToRun.Transactions.Find(t => t.Id == id);
-        
+
         foreach (var genRef in txRef.Data)
         {
             var generatorInput = workloadToRun.Generators.Find(g => g.Id == genRef.GeneratorReferenceId);
@@ -124,7 +124,7 @@ public class WorkloadCoordinator
         };
         return executableTx;
     }
-    
+
 
     private static int GetMaxRate(WorkloadInputUnresolved workloadToRun)
     {
