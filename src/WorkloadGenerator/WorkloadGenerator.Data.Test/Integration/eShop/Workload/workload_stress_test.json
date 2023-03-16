@@ -1,0 +1,58 @@
+{
+  "id": "workload-id",
+  "maxConcurrentTransactions": 5,
+  "generators": [
+    {
+      "id": "productId",
+      "type": "unsignedInt",
+      "distribution": "uniform",
+      "min": 1,
+      "max": 1000
+    },
+    {
+      "id": "productIdPriceUpdate",
+      "type": "constant",
+      "constant": 2
+    },
+    {
+      "id": "userId",
+      "type": "constant",
+      "constant": "10000000-0000-0000-0000-000000000000"
+    }
+  ],
+  "transactions": [
+    {
+      "id": "tx1",
+      "transactionReferenceId": "add-catalog-item",
+      "count": 1000,
+      "data": [
+        {
+          "name":  "product-id",
+          "generatorReferenceId": "productId"
+        }
+      ]
+    },
+    {
+      "id": "tx2",
+      "transactionReferenceId": "update-catalog-item-price",
+      "count": 1000,
+      "data": [
+        {
+          "name":  "product-id",
+          "generatorReferenceId": "productIdPriceUpdate"
+        }
+      ]
+    },
+    {
+      "id": "tx3",
+      "transactionReferenceId": "add-item-and-checkout-basket",
+      "count": 1000,
+      "data": [
+        {
+          "name":  "user-id",
+          "generatorReferenceId": "userId"
+        }
+      ]
+    }
+  ]
+}

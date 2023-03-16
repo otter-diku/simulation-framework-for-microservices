@@ -11,7 +11,7 @@ public class NumberGenerator : GeneratorBase, IGenerator
     private int? _min;
     private int? _max;
 
-    public GeneratorType Type => GeneratorType.UnsignedInt;
+    public override GeneratorType Type => GeneratorType.UnsignedInt;
 
     public NumberGenerator(bool unsigned, int? optionalMin = null, int? optionalMax = null)
     {

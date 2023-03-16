@@ -10,15 +10,11 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WorkloadGenerator.Grains.In
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Utilities", "..\Utilities\Utilities.csproj", "{65D8E795-4DB5-4C4E-A732-3EA76F01D35A}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WorkloadGenerator.Coordinator", "..\WorkloadGenerator\WorkloadGenerator.Coordinator\WorkloadGenerator.Coordinator.csproj", "{ACE32CDD-75E8-4C01-947A-A90BA17BA435}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EshopData", "..\EshopData\EshopData.csproj", "{49E9E8DC-3127-4DED-A496-0CD9E316ACDA}"
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WorkloadGenerator.Data", "..\WorkloadGenerator\WorkloadGenerator.Data\WorkloadGenerator.Data.csproj", "{7E15658A-DBE4-4863-A330-2F6307F88AFA}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WorkloadGenerator.Data.Test", "..\WorkloadGenerator\WorkloadGenerator.Data.Test\WorkloadGenerator.Data.Test.csproj", "{488CB08E-39BB-4E70-8D7C-0C11E5F09ECB}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WorkloadGenerator.Client2", "..\WorkloadGenerator\WorkloadGenerator.Client2\WorkloadGenerator.Client2.csproj", "{99E110B9-21B9-455D-A739-7C1224543F50}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WorkloadGenerator.Client", "..\WorkloadGenerator\WorkloadGenerator.Client\WorkloadGenerator.Client.csproj", "{99E110B9-21B9-455D-A739-7C1224543F50}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -46,14 +42,6 @@ Global
 		{65D8E795-4DB5-4C4E-A732-3EA76F01D35A}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{65D8E795-4DB5-4C4E-A732-3EA76F01D35A}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{65D8E795-4DB5-4C4E-A732-3EA76F01D35A}.Release|Any CPU.Build.0 = Release|Any CPU
-		{ACE32CDD-75E8-4C01-947A-A90BA17BA435}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{ACE32CDD-75E8-4C01-947A-A90BA17BA435}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{ACE32CDD-75E8-4C01-947A-A90BA17BA435}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{ACE32CDD-75E8-4C01-947A-A90BA17BA435}.Release|Any CPU.Build.0 = Release|Any CPU
-		{49E9E8DC-3127-4DED-A496-0CD9E316ACDA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{49E9E8DC-3127-4DED-A496-0CD9E316ACDA}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{49E9E8DC-3127-4DED-A496-0CD9E316ACDA}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{49E9E8DC-3127-4DED-A496-0CD9E316ACDA}.Release|Any CPU.Build.0 = Release|Any CPU
 		{7E15658A-DBE4-4863-A330-2F6307F88AFA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{7E15658A-DBE4-4863-A330-2F6307F88AFA}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{7E15658A-DBE4-4863-A330-2F6307F88AFA}.Release|Any CPU.ActiveCfg = Release|Any CPU

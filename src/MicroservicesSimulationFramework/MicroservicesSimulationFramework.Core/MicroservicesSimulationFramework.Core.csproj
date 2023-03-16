@@ -14,8 +14,7 @@
     </ItemGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\..\WorkloadGenerator\WorkloadGenerator.Client2\WorkloadGenerator.Client2.csproj" />
-        <ProjectReference Include="..\..\WorkloadGenerator\WorkloadGenerator.Coordinator\WorkloadGenerator.Coordinator.csproj" />
+        <ProjectReference Include="..\..\WorkloadGenerator\WorkloadGenerator.Client\WorkloadGenerator.Client.csproj" />
         <ProjectReference Include="..\..\WorkloadGenerator\WorkloadGenerator.Data\WorkloadGenerator.Data.csproj" />
         <ProjectReference Include="..\..\WorkloadGenerator\WorkloadGenerator.Server\WorkloadGenerator.Server.csproj" />
     </ItemGroup>

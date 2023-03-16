@@ -42,7 +42,7 @@ namespace WorkloadGenerator.Server
                     {
                         serializerBuilder.AddJsonSerializer(
                             isSupported: type =>
-                                type.Namespace.StartsWith("WorkloadGenerator."),
+                                type.Namespace!.StartsWith("WorkloadGenerator."),
 
                             new JsonSerializerOptions(new JsonSerializerOptions()
                             {

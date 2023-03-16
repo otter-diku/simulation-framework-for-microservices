@@ -4,7 +4,6 @@ using Microsoft.Extensions.Logging.Abstractions;
 using WorkloadGenerator.Data.Services;
 using Utilities;
 using WorkloadGenerator.Client;
-using WorkloadGenerator.Client2;
 using WorkloadGenerator.Data.Models.Operation;
 using WorkloadGenerator.Data.Models.Transaction;
 using WorkloadGenerator.Data.Models.Workload;
@@ -93,7 +92,7 @@ foreach (var w in workloadFiles)
 var input = Console.ReadLine();
 var parseResult = int.TryParse(input, out var selected);
 
-WorkloadInputUnresolved workloadToRun = null;
+WorkloadInputUnresolved? workloadToRun = null;
 if (parseResult && selected < workloadNum)
 {
     workloadToRun = workloads[workloadFiles[selected - 1].Item1];
@@ -101,7 +100,7 @@ if (parseResult && selected < workloadNum)
 
 var _ = await WorkloadGeneratorServer.StartSiloAsync();
 
-var clientHost = await WorkloadGeneratorClient2.StartClientAsync();
+var clientHost = await OrleansClientManager.StartClientAsync();
 
 
 
@@ -112,7 +111,7 @@ var host = hostBuilder.ConfigureServices(services =>
         services.AddSingleton<ITransactionOperationService, TransactionOperationService>();
         services.AddSingleton<ITransactionService, TransactionService>();
         services.AddSingleton<IWorkloadService, WorkloadService>();
-        services.AddSingleton(sp =>
+        services.AddSingleton(_ =>
         {
             var clusterClient = clientHost.Services.GetRequiredService<IClusterClient>();
             return new WorkloadScheduler(clusterClient);
@@ -124,7 +123,7 @@ var host = hostBuilder.ConfigureServices(services =>
 var workloadCoordinator = new WorkloadCoordinator(host.Services.GetRequiredService<WorkloadScheduler>());
 
 // await workloadCoordinator.RunWorkload(workloadToRun, transactions, operations);
-await workloadCoordinator.ScheduleWorkload(workloadToRun, transactions, operations);
+await workloadCoordinator.ScheduleWorkload(workloadToRun!, transactions, operations);
 
 Console.WriteLine("Workload generation finished. Press Enter to terminate");
 Console.ReadLine();

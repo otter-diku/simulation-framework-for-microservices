@@ -6,7 +6,9 @@ using Orleans.Serialization;
 using Utilities;
 using WorkloadGenerator.Data.Models.Operation;
 
-public static class WorkloadGeneratorClient2
+namespace WorkloadGenerator.Client;
+
+public static class OrleansClientManager
 {
     public static async Task<IHost> StartClientAsync()
     {
@@ -31,17 +33,17 @@ public static class WorkloadGeneratorClient2
                 {
                     serializerBuilder.AddJsonSerializer(
                         isSupported: type =>
-                            type.Namespace.StartsWith("WorkloadGenerator."),
-                    new JsonSerializerOptions(new JsonSerializerOptions()
-                    {
-                        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-                        PropertyNameCaseInsensitive = true,
-                        Converters =
+                            type.Namespace!.StartsWith("WorkloadGenerator."),
+                        new JsonSerializerOptions(new JsonSerializerOptions()
                         {
-                            new JsonStringEnumConverter(JsonNamingPolicy.CamelCase),
-                            new ITransactionOperationUnresolvedJsonConverter()
-                        }
-                    })
+                            PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+                            PropertyNameCaseInsensitive = true,
+                            Converters =
+                            {
+                                new JsonStringEnumConverter(JsonNamingPolicy.CamelCase),
+                                new ITransactionOperationUnresolvedJsonConverter()
+                            }
+                        })
                     );
                 });
             });

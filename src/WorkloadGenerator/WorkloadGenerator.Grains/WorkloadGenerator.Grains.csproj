@@ -7,7 +7,6 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\..\EshopData\EshopData.csproj" />
         <ProjectReference Include="..\..\Utilities\Utilities.csproj" />
         <ProjectReference Include="..\WorkloadGenerator.Data\WorkloadGenerator.Data.csproj" />
         <ProjectReference Include="..\WorkloadGenerator.Grains.Interfaces\WorkloadGenerator.Grains.Interfaces.csproj" />
