@@ -77,7 +77,7 @@ public class WorkloadCoordinator
     {
         _workloadScheduler.Init(GetMaxRate(workloadToRun));
 
-        
+
         var txStack = GetTransactionsToExecute(workloadToRun);
         while (txStack.Count != 0)
         {
