@@ -30,12 +30,12 @@ public class TransactionRunnerService
         Dictionary<string, ITransactionOperationUnresolved> operationsDictionary)
     {
         var transactionStopwatch = Stopwatch.StartNew();
-        
+
         // generate dynamic variable for transaction.DynamicVariables
         foreach (var operationReferenceId in transaction.Operations.Select(t => t.OperationReferenceId))
         {
             var operationStopwatch = Stopwatch.StartNew();
-            
+
             if (!operationsDictionary.TryGetValue(operationReferenceId, out var operation))
             {
                 _logger.LogWarning("Could not find operation with ID {OperationReferenceId}", operationReferenceId);
@@ -50,7 +50,7 @@ public class TransactionRunnerService
             });
 
             // TODO: add logging of operation type and maybe some extra details
-            
+
             var didResolve = _transactionOperationService.TryResolve(operation, providedValues, out var resolved);
             if (!didResolve)
             {
@@ -64,7 +64,7 @@ public class TransactionRunnerService
                 _logger.LogWarning("Failed to convert operation into executable");
                 return;
             }
-            
+
             var result = await ExecuteOperation(transactionOperationBaseExecutable, operationCorrelationId);
 
             if (result is null)
@@ -90,7 +90,7 @@ public class TransactionRunnerService
 
             _logger.LogInformation("Operation finished in {ElapsedMs} milliseconds", operationStopwatch.ElapsedMilliseconds);
         }
-        
+
         _logger.LogInformation("Transaction finished in {ElapsedMs} milliseconds", transactionStopwatch.ElapsedMilliseconds);
     }
 
@@ -224,7 +224,7 @@ public class TransactionRunnerService
     }
 
     private async Task<HttpResponseMessage> ExecuteHttpRequestOperation(
-        TransactionOperationExecutableBase transactionOperationbaseExecutable, 
+        TransactionOperationExecutableBase transactionOperationbaseExecutable,
         Guid operationCorrelationId)
     {
         var httpClient = _httpClientFactory.CreateClient();
