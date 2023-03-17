@@ -16,7 +16,7 @@
  * limitations under the License.
  */
 
-package org.myorg.quickstart;
+package org.myorg.flinkinvariants;
 
 import org.apache.flink.api.common.eventtime.WatermarkStrategy;
 import org.apache.flink.connector.kafka.source.KafkaSource;
