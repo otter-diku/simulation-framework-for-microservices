@@ -2,7 +2,7 @@ namespace Utilities;
 
 public static class Helper
 {
-    public static List<(string FileName, string Content)> ReadAllJsonFiles(string path)
+    public static (List<(string FileName, string Content)>? Files, string? ErrorMessage) TryReadAllJsonFiles(string path)
     {
         try
         {
@@ -13,15 +13,20 @@ public static class Helper
 
             foreach (var directory in Directory.GetDirectories(path))
             {
-                result.AddRange(ReadAllJsonFiles(directory)!);
+                var (files, errorMessage) = TryReadAllJsonFiles(directory);
+                if (errorMessage is not null)
+                {
+                    return (null, errorMessage);
+                }
+
+                result.AddRange(files!);
             }
 
-            return result;
+            return (result, null);
         }
         catch (Exception e)
         {
-            Console.WriteLine(e.Message);
-            throw;
+            return (null, e.Message);
         }
     }
 }

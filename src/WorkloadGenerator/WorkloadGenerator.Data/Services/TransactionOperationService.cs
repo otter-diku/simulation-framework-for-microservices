@@ -251,7 +251,6 @@ public class TransactionOperationService : ITransactionOperationService
             duration = Decimal.Parse(sleepOperation.Duration);
         }
 
-        // Console.WriteLine($"Create Sleep operation with duration {duration}");
         return new SleepOperationInputResolved()
         {
             Duration = duration,
