@@ -22,22 +22,22 @@ public class WorkloadCoordinator : IWorkloadCoordinator
         _logger = logger;
         _workloadScheduler = workloadScheduler;
     }
-    
+
     public async Task ScheduleWorkload(
             WorkloadInputUnresolved workloadToRun,
             Dictionary<string, TransactionInputUnresolved> transactions,
             Dictionary<string, ITransactionOperationUnresolved> operations)
     {
-        using var _ = _logger.BeginScope(new Dictionary<string, object>() 
+        using var _ = _logger.BeginScope(new Dictionary<string, object>()
         {
             { "WorkloadTemplateId", workloadToRun.TemplateId },
             { "CorrelationId", Guid.NewGuid() /* TODO: CorrelationId should be passed down */ }
         });
-        
+
         _workloadScheduler.Init(GetMaxRate(workloadToRun));
-        
+
         var txStack = GetTransactionsToExecute(workloadToRun);
-       
+
         _logger.LogInformation("{TransactionCount} transactions to execute", txStack.Count);
         while (txStack.Count != 0)
         {
@@ -48,7 +48,7 @@ public class WorkloadCoordinator : IWorkloadCoordinator
 
             // Generate providedValues with Generators
             var executableTx = CreateExecutableTransaction(workloadToRun, txStack.Pop(), transactions, operations);
-            
+
             await _workloadScheduler.SubmitTransaction(executableTx);
         }
 

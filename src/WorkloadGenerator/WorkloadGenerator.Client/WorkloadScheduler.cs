@@ -31,9 +31,9 @@ public class WorkloadScheduler : IWorkloadScheduler
     public void Init(int maxConcurrentTransactions)
     {
         _logger.LogInformation(
-            "Initializing the scheduler. Max concurrent transactions: {MaxConcurrentTransactions}", 
+            "Initializing the scheduler. Max concurrent transactions: {MaxConcurrentTransactions}",
             maxConcurrentTransactions);
-        
+
         _availableWorkers = new ConcurrentDictionary<IWorkGrain, bool>();
         _streams = new Dictionary<long, IAsyncStream<ExecutableTransaction>>();
 
@@ -60,14 +60,14 @@ public class WorkloadScheduler : IWorkloadScheduler
         // _availableWorkers[availableWorker.Key] = false;
 
         var workerPrimaryKey = availableWorker.Key.GetPrimaryKeyLong();
-        
+
         var stream = _streams[workerPrimaryKey];
-        
+
         _logger.LogInformation(
             "Submitting transaction {TransactionTemplateId} to worker {WorkerPrimaryKey}",
             executableTransaction.Transaction.TemplateId,
             workerPrimaryKey);
-        
+
         await stream.OnNextAsync(executableTransaction);
     }
 }

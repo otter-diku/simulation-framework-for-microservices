@@ -48,7 +48,7 @@ public static class Program
                           errorResult +
                           "Exiting...");
         }
-        
+
         var workloadSelected = SelectWorkload(scenarioValidated!.Workloads.Values.ToList());
         if (workloadSelected is null)
         {
@@ -110,15 +110,15 @@ public static class Program
                 return null;
             }
 
-            var selectedWithinRange = int.TryParse(input, out var selected) 
-                                      && selected > 0 
+            var selectedWithinRange = int.TryParse(input, out var selected)
+                                      && selected > 0
                                       && selected <= workloads.Count;
 
             if (selectedWithinRange)
             {
                 return workloads[selected - 1];
             }
-            
+
             Console.WriteLine("\nInvalid workload number provided, try again. (or press 'q' to quit)\n");
         }
     }
@@ -128,7 +128,7 @@ public static class Program
         var _ = await WorkloadGeneratorServer.StartSiloAsync();
         var orleansClientHost = await OrleansClientManager.StartClientAsync();
         var hostBuilder = Host.CreateDefaultBuilder(strings);
-        
+
         return hostBuilder
             .ConfigureLogging((_, loggingBuilder) =>
             {

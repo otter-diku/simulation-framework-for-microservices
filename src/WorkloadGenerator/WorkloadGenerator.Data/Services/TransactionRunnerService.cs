@@ -36,7 +36,7 @@ public class TransactionRunnerService
                 _logger.LogWarning("Could not find operation with ID {OperationReferenceId}", operationReferenceId);
                 return;
             }
-            
+
             using var _ = _logger.BeginScope(new Dictionary<string, object>
             {
                 { "OperationReferenceId", operationReferenceId },
@@ -44,7 +44,7 @@ public class TransactionRunnerService
             });
 
             // TODO: add logging of operation type and maybe some extra details
-            
+
             var didResolve = _transactionOperationService.TryResolve(operation, providedValues, out var resolved);
             if (!didResolve)
             {
@@ -58,7 +58,7 @@ public class TransactionRunnerService
                 _logger.LogWarning("Failed to convert operation into executable");
                 return;
             }
-            
+
             var result = await ExecuteOperation(transactionOperationBaseExecutable);
 
             if (result is null)
