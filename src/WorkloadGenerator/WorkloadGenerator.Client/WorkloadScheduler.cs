@@ -1,4 +1,5 @@
 using System.Collections.Concurrent;
+using Microsoft.Extensions.Logging;
 using Orleans.Runtime;
 using Orleans.Streams;
 using WorkloadGenerator.Data.Models;
@@ -16,17 +17,23 @@ namespace WorkloadGenerator.Client;
 /// </summary>
 public class WorkloadScheduler : IWorkloadScheduler
 {
+    private readonly ILogger<WorkloadScheduler> _logger;
     private readonly IClusterClient _client;
     private ConcurrentDictionary<IWorkGrain, bool> _availableWorkers = new();
     private Dictionary<long, IAsyncStream<ExecutableTransaction>> _streams = new();
 
-    public WorkloadScheduler(IClusterClient client)
+    public WorkloadScheduler(ILogger<WorkloadScheduler> logger, IClusterClient client)
     {
+        _logger = logger;
         _client = client;
     }
 
     public void Init(int maxConcurrentTransactions)
     {
+        _logger.LogInformation(
+            "Initializing the scheduler. Max concurrent transactions: {MaxConcurrentTransactions}", 
+            maxConcurrentTransactions);
+        
         _availableWorkers = new ConcurrentDictionary<IWorkGrain, bool>();
         _streams = new Dictionary<long, IAsyncStream<ExecutableTransaction>>();
 
@@ -52,8 +59,15 @@ public class WorkloadScheduler : IWorkloadScheduler
         // TODO: will only make sense once we have 2-way communication
         // _availableWorkers[availableWorker.Key] = false;
 
-        var stream = _streams[availableWorker.Key.GetPrimaryKeyLong()];
-
+        var workerPrimaryKey = availableWorker.Key.GetPrimaryKeyLong();
+        
+        var stream = _streams[workerPrimaryKey];
+        
+        _logger.LogInformation(
+            "Submitting transaction {TransactionTemplateId} to worker {WorkerPrimaryKey}",
+            executableTransaction.Transaction.TemplateId,
+            workerPrimaryKey);
+        
         await stream.OnNextAsync(executableTransaction);
     }
 }

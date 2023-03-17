@@ -36,7 +36,7 @@ public class WorkGrain : Grain, IWorkGrain
             var streamId = StreamId.Create(StreamNamespace, this.GetPrimaryKeyLong().ToString());
             var stream = streamProvider.GetStream<ExecutableTransaction>(streamId);
             var handle = await stream.SubscribeAsync(Run);
-            _logger.LogDebug("Subscribed to stream {Stream}. Handle: {HandleId}",
+            _logger.LogInformation("Subscribed to stream {Stream}. Handle: {HandleId}",
                 StreamNamespace,
                 handle.HandleId);
         }
@@ -56,13 +56,13 @@ public class WorkGrain : Grain, IWorkGrain
             { "CorrelationId", Guid.NewGuid() /* TODO: correlation IDs should probably be passed down */},
         });
 
-        _logger.LogDebug("Starting to execute transaction");
+        _logger.LogInformation("Starting to execute transaction");
 
         try
         {
             await _runnerService.Run(executableTransaction.Transaction, executableTransaction.ProvidedValues,
                 executableTransaction.Operations);
-            _logger.LogDebug("Finished executing transaction");
+            _logger.LogInformation("Finished executing transaction");
         }
         catch (Exception exception)
         {

@@ -2,6 +2,7 @@
 using MicroservicesSimulationFramework.Core.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 using Utilities;
 using WorkloadGenerator.Client;
 using WorkloadGenerator.Data.Models.Workload;
@@ -22,7 +23,15 @@ public static class Program
             return;
         }
 
-        var jsonFiles = Helper.ReadAllJsonFiles(args[0]);
+        var (jsonFiles, errorMessage) = Helper.TryReadAllJsonFiles(args[0]);
+
+        if (errorMessage is not null)
+        {
+            Console.WriteLine("Failed trying to read JSON configuration files:\n" +
+                              errorMessage + "\n" +
+                              "Exiting...");
+            return;
+        }
 
         if (jsonFiles is not { Count: > 0 })
         {
@@ -39,14 +48,16 @@ public static class Program
                           errorResult +
                           "Exiting...");
         }
-
-        var workloadSelected = SelectWorkload(scenarioValidated);
+        
+        var workloadSelected = SelectWorkload(scenarioValidated!.Workloads.Values.ToList());
         if (workloadSelected is null)
         {
             Console.WriteLine("No workload selected, exiting...");
+            return;
         }
 
-        Console.WriteLine($"Selected workload: {workloadSelected.TemplateId}.\nScheduler starting...");
+        Console.WriteLine($"\nSelected workload: {workloadSelected.TemplateId}.\n" +
+                          "Scheduler starting...\n");
         var workloadCoordinator = host.Services.GetRequiredService<IWorkloadCoordinator>();
 
         await workloadCoordinator.ScheduleWorkload(
@@ -54,14 +65,15 @@ public static class Program
             scenarioValidated.Transactions,
             scenarioValidated.Operations);
 
-        Console.WriteLine("Workload generation finished. Press any key to terminate");
+        Console.WriteLine("\nWorkload generation finished. Press any key to terminate");
         Console.ReadLine();
     }
 
     private static WorkloadGeneratorInputUnvalidated ExtractInputFiles(List<(string FileName, string Content)> valueTuples)
     {
         var filesSplit = valueTuples
-            .GroupBy(file => file.FileName.Split("_").FirstOrDefault());
+            .GroupBy(file => file.FileName.Split("_").FirstOrDefault())
+            .ToList();
 
         var operationFiles = filesSplit
             .SingleOrDefault(group => group.Key == "op")
@@ -78,16 +90,16 @@ public static class Program
         return new WorkloadGeneratorInputUnvalidated(operationFiles!, transactionFiles!, workloadFiles!);
     }
 
-    private static WorkloadInputUnresolved? SelectWorkload(WorkloadGeneratorInputValidated workloadGeneratorInput)
+    private static WorkloadInputUnresolved? SelectWorkload(List<WorkloadInputUnresolved> workloads)
     {
-        Console.WriteLine("Select workload to run:");
+        Console.WriteLine("Select workload to run (or press 'q' to quit):");
 
         while (true)
         {
             var workloadNum = 1;
-            foreach (var (workloadTemplateId, _) in workloadGeneratorInput.Workloads)
+            foreach (var workload in workloads)
             {
-                Console.WriteLine($"({workloadNum}) {workloadTemplateId}");
+                Console.WriteLine($"({workloadNum}) {workload.TemplateId}");
                 workloadNum++;
             }
 
@@ -98,12 +110,16 @@ public static class Program
                 return null;
             }
 
-            var parseResult = int.TryParse(input, out var selected) && selected <= workloadGeneratorInput.Workloads.Count;
+            var selectedWithinRange = int.TryParse(input, out var selected) 
+                                      && selected > 0 
+                                      && selected <= workloads.Count;
 
-            if (!parseResult)
+            if (selectedWithinRange)
             {
-                Console.WriteLine("Invalid workload number provided, try again. (or press 'q' to quit)\n");
+                return workloads[selected - 1];
             }
+            
+            Console.WriteLine("\nInvalid workload number provided, try again. (or press 'q' to quit)\n");
         }
     }
 
@@ -112,7 +128,14 @@ public static class Program
         var _ = await WorkloadGeneratorServer.StartSiloAsync();
         var orleansClientHost = await OrleansClientManager.StartClientAsync();
         var hostBuilder = Host.CreateDefaultBuilder(strings);
-        return hostBuilder.ConfigureServices(services =>
+        
+        return hostBuilder
+            .ConfigureLogging((_, loggingBuilder) =>
+            {
+                loggingBuilder.ClearProviders();
+                loggingBuilder.AddConsole().AddDebug();
+            })
+            .ConfigureServices(services =>
             {
                 services.AddSingleton<TransactionRunnerService>();
                 services.AddHttpClient<TransactionRunnerService>();
@@ -120,10 +143,12 @@ public static class Program
                 services.AddSingleton<ITransactionService, TransactionService>();
                 services.AddSingleton<IWorkloadService, WorkloadService>();
                 services.AddSingleton<IWorkloadCoordinator, WorkloadCoordinator>();
+                services.AddSingleton<IWorkloadGeneratorRunnerService, WorkloadGeneratorRunnerService>();
                 services.AddSingleton<IWorkloadScheduler, WorkloadScheduler>(_ =>
                 {
                     var clusterClient = orleansClientHost.Services.GetRequiredService<IClusterClient>();
-                    return new WorkloadScheduler(clusterClient);
+                    var loggerFactory = orleansClientHost.Services.GetRequiredService<ILoggerFactory>();
+                    return new WorkloadScheduler(loggerFactory.CreateLogger<WorkloadScheduler>(), clusterClient);
                 });
             })
             .Build();

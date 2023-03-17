@@ -1,5 +1,5 @@
 {
-  "templateId": "workload-id",
+  "templateId": "workload-eshop-multi-price-update",
   "generators": [
     {
       "id": "productIdPriceUpdate1",

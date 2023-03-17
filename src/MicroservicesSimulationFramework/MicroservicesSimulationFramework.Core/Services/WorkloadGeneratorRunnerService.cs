@@ -1,4 +1,5 @@
 using MicroservicesSimulationFramework.Core.Models;
+using Microsoft.Extensions.Logging;
 using WorkloadGenerator.Data.Models.Operation;
 using WorkloadGenerator.Data.Models.Transaction;
 using WorkloadGenerator.Data.Models.Workload;
@@ -11,15 +12,18 @@ public class WorkloadGeneratorRunnerService : IWorkloadGeneratorRunnerService
     private readonly ITransactionOperationService _transactionOperationService;
     private readonly ITransactionService _transactionService;
     private readonly IWorkloadService _workloadService;
+    private readonly ILogger<WorkloadGeneratorRunnerService> _logger;
 
     public WorkloadGeneratorRunnerService(
         ITransactionOperationService transactionOperationService,
         ITransactionService transactionService,
-        IWorkloadService workloadService)
+        IWorkloadService workloadService,
+        ILogger<WorkloadGeneratorRunnerService> logger)
     {
         _transactionOperationService = transactionOperationService;
         _transactionService = transactionService;
         _workloadService = workloadService;
+        _logger = logger;
     }
 
     public (WorkloadGeneratorInputValidated? ScenarioValidated, string? ErrorMessage) TryValidate(WorkloadGeneratorInputUnvalidated workloadGeneratorInputUnvalidated)

@@ -1,4 +1,5 @@
-﻿using WorkloadGenerator.Data.Models;
+﻿using Microsoft.Extensions.Logging;
+using WorkloadGenerator.Data.Models;
 using WorkloadGenerator.Data.Models.Generator;
 using WorkloadGenerator.Data.Models.Operation;
 using WorkloadGenerator.Data.Models.Transaction;
@@ -13,71 +14,31 @@ namespace WorkloadGenerator.Client;
 /// </summary>
 public class WorkloadCoordinator : IWorkloadCoordinator
 {
-    private readonly WorkloadScheduler _workloadScheduler;
+    private readonly ILogger<WorkloadCoordinator> _logger;
+    private readonly IWorkloadScheduler _workloadScheduler;
 
-    public WorkloadCoordinator(WorkloadScheduler workloadScheduler)
+    public WorkloadCoordinator(ILogger<WorkloadCoordinator> logger, IWorkloadScheduler workloadScheduler)
     {
+        _logger = logger;
         _workloadScheduler = workloadScheduler;
     }
-
-    // public async Task RunWorkload(
-    //     WorkloadInputUnresolved workloadToRun,
-    //     Dictionary<string, TransactionInputUnresolved> transactions,
-    //     Dictionary<string, ITransactionOperationUnresolved> operations)
-    // {
-    //     // need to complete transactions that are specified (counts)
-    //     // need algorithm to select next transaction + number of concurrent transactions
-    //     // running
-    //
-    //     // spawn worker threads according to numbers with timers?
-    //     // then start them
-    //     var txCounts = workloadToRun.Transactions.Select(t => t.Count);
-    //     var txToExecute = new List<string>();
-    //     foreach (var txRef in workloadToRun.Transactions)
-    //     {
-    //         txToExecute.AddRange(Enumerable.Repeat<string>(txRef.Id, txRef.Count));
-    //     }
-    //     // TODO: shuffle list for now use guid but probably not optimal
-    //     var txStack = new Stack<string>(txToExecute.OrderBy(a => Guid.NewGuid()));
-    //
-    //     var maxRate = 10;
-    //     if (workloadToRun.MaxConcurrentTransactions is not null)
-    //     {
-    //         maxRate = (int)workloadToRun.MaxConcurrentTransactions;
-    //     }
-    //
-    //     var tasks = new List<Task>();
-    //     // Here we simply spawn a worker grain for each transaction and wait for their completion
-    //     while (txStack.Count != 0)
-    //     {
-    //         var nextId = txStack.Pop();
-    //         var txRef =
-    //             workloadToRun.Transactions.Find(tr => tr.Id == nextId);
-    //
-    //         
-    //         var tx = transactions[txRef.TransactionReferenceId];
-    //         var txOpsRefs = tx.Operations.Select(o => o.OperationReferenceId).ToHashSet();
-    //         var txOps =
-    //             operations.Where(o => txOpsRefs.Contains(o.Key))
-    //                 .ToDictionary(x => x.Key, x => x.Value);
-    //         Console.WriteLine($"Starting tx: {txRef.Id}");
-    //         var task = worker.ExecuteTransaction(workloadToRun, txRef,
-    //             transactions[txRef.TransactionReferenceId], txOps, _httpClientFactory);
-    //         tasks.Add(task);
-    //     }
-    //
-    //     await Task.WhenAll(tasks);
-    // }
-
+    
     public async Task ScheduleWorkload(
             WorkloadInputUnresolved workloadToRun,
             Dictionary<string, TransactionInputUnresolved> transactions,
             Dictionary<string, ITransactionOperationUnresolved> operations)
     {
+        using var _ = _logger.BeginScope(new Dictionary<string, object>() 
+        {
+            { "WorkloadTemplateId", workloadToRun.TemplateId },
+            { "CorrelationId", Guid.NewGuid() /* TODO: CorrelationId should be passed down */ }
+        });
+        
         _workloadScheduler.Init(GetMaxRate(workloadToRun));
-
-
+        
         var txStack = GetTransactionsToExecute(workloadToRun);
+       
+        _logger.LogInformation("{TransactionCount} transactions to execute", txStack.Count);
         while (txStack.Count != 0)
         {
             // var txOpsRefs = tx.Operations.Select(o => o.OperationReferenceId).ToHashSet();
@@ -87,16 +48,12 @@ public class WorkloadCoordinator : IWorkloadCoordinator
 
             // Generate providedValues with Generators
             var executableTx = CreateExecutableTransaction(workloadToRun, txStack.Pop(), transactions, operations);
-
-            // Submit transaction to scheduler
-            Console.WriteLine($"Submit tx: {executableTx.Transaction.TemplateId} to scheduler");
-
+            
             await _workloadScheduler.SubmitTransaction(executableTx);
         }
 
         // TODO: we need to find a way of getting some information back from the grains to know that they are finished
-        Console.WriteLine("All transactions have been submitted to the scheduler");
-        Console.ReadKey();
+        _logger.LogInformation("All transactions have been submitted to the scheduler");
     }
 
     private static ExecutableTransaction CreateExecutableTransaction(WorkloadInputUnresolved workloadToRun,

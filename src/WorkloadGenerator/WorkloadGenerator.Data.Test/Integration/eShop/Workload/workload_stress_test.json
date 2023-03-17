@@ -1,5 +1,5 @@
 {
-  "templateId": "workload-id",
+  "templateId": "workload-stress-test",
   "maxConcurrentTransactions": 5,
   "generators": [
     {

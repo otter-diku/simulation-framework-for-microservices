@@ -29,28 +29,36 @@ public class TransactionRunnerService
         Dictionary<string, ITransactionOperationUnresolved> operationsDictionary)
     {
         // generate dynamic variable for transaction.DynamicVariables
-        for (var i = 0; i < transaction.Operations.Count; i++)
+        foreach (var operationReferenceId in transaction.Operations.Select(t => t.OperationReferenceId))
         {
-            var opRefId = transaction.Operations[i].OperationReferenceId;
-            if (!operationsDictionary.TryGetValue(opRefId, out var operation))
+            if (!operationsDictionary.TryGetValue(operationReferenceId, out var operation))
             {
-                throw new Exception($"Could not find operation with ID {opRefId}");
+                _logger.LogWarning("Could not find operation with ID {OperationReferenceId}", operationReferenceId);
+                return;
             }
+            
+            using var _ = _logger.BeginScope(new Dictionary<string, object>
+            {
+                { "OperationReferenceId", operationReferenceId },
+                { "CorrelationId", Guid.NewGuid() /* TODO: CorrelationIds should be passed down*/ },
+            });
 
+            // TODO: add logging of operation type and maybe some extra details
+            
             var didResolve = _transactionOperationService.TryResolve(operation, providedValues, out var resolved);
             if (!didResolve)
             {
-                Console.WriteLine($"Failed to resolve Tx: {transaction.TemplateId}, Op: {opRefId}");
+                _logger.LogWarning("Failed to resolve operation");
                 return;
             }
+
             var didConvert = _transactionOperationService.TryConvertToExecutable(resolved, out var transactionOperationBaseExecutable);
             if (!didConvert)
             {
-                Console.WriteLine($"Failed to convert Tx: {transaction.TemplateId}, Op: {opRefId}");
+                _logger.LogWarning("Failed to convert operation into executable");
                 return;
             }
-
-
+            
             var result = await ExecuteOperation(transactionOperationBaseExecutable);
 
             if (result is null)
@@ -74,12 +82,7 @@ public class TransactionRunnerService
                 providedValues[p.Key] = p.Value;
             }
 
-
-            // TODO: need to write this to Kafka cluster instead
-            await using var logFile = new StreamWriter(Path.Combine(Directory.GetCurrentDirectory(), Constants.LogFile), true);
-            await logFile.WriteLineAsync($"[{DateTime.Now}]: Tx: {transaction.TemplateId}, Op: {opRefId}:");
-            await logFile.WriteLineAsync($"Result: {((HttpResponseMessage)result).ToString()}");
-            await logFile.WriteLineAsync("----------------------------------------------------------------");
+            _logger.LogInformation("Operation finished");
         }
     }
 
