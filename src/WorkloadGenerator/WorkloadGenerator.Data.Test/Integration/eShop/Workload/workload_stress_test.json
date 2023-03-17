@@ -1,5 +1,5 @@
 {
-  "id": "workload-id",
+  "templateId": "workload-id",
   "maxConcurrentTransactions": 5,
   "generators": [
     {
