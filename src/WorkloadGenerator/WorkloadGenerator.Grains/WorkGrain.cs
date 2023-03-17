@@ -12,7 +12,7 @@ public class WorkGrain : Grain, IWorkGrain
 {
     private const string StreamNamespace = "TRANSACTIONDATA";
     private const string StreamProviderName = "StreamProvider";
-    
+
     private readonly TransactionRunnerService _runnerService;
     private readonly ILogger<WorkGrain> _logger;
 
@@ -29,14 +29,14 @@ public class WorkGrain : Grain, IWorkGrain
             { "GrainPrimaryKey", this.GetPrimaryKeyLong() },
             { "MethodName", nameof(OnActivateAsync) }
         });
-        
+
         try
         {
             var streamProvider = this.GetStreamProvider(StreamProviderName);
             var streamId = StreamId.Create(StreamNamespace, this.GetPrimaryKeyLong().ToString());
             var stream = streamProvider.GetStream<ExecutableTransaction>(streamId);
             var handle = await stream.SubscribeAsync(Run);
-            _logger.LogDebug("Subscribed to stream {Stream}. Handle: {HandleId}", 
+            _logger.LogDebug("Subscribed to stream {Stream}. Handle: {HandleId}",
                 StreamNamespace,
                 handle.HandleId);
         }
@@ -55,9 +55,9 @@ public class WorkGrain : Grain, IWorkGrain
             { "TransactionTemplateId", executableTransaction.Transaction.TemplateId },
             { "CorrelationId", Guid.NewGuid() /* TODO: correlation IDs should probably be passed down */},
         });
-        
+
         _logger.LogDebug("Starting to execute transaction");
-        
+
         try
         {
             await _runnerService.Run(executableTransaction.Transaction, executableTransaction.ProvidedValues,

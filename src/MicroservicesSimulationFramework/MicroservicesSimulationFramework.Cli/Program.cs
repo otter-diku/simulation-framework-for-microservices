@@ -49,14 +49,14 @@ public static class Program
         var workloadCoordinator = host.Services.GetRequiredService<IWorkloadCoordinator>();
 
         await workloadCoordinator.ScheduleWorkload(
-            workloadSelected, 
+            workloadSelected,
             scenarioValidated.Transactions,
             scenarioValidated.Operations);
 
         Console.WriteLine("Workload generation finished. Press any key to terminate");
         Console.ReadLine();
     }
-    
+
     private static ScenarioInput ExtractInputFiles(List<(string FileName, string Content)> valueTuples)
     {
         var filesSplit = valueTuples
@@ -76,12 +76,12 @@ public static class Program
 
         return new ScenarioInput(operationFiles!, transactionFiles!, workloadFiles!);
     }
-    
+
     private static WorkloadInputUnresolved? SelectWorkload(ScenarioValidated scenario)
     {
         Console.WriteLine("Select workload to run:");
 
-        while(true)
+        while (true)
         {
             var workloadNum = 1;
             foreach (var (workloadTemplateId, _) in scenario.Workloads)
