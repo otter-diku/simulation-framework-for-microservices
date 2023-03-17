@@ -1,4 +1,5 @@
-﻿using MicroservicesSimulationFramework.Core;
+﻿using MicroservicesSimulationFramework.Core.Models;
+using MicroservicesSimulationFramework.Core.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Utilities;
@@ -57,7 +58,7 @@ public static class Program
         Console.ReadLine();
     }
 
-    private static ScenarioInput ExtractInputFiles(List<(string FileName, string Content)> valueTuples)
+    private static WorkloadGeneratorInputUnvalidated ExtractInputFiles(List<(string FileName, string Content)> valueTuples)
     {
         var filesSplit = valueTuples
             .GroupBy(file => file.FileName.Split("_").FirstOrDefault());
@@ -74,17 +75,17 @@ public static class Program
             .SingleOrDefault(group => group.Key == "workload")
             ?.ToList();
 
-        return new ScenarioInput(operationFiles!, transactionFiles!, workloadFiles!);
+        return new WorkloadGeneratorInputUnvalidated(operationFiles!, transactionFiles!, workloadFiles!);
     }
 
-    private static WorkloadInputUnresolved? SelectWorkload(ScenarioValidated scenario)
+    private static WorkloadInputUnresolved? SelectWorkload(WorkloadGeneratorInputValidated workloadGeneratorInput)
     {
         Console.WriteLine("Select workload to run:");
 
         while (true)
         {
             var workloadNum = 1;
-            foreach (var (workloadTemplateId, _) in scenario.Workloads)
+            foreach (var (workloadTemplateId, _) in workloadGeneratorInput.Workloads)
             {
                 Console.WriteLine($"({workloadNum}) {workloadTemplateId}");
                 workloadNum++;
@@ -97,7 +98,7 @@ public static class Program
                 return null;
             }
 
-            var parseResult = int.TryParse(input, out var selected) && selected <= scenario.Workloads.Count;
+            var parseResult = int.TryParse(input, out var selected) && selected <= workloadGeneratorInput.Workloads.Count;
 
             if (!parseResult)
             {
