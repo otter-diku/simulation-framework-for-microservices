@@ -1,8 +1,12 @@
 ﻿using System.Text.Json;
+using System.Text.Json.Serialization;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Orleans.Configuration;
 using Orleans.Serialization;
 using Utilities;
+using WorkloadGenerator.Data.Models.Operation;
+using WorkloadGenerator.Data.Services;
 
 namespace WorkloadGenerator.Server
 {
@@ -25,6 +29,12 @@ namespace WorkloadGenerator.Server
                             options.SiloPort = Constants.SiloPort; // silo-to-silo communication
                             options.GatewayPort = Constants.GatewayPort; // client-to-silo communication
                         })
+                        .ConfigureServices((sc) =>
+                        {
+                            sc.AddHttpClient<TransactionRunnerService>();
+                            sc.AddSingleton<TransactionRunnerService>();
+                            sc.AddSingleton<ITransactionOperationService, TransactionOperationService>();
+                        })
                         .AddMemoryStreams("StreamProvider")
                         .AddMemoryGrainStorage("PubSubStore")
                         .UseDashboard(_ => { }); // localhost:8080
@@ -32,17 +42,24 @@ namespace WorkloadGenerator.Server
                     {
                         serializerBuilder.AddJsonSerializer(
                             isSupported: type =>
-                                type.Namespace.StartsWith("WorkloadGenerator.Data.Models")
-                                || type.Namespace.StartsWith("WorkloadGenerator.Coordinator")
+                                type.Namespace!.StartsWith("WorkloadGenerator."),
+
+                            new JsonSerializerOptions(new JsonSerializerOptions()
+                            {
+                                PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+                                PropertyNameCaseInsensitive = true,
+                                Converters =
+                                {
+                                    new JsonStringEnumConverter(JsonNamingPolicy.CamelCase),
+                                    new ITransactionOperationUnresolvedJsonConverter()
+                                }
+                            })
                             );
                     });
                 });
 
             var server = builder.Build();
             await server.StartAsync();
-            Console.WriteLine("*************************************************************************");
-            Console.WriteLine("    The Workload Generator server started. Press Enter to terminate...");
-            Console.WriteLine("*************************************************************************");
             return server;
         }
     }

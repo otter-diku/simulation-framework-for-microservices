@@ -1,40 +1,45 @@
-using System.Collections.Concurrent;
 using Microsoft.Extensions.Logging.Abstractions;
-using Orleans.Concurrency;
+using Orleans.Runtime;
+using Orleans.Streams;
 using WorkloadGenerator.Data.Models;
 using WorkloadGenerator.Data.Services;
 using WorkloadGenerator.Grains.Interfaces;
 
 namespace WorkloadGenerator.Grains;
 
-public class WorkGrain : IWorkGrain
+[ImplicitStreamSubscription("TRANSACTIONDATA")]
+public class WorkGrain : Grain, IWorkGrain
 {
-    private ConcurrentQueue<ExecutableTransaction> _transactionQueue;
-    private TransactionRunnerService _runnerService;
+    private readonly TransactionRunnerService _runnerService;
 
-    public Task Init(IHttpClientFactory httpClientFactory, ConcurrentQueue<ExecutableTransaction> transactionQueue)
+    public WorkGrain(TransactionRunnerService transactionRunnerService)
     {
-        var transactionOperationService =
-            new TransactionOperationService(NullLogger<TransactionOperationService>.Instance);
-        _runnerService = new TransactionRunnerService(
-            transactionOperationService,
-            httpClientFactory,
-            NullLogger<TransactionRunnerService>.Instance
-        );
-
-        _transactionQueue = transactionQueue;
-        return Task.CompletedTask;
+        _runnerService = transactionRunnerService;
     }
 
-    // TODO: could make reentrant and once transaction queue is empty we can dispose the grain gracefully from scheduler
-    public async Task Start()
+    public override async Task OnActivateAsync(CancellationToken cancellationToken)
     {
-        while (true)
+        var streamProvider = this.GetStreamProvider("StreamProvider");
+        var streamId = StreamId.Create("TRANSACTIONDATA", this.GetPrimaryKeyLong().ToString());
+        var stream = streamProvider.GetStream<ExecutableTransaction>(streamId);
+        await stream.SubscribeAsync(Run);
+    }
+
+    private async Task Run(ExecutableTransaction executableTransaction, StreamSequenceToken? token = null)
+    {
+        try
         {
-            if (_transactionQueue.TryDequeue(out var execTx))
-            {
-                await _runnerService.Run(execTx.Transaction, execTx.ProvidedValues, execTx.Operations);
-            }
+            Console.WriteLine(
+                $"Grain {this.GetPrimaryKeyLong()} started {executableTransaction.Transaction.TemplateId} at {DateTimeOffset.Now}");
+            await _runnerService.Run(executableTransaction.Transaction, executableTransaction.ProvidedValues,
+                executableTransaction.Operations);
+            Console.WriteLine(
+                $"Grain {this.GetPrimaryKeyLong()} finished {executableTransaction.Transaction.TemplateId} at {DateTimeOffset.Now}");
         }
+        catch (Exception e)
+        {
+            Console.WriteLine($"Failed, but returning as a hero. Exception: {e.Message}");
+        }
+
     }
 }

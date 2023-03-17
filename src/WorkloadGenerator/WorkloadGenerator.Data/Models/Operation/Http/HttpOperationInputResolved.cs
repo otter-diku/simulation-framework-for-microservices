@@ -32,7 +32,7 @@ public class HttpOperationRequestPayloadResolvedBaseConverter : JsonConverter<Ht
             throw new JsonException();
         }
 
-        if (typeProperty.GetString().ToLower() != HttpPayloadType.Json.ToString().ToLower())
+        if (!string.Equals(typeProperty.GetString(), HttpPayloadType.Json.ToString(), StringComparison.CurrentCultureIgnoreCase))
         {
             throw new JsonException();
         }

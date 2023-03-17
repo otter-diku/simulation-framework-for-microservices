@@ -7,7 +7,6 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\..\EshopData\EshopData.csproj" />
         <ProjectReference Include="..\..\Utilities\Utilities.csproj" />
         <ProjectReference Include="..\WorkloadGenerator.Data\WorkloadGenerator.Data.csproj" />
         <ProjectReference Include="..\WorkloadGenerator.Grains.Interfaces\WorkloadGenerator.Grains.Interfaces.csproj" />
@@ -23,6 +22,7 @@
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>
         <PackageReference Include="Microsoft.Orleans.Sdk" Version="7.1.0" />
+        <PackageReference Include="Microsoft.Orleans.Streaming" Version="7.1.0" />
     </ItemGroup>
 
 </Project>
