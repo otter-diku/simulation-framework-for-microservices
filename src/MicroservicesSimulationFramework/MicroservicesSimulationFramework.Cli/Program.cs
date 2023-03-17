@@ -56,8 +56,8 @@ public static class Program
             return;
         }
 
-        Console.WriteLine($"\nSelected workload: {workloadSelected.TemplateId}.\n" +
-                          "Scheduler starting...\n");
+        Console.WriteLine($"Selected workload: {workloadSelected.TemplateId}.\n" +
+                          "Scheduler starting...");
         var workloadCoordinator = host.Services.GetRequiredService<IWorkloadCoordinator>();
 
         await workloadCoordinator.ScheduleWorkload(
@@ -65,7 +65,7 @@ public static class Program
             scenarioValidated.Transactions,
             scenarioValidated.Operations);
 
-        Console.WriteLine("\nWorkload generation finished. Press any key to terminate");
+        Console.WriteLine("Workload generation finished. Press any key to terminate\n");
         Console.ReadLine();
     }
 
@@ -133,7 +133,7 @@ public static class Program
             .ConfigureLogging((_, loggingBuilder) =>
             {
                 loggingBuilder.ClearProviders();
-                loggingBuilder.AddConsole().AddDebug();
+                loggingBuilder.AddSeq(); // TODO: it's using the default localhost:5431 host
             })
             .ConfigureServices(services =>
             {

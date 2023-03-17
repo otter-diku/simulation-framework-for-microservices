@@ -19,7 +19,7 @@ namespace WorkloadGenerator.Server
                 .ConfigureLogging((_, loggingBuilder) =>
                 {
                     loggingBuilder.ClearProviders();
-                    loggingBuilder.AddConsole().AddDebug();
+                    loggingBuilder.AddSeq();
                 })
                 .UseOrleans(siloBuilder =>
                 {
@@ -38,7 +38,7 @@ namespace WorkloadGenerator.Server
                         .ConfigureLogging(loggingBuilder =>
                         {
                             loggingBuilder.ClearProviders();
-                            loggingBuilder.AddConsole().AddDebug();
+                            loggingBuilder.AddSeq();
                         })
                         .ConfigureServices((sc) =>
                         {

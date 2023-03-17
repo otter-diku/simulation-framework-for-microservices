@@ -17,7 +17,7 @@ public static class OrleansClientManager
             .ConfigureLogging((_, loggingBuilder) =>
             {
                 loggingBuilder.ClearProviders();
-                loggingBuilder.AddConsole().AddDebug();
+                loggingBuilder.AddSeq();
             })
             .UseOrleansClient(clientBuilder =>
             {

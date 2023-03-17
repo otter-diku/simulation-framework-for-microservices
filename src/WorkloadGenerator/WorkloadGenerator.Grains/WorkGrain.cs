@@ -50,10 +50,11 @@ public class WorkGrain : Grain, IWorkGrain
     {
         using var _ = _logger.BeginScope(new Dictionary<string, object>
         {
+            { "WorkloadCorrelationId", executableTransaction.WorkloadCorrelationId },
             { "GrainPrimaryKey", this.GetPrimaryKeyLong() },
             { "MethodName", nameof(Run) },
             { "TransactionTemplateId", executableTransaction.Transaction.TemplateId },
-            { "CorrelationId", Guid.NewGuid() /* TODO: correlation IDs should probably be passed down */},
+            { "TransactionCorrelationId", Guid.NewGuid() /* TODO: correlation IDs should be hierarchical and passed down */},
         });
 
         _logger.LogInformation("Starting to execute transaction");

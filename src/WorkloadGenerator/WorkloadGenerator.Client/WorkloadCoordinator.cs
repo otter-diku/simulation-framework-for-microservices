@@ -28,10 +28,11 @@ public class WorkloadCoordinator : IWorkloadCoordinator
             Dictionary<string, TransactionInputUnresolved> transactions,
             Dictionary<string, ITransactionOperationUnresolved> operations)
     {
+        var workloadCorrelationId = Guid.NewGuid(); /* TODO: correlation IDs should be hierarchical and passed down */
         using var _ = _logger.BeginScope(new Dictionary<string, object>() 
         {
             { "WorkloadTemplateId", workloadToRun.TemplateId },
-            { "CorrelationId", Guid.NewGuid() /* TODO: CorrelationId should be passed down */ }
+            { "WorkloadCorrelationId", workloadCorrelationId }
         });
         
         _workloadScheduler.Init(GetMaxRate(workloadToRun));
@@ -47,7 +48,7 @@ public class WorkloadCoordinator : IWorkloadCoordinator
             //         .ToDictionary(x => x.Key, x => x.Value);
 
             // Generate providedValues with Generators
-            var executableTx = CreateExecutableTransaction(workloadToRun, txStack.Pop(), transactions, operations);
+            var executableTx = CreateExecutableTransaction(workloadCorrelationId, workloadToRun, txStack.Pop(), transactions, operations);
             
             await _workloadScheduler.SubmitTransaction(executableTx);
         }
@@ -56,7 +57,9 @@ public class WorkloadCoordinator : IWorkloadCoordinator
         _logger.LogInformation("All transactions have been submitted to the scheduler");
     }
 
-    private static ExecutableTransaction CreateExecutableTransaction(WorkloadInputUnresolved workloadToRun,
+    private static ExecutableTransaction CreateExecutableTransaction(
+        Guid workloadCorrelationId,
+        WorkloadInputUnresolved workloadToRun,
         string id,
         Dictionary<string, TransactionInputUnresolved> transactionsByReferenceId,
         Dictionary<string, ITransactionOperationUnresolved> operationsByReferenceId)
@@ -75,6 +78,7 @@ public class WorkloadCoordinator : IWorkloadCoordinator
 
         var executableTx = new ExecutableTransaction()
         {
+            WorkloadCorrelationId = workloadCorrelationId,
             Transaction = transactionsByReferenceId[txRef.TransactionReferenceId],
             Operations = operationsByReferenceId,
             ProvidedValues = providedValues

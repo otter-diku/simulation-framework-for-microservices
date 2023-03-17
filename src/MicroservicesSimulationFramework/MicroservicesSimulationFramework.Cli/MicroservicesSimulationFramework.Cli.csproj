@@ -15,4 +15,8 @@
       <ProjectReference Include="..\MicroservicesSimulationFramework.Core\MicroservicesSimulationFramework.Core.csproj" />
     </ItemGroup>
 
+    <ItemGroup>
+      <PackageReference Include="Seq.Extensions.Logging" Version="6.1.0" />
+    </ItemGroup>
+
 </Project>

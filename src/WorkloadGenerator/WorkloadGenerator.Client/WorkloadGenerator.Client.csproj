@@ -12,6 +12,7 @@
       <PackageReference Include="Microsoft.Orleans.Core" Version="7.1.0" />
       <PackageReference Include="Microsoft.Orleans.Runtime" Version="7.1.0" />
       <PackageReference Include="Microsoft.Orleans.Streaming" Version="7.1.0" />
+      <PackageReference Include="Seq.Extensions.Logging" Version="6.1.0" />
     </ItemGroup>
 
     <ItemGroup>
