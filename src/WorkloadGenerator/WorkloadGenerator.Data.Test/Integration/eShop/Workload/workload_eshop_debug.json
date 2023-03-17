@@ -1,6 +1,5 @@
 {
-  "id": "workload-id",
-  "maxConcurrentTransactions": 1,
+  "id": "workload-debug",
   "generators": [
     {
       "id": "productId",
@@ -8,6 +7,13 @@
       "distribution": "uniform",
       "min": 1,
       "max": 1000
+    },
+    {
+      "id": "sleepSeconds",
+      "type": "unsignedInt",
+      "distribution": "uniform",
+      "min": 1,
+      "max": 2
     },
     {
       "id": "productIdPriceUpdate",
@@ -22,20 +28,9 @@
   ],
   "transactions": [
     {
-      "id": "tx1",
-      "transactionReferenceId": "add-catalog-item",
-      "count": 20,
-      "data": [
-        {
-          "name":  "product-id",
-          "generatorReferenceId": "productId"
-        }
-      ]
-    },
-    {
-      "id": "tx2",
+      "id": "tx-1",
       "transactionReferenceId": "update-catalog-item-price",
-      "count": 20,
+      "count": 1,
       "data": [
         {
           "name":  "product-id",
@@ -44,13 +39,17 @@
       ]
     },
     {
-      "id": "tx3",
-      "transactionReferenceId": "add-item-and-checkout-basket",
-      "count": 20,
+      "id": "tx-2",
+      "transactionReferenceId": "add-item-and-checkout-basket-with-sleeps",
+      "count": 1,
       "data": [
         {
           "name":  "user-id",
           "generatorReferenceId": "userId"
+        },
+        {
+          "name":  "sleep-time",
+          "generatorReferenceId": "sleepSeconds"
         }
       ]
     }

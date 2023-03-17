@@ -1,109 +1,132 @@
-﻿// See https://aka.ms/new-console-template for more information
-
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Logging;
+﻿using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging.Abstractions;
 using WorkloadGenerator.Data.Services;
 using Utilities;
-using WorkloadGenerator.Coordinator;
+using WorkloadGenerator.Client;
 using WorkloadGenerator.Data.Models.Operation;
 using WorkloadGenerator.Data.Models.Transaction;
 using WorkloadGenerator.Data.Models.Workload;
+using WorkloadGenerator.Server;
+
+var hostBuilder = Host.CreateDefaultBuilder(args);
 
 if (args.Length == 0)
 {
-    Console.WriteLine("No workload configuration folder specified");
+    Console.WriteLine("No workload configuration folder specified, exiting...");
     return;
 }
 
-var jsonFiles = new List<(string, string)>();
-Helper.ReadAllJsonFiles(jsonFiles, args[0]);
+var jsonFiles = Helper.ReadAllJsonFiles(args[0]);
 
-if (jsonFiles is not null)
+if (jsonFiles is not { Count: > 0 })
 {
-    var operationFiles = jsonFiles.Where(f =>
-        f.Item1.StartsWith("op_")).ToList();
-    var transactionFiles = jsonFiles.Where(f =>
-        f.Item1.StartsWith("tx_")).ToList();
-    var workloadFiles = jsonFiles.Where(f =>
-        f.Item1.StartsWith("workload_")).ToList();
-
-    // Parsing + validation
-    var operationService = new TransactionOperationService(NullLogger<TransactionOperationService>.Instance);
-    var operations = new Dictionary<string, ITransactionOperationUnresolved>();
-    foreach (var o in operationFiles)
-    {
-        var parsingResult = operationService.TryParseInput(o.Item2, out var parsedOp);
-        if (!parsingResult)
-        {
-            Console.WriteLine($"Error while parsing {o}");
-            return;
-        }
-        operations.Add(parsedOp.TemplateId, parsedOp);
-    }
-
-    var transactionService = new TransactionService(NullLogger<TransactionService>.Instance);
-    var transactions = new Dictionary<string, TransactionInputUnresolved>();
-    foreach (var t in transactionFiles)
-    {
-        var parsingResult = transactionService.TryParseInput(t.Item2, out var parsedTx);
-        if (!parsingResult)
-        {
-            Console.WriteLine($"Error while parsing {t}");
-            return;
-        }
-        transactions.Add(parsedTx.TemplateId, parsedTx);
-    }
-
-    var workloadService = new WorkloadService(NullLogger<WorkloadService>.Instance);
-    var workloads = new Dictionary<string, WorkloadInputUnresolved>();
-    foreach (var w in workloadFiles)
-    {
-        var parsingResult = workloadService.TryParseInput(w.Item2, out var parsedWorkload);
-        if (!parsingResult)
-        {
-            Console.WriteLine($"Error while parsing {w}");
-            return;
-        }
-        workloads.Add(w.Item1, parsedWorkload);
-    }
-
-    // Create hashsets to check all referenced transactions / operations exist while resolving
-    var operationReferenceIds =
-        operations.Values.Select(o => o.TemplateId).ToHashSet();
-    var transactionReferenceIds =
-        transactions.Values.Select(t => t.TemplateId).ToHashSet();
-
-    // TODO: do op/tx reference validation here before starting to execute workload
-
-
-    // Select workload to run
-    Console.WriteLine("Select workload to run:");
-    var workloadNum = 1;
-    foreach (var w in workloadFiles)
-    {
-        Console.WriteLine($"({workloadNum}) {w.Item1}");
-        workloadNum++;
-    }
-    var input = Console.ReadLine();
-    var parseResult = int.TryParse(input, out var selected);
-
-    WorkloadInputUnresolved workloadToRun = null;
-    if (parseResult && selected < workloadNum)
-    {
-        workloadToRun = workloads[workloadFiles[selected - 1].Item1];
-    }
-
-    var workloadCoordinator = new WorkloadCoordinator();
-    await workloadCoordinator.Init();
-
-    await workloadCoordinator.RunWorkload(workloadToRun, transactions, operations);
-    // await workloadCoordinator.ScheduleWorkload(workloadToRun, transactions, operations);
-
-    Console.WriteLine("Workload generation finished. Press Enter to terminate");
-    Console.ReadLine();
+    Console.WriteLine($"No JSON configuration files found at {args[0]}, exiting...");
+    return;
 }
 
+var operationFiles = jsonFiles.Where(f =>
+    f.Item1.StartsWith("op_")).ToList();
+var transactionFiles = jsonFiles.Where(f =>
+    f.Item1.StartsWith("tx_")).ToList();
+var workloadFiles = jsonFiles.Where(f =>
+    f.Item1.StartsWith("workload_")).ToList();
+
+// Parsing + validation
+var operationService = new TransactionOperationService(NullLogger<TransactionOperationService>.Instance);
+var operations = new Dictionary<string, ITransactionOperationUnresolved>();
+foreach (var o in operationFiles)
+{
+    var parsingResult = operationService.TryParseInput(o.Item2, out var parsedOp);
+    if (!parsingResult)
+    {
+        Console.WriteLine($"Error while parsing {o}, exiting...");
+        return;
+    }
+    operations.Add(parsedOp.TemplateId, parsedOp);
+}
+
+var transactionService = new TransactionService(NullLogger<TransactionService>.Instance);
+var transactions = new Dictionary<string, TransactionInputUnresolved>();
+foreach (var t in transactionFiles)
+{
+    var parsingResult = transactionService.TryParseInput(t.Item2, out var parsedTx);
+    if (!parsingResult)
+    {
+        Console.WriteLine($"Error while parsing {t}, exiting...");
+        return;
+    }
+    transactions.Add(parsedTx.TemplateId, parsedTx);
+}
+
+var workloadService = new WorkloadService(NullLogger<WorkloadService>.Instance);
+var workloads = new Dictionary<string, WorkloadInputUnresolved>();
+foreach (var w in workloadFiles)
+{
+    var parsingResult = workloadService.TryParseInput(w.Item2, out var parsedWorkload);
+    if (!parsingResult)
+    {
+        Console.WriteLine($"Error while parsing {w}, exiting....");
+        return;
+    }
+    workloads.Add(w.Item1, parsedWorkload);
+}
+
+// Create hashsets to check all referenced transactions / operations exist while resolving
+var operationReferenceIds =
+    operations.Values.Select(o => o.TemplateId).ToHashSet();
+var transactionReferenceIds =
+    transactions.Values.Select(t => t.TemplateId).ToHashSet();
+
+// TODO: do op/tx reference validation here before starting to execute workload
+
+
+// Select workload to run
+Console.WriteLine("Select workload to run:");
+var workloadNum = 1;
+foreach (var w in workloadFiles)
+{
+    Console.WriteLine($"({workloadNum}) {w.Item1}");
+    workloadNum++;
+}
+var input = Console.ReadLine();
+var parseResult = int.TryParse(input, out var selected);
+
+WorkloadInputUnresolved? workloadToRun = null;
+if (parseResult && selected < workloadNum)
+{
+    workloadToRun = workloads[workloadFiles[selected - 1].Item1];
+}
+
+var _ = await WorkloadGeneratorServer.StartSiloAsync();
+
+var clientHost = await OrleansClientManager.StartClientAsync();
+
+
+
+var host = hostBuilder.ConfigureServices(services =>
+    {
+        services.AddSingleton<TransactionRunnerService>();
+        services.AddHttpClient<TransactionRunnerService>();
+        services.AddSingleton<ITransactionOperationService, TransactionOperationService>();
+        services.AddSingleton<ITransactionService, TransactionService>();
+        services.AddSingleton<IWorkloadService, WorkloadService>();
+        services.AddSingleton(_ =>
+        {
+            var clusterClient = clientHost.Services.GetRequiredService<IClusterClient>();
+            return new WorkloadScheduler(clusterClient);
+        });
+    })
+    .Build();
+
+
+var workloadCoordinator = new WorkloadCoordinator(host.Services.GetRequiredService<WorkloadScheduler>());
+
+// await workloadCoordinator.RunWorkload(workloadToRun, transactions, operations);
+await workloadCoordinator.ScheduleWorkload(workloadToRun!, transactions, operations);
+
+Console.WriteLine("Workload generation finished. Press Enter to terminate");
+Console.ReadLine();
 
 
 
