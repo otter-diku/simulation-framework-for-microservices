@@ -1,5 +1,4 @@
-﻿using WorkloadGenerator.Client;
-using WorkloadGenerator.Data.Models;
+﻿using WorkloadGenerator.Data.Models;
 using WorkloadGenerator.Data.Models.Generator;
 using WorkloadGenerator.Data.Models.Operation;
 using WorkloadGenerator.Data.Models.Transaction;
@@ -12,7 +11,7 @@ namespace WorkloadGenerator.Client;
 /// by creating the worker grains which execute the requests against
 /// the application that is being simulated.
 /// </summary>
-public class WorkloadCoordinator
+public class WorkloadCoordinator : IWorkloadCoordinator
 {
     private readonly WorkloadScheduler _workloadScheduler;
 

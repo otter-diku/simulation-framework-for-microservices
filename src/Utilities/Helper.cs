@@ -2,7 +2,7 @@ namespace Utilities;
 
 public static class Helper
 {
-    public static List<(string, string)> ReadAllJsonFiles(string path)
+    public static List<(string FileName, string Content)> ReadAllJsonFiles(string path)
     {
         try
         {

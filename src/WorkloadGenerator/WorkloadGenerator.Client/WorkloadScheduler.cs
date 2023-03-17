@@ -14,7 +14,7 @@ namespace WorkloadGenerator.Client;
 /// Once a worker grains is finished with its current transaction it
 /// retrieves the next transaction from the queue.
 /// </summary>
-public class WorkloadScheduler
+public class WorkloadScheduler : IWorkloadScheduler
 {
     private readonly IClusterClient _client;
     private ConcurrentDictionary<IWorkGrain, bool> _availableWorkers = new();
