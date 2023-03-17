@@ -6,28 +6,16 @@ import org.apache.flink.cep.pattern.Pattern;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.cep.pattern.conditions.SimpleCondition;
+import org.myorg.flinkinvariants.events.Event;
 
-public class CEPJob {
+public class CEPExampleJob {
 
     public static void main(String[] args) throws Exception {
         String broker = "localhost:29092";
         String topic = "eshop_event_bus";
         String groupId = "flink-invariant-checker";
 
-        // Sets up the execution environment, which is the main entry point
-        // to building Flink applications.
         final StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
-
-//        KafkaSource<String> source = KafkaSource.<String>builder()
-//                .setBootstrapServers(broker)
-//                .setTopics(topic)
-//                .setGroupId(groupId)
-//                .setStartingOffsets(OffsetsInitializer.earliest())
-//                .setDeserializer(KafkaRecordDeserializationSchema.valueOnly(StringDeserializer.class))
-//                .build();
-//
-//        env.fromSource(source, WatermarkStrategy.noWatermarks(), "Kafka Source")
-//                .print();
 
         // Create input sequence
         DataStream<Event> input = env.fromElements(
@@ -46,7 +34,6 @@ public class CEPJob {
             }
         });
 
-
         DataStream<String> result =
                 CEP.pattern(input, pattern)
                         .inProcessingTime()
@@ -61,6 +48,6 @@ public class CEPJob {
         result.print();
 
         // Execute program, beginning computation.
-        env.execute("Flink-CEP Eshop Invariant Checker");
+        env.execute("CEP Example Job");
     }
 }

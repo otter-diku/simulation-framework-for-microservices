@@ -16,7 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.myorg.flinkinvariants;
+package org.myorg.flinkinvariants.events;
 
 import java.util.Objects;
 

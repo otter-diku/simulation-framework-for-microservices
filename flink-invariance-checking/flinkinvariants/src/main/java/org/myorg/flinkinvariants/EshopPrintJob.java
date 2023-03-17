@@ -20,24 +20,16 @@ package org.myorg.flinkinvariants;
 
 import org.apache.flink.api.common.eventtime.WatermarkStrategy;
 import org.apache.flink.connector.kafka.source.KafkaSource;
-import org.apache.flink.connector.kafka.source.enumerator.initializer.OffsetsInitializer;
-import org.apache.flink.connector.kafka.source.reader.deserializer.KafkaRecordDeserializationSchema;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
-import org.apache.kafka.common.serialization.StringDeserializer;
+import org.myorg.flinkinvariants.events.EshopRecord;
+
+import static org.myorg.flinkinvariants.Connectors.getEshopRecordKafkaSource;
 
 /**
- * Skeleton for a Flink DataStream Job.
- *
- * <p>For a tutorial how to write a Flink application, check the
- * tutorials and examples on the <a href="https://flink.apache.org">Flink Website</a>.
- *
- * <p>To package your application into a JAR file for execution, run
- * 'mvn clean package' on the command line.
- *
- * <p>If you change the name of the main class (with the public static void main(String[] args))
- * method, change the respective entry in the POM.xml file (simply search for 'mainClass').
+ * Basic KafkaSource connector example.
+ * Reads events from eshop_event_bus and prints them.
  */
-public class DataStreamJob {
+public class EshopPrintJob {
 
 
 	public static void main(String[] args) throws Exception {
@@ -49,18 +41,17 @@ public class DataStreamJob {
 		// to building Flink applications.
 		final StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
 
-		KafkaSource<String> source = KafkaSource.<String>builder()
-				.setBootstrapServers(broker)
-				.setTopics(topic)
-				.setGroupId(groupId)
-				.setStartingOffsets(OffsetsInitializer.earliest())
-				.setDeserializer(KafkaRecordDeserializationSchema.valueOnly(StringDeserializer.class))
-				.build();
+		KafkaSource<EshopRecord> source = getEshopRecordKafkaSource(broker, topic, groupId);
 
 		env.fromSource(source, WatermarkStrategy.noWatermarks(), "Kafka Source")
+				//.filter(r -> r.EventName.equals("ProductPriceChangedIntegrationEvent")
+				//		|| r.EventName.equals("UserCheckoutAcceptedIntegrationEvent"))
 				.print();
 
 		// Execute program, beginning computation.
 		env.execute("Flink Eshop Invariant Checker");
 	}
+
 }
+
+
