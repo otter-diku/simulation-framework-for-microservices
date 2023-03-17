@@ -17,15 +17,15 @@ public class WorkloadGeneratorRunnerService
     private readonly IWorkloadService _workloadService;
 
     public WorkloadGeneratorRunnerService(
-        ITransactionOperationService transactionOperationService, 
-        ITransactionService transactionService, 
+        ITransactionOperationService transactionOperationService,
+        ITransactionService transactionService,
         IWorkloadService workloadService)
     {
         _transactionOperationService = transactionOperationService;
         _transactionService = transactionService;
         _workloadService = workloadService;
     }
-    
+
     public (ScenarioValidated? ScenarioValidated, string? ErrorMessage) TryValidate(ScenarioInput scenarioInput)
     {
         if (scenarioInput.Operations is { Count: > 0 }
@@ -39,17 +39,17 @@ public class WorkloadGeneratorRunnerService
                            $"Operation files found: {scenarioInput.Operations?.Count ?? 0}\n" +
                            $"Transaction files found: {scenarioInput.Transactions?.Count ?? 0}\n" +
                            $"Workload files found: {scenarioInput.Workloads?.Count ?? 0}\n";
-        
+
         return (null, errorMessage);
     }
 
     private (ScenarioValidated? ScenarioValidated, string? ErrorMessage) TryGetValidatedScenario(ScenarioInput scenarioInput)
     {
         var scenarioValidated = new ScenarioValidated(
-            new Dictionary<string, ITransactionOperationUnresolved>(), 
-            new Dictionary<string, TransactionInputUnresolved>(), 
+            new Dictionary<string, ITransactionOperationUnresolved>(),
+            new Dictionary<string, TransactionInputUnresolved>(),
             new Dictionary<string, WorkloadInputUnresolved>());
-        
+
         foreach (var (fileName, content) in scenarioInput.Operations)
         {
             var parsingResult = _transactionOperationService.TryParseInput(content, out var parsedOperation);
@@ -57,7 +57,7 @@ public class WorkloadGeneratorRunnerService
             {
                 return (null, $"Error while parsing {fileName}");
             }
-            
+
             scenarioValidated.Operations.Add(parsedOperation.TemplateId, parsedOperation);
         }
 
@@ -68,7 +68,7 @@ public class WorkloadGeneratorRunnerService
             {
                 return (null, $"Error while parsing {fileName}");
             }
-            
+
             scenarioValidated.Transactions.Add(parsedTransaction.TemplateId, parsedTransaction);
         }
 
@@ -79,7 +79,7 @@ public class WorkloadGeneratorRunnerService
             {
                 return (null, $"Error while parsing {fileName}");
             }
-            
+
             scenarioValidated.Workloads.Add(parsedWorkload.TemplateId, parsedWorkload);
         }
 
