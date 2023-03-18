@@ -8,7 +8,7 @@ namespace WorkloadGenerator.Data.Models.Operation;
 public interface IOperationUnresolved : IOperation
 {
     void ValidateAndThrow();
-
+    
     public Argument[]? Arguments { get; set; }
 
     public DynamicVariable[]? DynamicVariables { get; set; }

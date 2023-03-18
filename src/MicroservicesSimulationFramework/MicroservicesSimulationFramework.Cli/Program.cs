@@ -139,13 +139,20 @@ public static class Program
             })
             .ConfigureServices(services =>
             {
-                services.AddSingleton<TransactionRunnerService>();
-                services.AddHttpClient<TransactionRunnerService>();
-                services.AddSingleton<IOperationService, OperationService>();
-                services.AddSingleton<ITransactionService, TransactionService>();
-                services.AddSingleton<IWorkloadService, WorkloadService>();
-                services.AddSingleton<IWorkloadCoordinator, WorkloadCoordinator>();
+                
                 services.AddSingleton<IWorkloadGeneratorRunnerService, WorkloadGeneratorRunnerService>();
+
+                services.AddSingleton<IWorkloadService, WorkloadService>();
+                services.AddSingleton<ITransactionService, TransactionService>();
+                services.AddSingleton<IOperationService, OperationService>();
+
+                services.AddSingleton<IOperationExecutionService, HttpOperationExecutionService>();
+                services.AddHttpClient<HttpOperationExecutionService>();
+                services.AddSingleton<IOperationExecutionService, SleepOperationExecutionService>();
+                
+                services.AddSingleton<ITransactionExecutionService, TransactionExecutionService>();
+
+                services.AddSingleton<IWorkloadCoordinator, WorkloadCoordinator>();
                 services.AddSingleton<IWorkloadScheduler, WorkloadScheduler>(_ =>
                 {
                     var clusterClient = orleansClientHost.Services.GetRequiredService<IClusterClient>();

@@ -69,14 +69,15 @@ public class TransactionExecutionTest
             }
         };
 
-        var operationService =
-            new OperationService(NullLogger<OperationService>.Instance);
+        var httpOperationExecutionService =
+            new HttpOperationExecutionService(
+                NullLogger<HttpOperationExecutionService>.Instance, 
+                new DefaultHttpClientFactory(), 
+                new OperationService(NullLogger<OperationService>.Instance));
 
-        var httpClientFactory = new DefaultHttpClientFactory();
-        var sut = new TransactionRunnerService(
-            operationService,
-            httpClientFactory,
-            NullLogger<TransactionRunnerService>.Instance
+        var sut = new TransactionExecutionService(
+            new [] { httpOperationExecutionService },
+            NullLogger<TransactionExecutionService>.Instance
         );
 
         var providedValues = new Dictionary<string, object>();
