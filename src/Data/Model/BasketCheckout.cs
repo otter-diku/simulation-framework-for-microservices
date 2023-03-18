@@ -24,9 +24,9 @@
 
         public string Buyer { get; set; }
 
-        // filled which was introduce as replacement of identity service
-        // not safe practice but workabel solution
-        // in the checkout user also shows which basket is his
+        // field which was introduce as replacement of identity service
+        // not safe practice but workable solution
+        // in the checkout user also shows which basket is theirs
         public string UserId { get; set; }
     }
 }

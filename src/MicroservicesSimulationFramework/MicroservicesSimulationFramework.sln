@@ -18,6 +18,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WorkloadGenerator.Data", ".
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WorkloadGenerator.Data.Test", "..\WorkloadGenerator\WorkloadGenerator.Data.Test\WorkloadGenerator.Data.Test.csproj", "{488CB08E-39BB-4E70-8D7C-0C11E5F09ECB}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WorkloadGenerator.Grains.Test", "..\WorkloadGenerator\WorkloadGenerator.Grains.Test\WorkloadGenerator.Grains.Test.csproj", "{A49631B8-3914-4672-B724-7B195EA5F9A2}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -60,5 +62,9 @@ Global
 		{488CB08E-39BB-4E70-8D7C-0C11E5F09ECB}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{488CB08E-39BB-4E70-8D7C-0C11E5F09ECB}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{488CB08E-39BB-4E70-8D7C-0C11E5F09ECB}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A49631B8-3914-4672-B724-7B195EA5F9A2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A49631B8-3914-4672-B724-7B195EA5F9A2}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A49631B8-3914-4672-B724-7B195EA5F9A2}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A49631B8-3914-4672-B724-7B195EA5F9A2}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

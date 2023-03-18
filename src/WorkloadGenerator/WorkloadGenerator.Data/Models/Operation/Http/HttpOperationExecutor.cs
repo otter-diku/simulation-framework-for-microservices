@@ -1,67 +1,58 @@
-using System.Diagnostics;
-using System.Runtime.InteropServices.JavaScript;
 using System.Text.Json;
-using System.Text.Json.Nodes;
-using System.Text.RegularExpressions;
-using System.Transactions;
 using Microsoft.Extensions.Logging;
-using WorkloadGenerator.Data.Models;
-using WorkloadGenerator.Data.Models.Operation;
-using WorkloadGenerator.Data.Models.Operation.Http;
-using WorkloadGenerator.Data.Models.Transaction;
+using WorkloadGenerator.Data.Services;
 
-namespace WorkloadGenerator.Data.Services;
+namespace WorkloadGenerator.Data.Models.Operation.Http;
 
-public class TransactionRunnerService
+public class HttpOperationExecutor : IOperationExecutor
 {
-    private readonly ITransactionOperationService _transactionOperationService;
+    private readonly ILogger<HttpOperationExecutor> _logger;
     private readonly IHttpClientFactory _httpClientFactory;
-    private readonly ILogger<TransactionRunnerService> _logger;
+    private readonly ITransactionOperationService _transactionOperationService;
 
-    public TransactionRunnerService(ITransactionOperationService transactionOperationService,
+    public HttpOperationExecutor(ILogger<HttpOperationExecutor> logger, 
         IHttpClientFactory httpClientFactory,
-        ILogger<TransactionRunnerService> logger)
+        ITransactionOperationService transactionOperationService)
     {
-        _transactionOperationService = transactionOperationService;
-        _httpClientFactory = httpClientFactory;
         _logger = logger;
+        _httpClientFactory = httpClientFactory;
+        _transactionOperationService = transactionOperationService;
     }
 
-    public async Task Run(
-        TransactionInputUnresolved transaction,
-        Dictionary<string, object> providedValues,
-        Dictionary<string, HttpOperationInputUnresolved> operationsDictionary)
+    public bool CanHandle(ITransactionOperationResolved resolved)
     {
-        // generate dynamic variable for transaction.DynamicVariables
-        for (var i = 0; i < transaction.Operations.Count; i++)
-        {
-            var opRefId = transaction.Operations[i].OperationReferenceId;
-            if (!operationsDictionary.TryGetValue(opRefId, out var operation))
-            {
-                throw new Exception($"Could not find operation with ID {opRefId}");
-            }
-
-            _transactionOperationService.TryResolve(operation, providedValues, out var resolved);
-            _transactionOperationService.TryConvertToExecutable(resolved, out var transactionOperationbaseExecutable);
-
-            var result = await ExecuteOperation(transactionOperationbaseExecutable);
-
-            var returnValues = await ExtractReturnValues(operation, result);
-
-            // Todo: this simply adds new return values to all provided Values,
-            // if we really only want to pass what the next operation uses it gets more tricky
-            foreach (var p in returnValues)
-            {
-                if (!providedValues.ContainsKey(p.Key))
-                {
-                    providedValues.Add(p.Key, p.Value);
-                }
-            }
-        }
+        return resolved is HttpOperationInputResolved;
     }
 
+    public async Task<Dictionary<string, object>> Execute(ITransactionOperationResolved resolved)
+    {
+        if (resolved is not HttpOperationInputResolved httpOperation)
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+
+        if (!_transactionOperationService.TryConvertToExecutable(httpOperation, out var executable))
+        {
+            throw new Exception();
+        }
+
+        if (executable is not HttpOperationTransactionExecutable httpExecutable || httpExecutable is null) 
+        {
+            throw new Exception();
+        }
+        
+        var client = _httpClientFactory.CreateClient();
+        var message = new HttpRequestMessage();
+        
+        httpExecutable.PrepareRequestMessage!(message);
+
+        var response = await client.SendAsync(message);
+
+        return await ExtractReturnValues(httpOperation, response);
+    }
+    
     private async Task<Dictionary<string, object>> ExtractReturnValues(
-        HttpOperationInputUnresolved operation,
+        HttpOperationInputResolved operation,
         object result)
     {
         if (operation.Response is not null)
@@ -150,34 +141,5 @@ public class TransactionRunnerService
             );
             throw;
         }
-    }
-
-
-    private async Task<object> ExecuteOperation(TransactionOperationExecutableBase transactionOperationbaseExecutable)
-    {
-        return transactionOperationbaseExecutable.Type switch
-        {
-            OperationType.Http => await ExecuteHttpRequestOperation(transactionOperationbaseExecutable),
-            OperationType.Sleep => await ExecuteSleepOperation(transactionOperationbaseExecutable),
-            _ => throw new ArgumentOutOfRangeException()
-        };
-    }
-
-    private async Task<HttpResponseMessage> ExecuteHttpRequestOperation(
-        TransactionOperationExecutableBase transactionOperationbaseExecutable)
-    {
-        var httpClient = _httpClientFactory.CreateClient();
-        var requestMessage = new HttpRequestMessage();
-
-        // TODO: is using explicit cast really best solution here?
-        var executable = (HttpOperationTransactionExecutable)transactionOperationbaseExecutable;
-        executable.PrepareRequestMessage(requestMessage);
-        return await httpClient.SendAsync(requestMessage);
-    }
-
-    private async Task<object> ExecuteSleepOperation(
-        TransactionOperationExecutableBase transactionOperationbaseExecutable)
-    {
-        throw new NotImplementedException();
     }
 }

@@ -14,6 +14,8 @@ public abstract class HttpOperationInputBase : TransactionOperationInputBase
 
     // TODO: Query params should be parametrized 
     public List<QueryParameter>? QueryParameters { get; set; }
+    
+    public HttpOperationResponseInput? Response { get; set; }
 }
 
 public class HttpOperationInputBaseValidator : AbstractValidator<HttpOperationInputBase>

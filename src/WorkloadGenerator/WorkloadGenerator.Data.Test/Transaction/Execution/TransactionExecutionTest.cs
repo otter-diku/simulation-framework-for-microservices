@@ -73,11 +73,12 @@ public class TransactionExecutionTest
             new TransactionOperationService(NullLogger<TransactionOperationService>.Instance);
 
         var httpClientFactory = new DefaultHttpClientFactory();
-        var sut = new TransactionRunnerService(
+        var sut = new TransactionGrain(
             transactionOperationService,
             httpClientFactory,
             NullLogger<TransactionRunnerService>.Instance
         );
+        
 
         var providedValues = new Dictionary<string, object>();
         await sut.Run(transaction, providedValues, operations);

@@ -5,7 +5,7 @@ namespace WorkloadGenerator.Data.Models.Transaction;
 public class TransactionInputResolved : TransactionInputBase
 {
     public Guid Id { get; set; }
-    public Dictionary<string, object> ProvidedValues { get; set; } = new();
+    public Dictionary<string, object> ProvidedValues { get; set; }
 }
 
 public class TransactionInputResolvedValidator : AbstractValidator<TransactionInputResolved>

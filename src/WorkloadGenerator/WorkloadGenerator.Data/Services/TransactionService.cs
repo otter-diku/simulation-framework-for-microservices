@@ -1,3 +1,4 @@
+using System.Collections.Immutable;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using Microsoft.Extensions.Logging;
@@ -46,19 +47,18 @@ public class TransactionService : ITransactionService
         }
     }
 
+    public bool Validate(TransactionInputUnresolved unresolved, IReadOnlySet<string> operationReferenceIds)
+    {
+        return ValidateOperationReferenceIds(unresolved.Operations, operationReferenceIds);
+    }
+
     public bool TryResolve(TransactionInputUnresolved unresolved, 
-        Dictionary<string, object> providedValues, 
-        HashSet<string> operationReferenceIds,
+        IReadOnlyDictionary<string, object> providedValues, 
         out TransactionInputResolved resolved)
     {
         resolved = null!;
 
         if (!Utilities.ValidateArguments(unresolved.Arguments, providedValues))
-        {
-            return false;
-        }
-
-        if (!ValidateOperationReferenceIds(unresolved.Operations, operationReferenceIds))
         {
             return false;
         }
@@ -77,7 +77,7 @@ public class TransactionService : ITransactionService
         return true;
     }
 
-    private bool ValidateOperationReferenceIds(List<OperationReference> unresolvedOperations, HashSet<string> operationReferenceIds)
+    private bool ValidateOperationReferenceIds(List<OperationReference> unresolvedOperations, IReadOnlySet<string> operationReferenceIds)
     {
         var unknownOperationReference = 
             unresolvedOperations.FirstOrDefault(op => !operationReferenceIds.Contains(op.OperationReferenceId));
@@ -95,7 +95,7 @@ public class TransactionService : ITransactionService
         return false;
     }
 
-    private Dictionary<string, object> DeepCopy(Dictionary<string, object> providedValues)
+    private Dictionary<string, object> DeepCopy(IReadOnlyDictionary<string, object> providedValues)
     {
         var serialized = JsonSerializer.Serialize(providedValues, _jsonSerializerOptions);
         return JsonSerializer.Deserialize<Dictionary<string, object>>(serialized)!;
