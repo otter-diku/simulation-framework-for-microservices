@@ -1,6 +1,6 @@
 namespace WorkloadGenerator.Data.Models.Operation.Sleep;
 
-public class SleepOperationTransactionExecutable : TransactionOperationExecutableBase
+public class SleepOperationExecutable : OperationExecutableBase
 {
     public Func<Task> Sleep { get; set; }
 

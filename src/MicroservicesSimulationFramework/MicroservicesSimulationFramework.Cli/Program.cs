@@ -139,7 +139,7 @@ public static class Program
             {
                 services.AddSingleton<TransactionRunnerService>();
                 services.AddHttpClient<TransactionRunnerService>();
-                services.AddSingleton<ITransactionOperationService, TransactionOperationService>();
+                services.AddSingleton<IOperationService, OperationService>();
                 services.AddSingleton<ITransactionService, TransactionService>();
                 services.AddSingleton<IWorkloadService, WorkloadService>();
                 services.AddSingleton<IWorkloadCoordinator, WorkloadCoordinator>();

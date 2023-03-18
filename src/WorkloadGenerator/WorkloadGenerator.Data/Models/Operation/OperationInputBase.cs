@@ -1,6 +1,6 @@
 namespace WorkloadGenerator.Data.Models.Operation;
 
-public abstract class TransactionOperationExecutableBase
+public class OperationInputBase
 {
     public virtual OperationType Type { get; set; }
 }

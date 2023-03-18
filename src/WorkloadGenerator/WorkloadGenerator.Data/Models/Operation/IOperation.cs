@@ -1,6 +1,6 @@
 namespace WorkloadGenerator.Data.Models.Operation;
 
-public interface ITransactionOperation
+public interface IOperation
 {
     public string TemplateId { get; set; }
 }

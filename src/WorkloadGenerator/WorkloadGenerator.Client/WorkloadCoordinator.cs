@@ -26,7 +26,7 @@ public class WorkloadCoordinator : IWorkloadCoordinator
     public async Task ScheduleWorkload(
             WorkloadInputUnresolved workloadToRun,
             Dictionary<string, TransactionInputUnresolved> transactions,
-            Dictionary<string, ITransactionOperationUnresolved> operations)
+            Dictionary<string, IOperationUnresolved> operations)
     {
         var workloadCorrelationId = Guid.NewGuid(); /* TODO: correlation IDs should be hierarchical and passed down */
         using var _ = _logger.BeginScope(new Dictionary<string, object>()
@@ -62,7 +62,7 @@ public class WorkloadCoordinator : IWorkloadCoordinator
         WorkloadInputUnresolved workloadToRun,
         string id,
         Dictionary<string, TransactionInputUnresolved> transactionsByReferenceId,
-        Dictionary<string, ITransactionOperationUnresolved> operationsByReferenceId)
+        Dictionary<string, IOperationUnresolved> operationsByReferenceId)
     {
         var providedValues = new Dictionary<string, object>();
 

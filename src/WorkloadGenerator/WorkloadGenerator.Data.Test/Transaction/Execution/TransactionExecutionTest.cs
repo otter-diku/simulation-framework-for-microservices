@@ -26,7 +26,7 @@ public class TransactionExecutionTest
           }
         }
         """;
-        var operations = new Dictionary<string, ITransactionOperationUnresolved>();
+        var operations = new Dictionary<string, IOperationUnresolved>();
         var op = new HttpOperationInputUnresolved()
         {
             TemplateId = "operation-1",
@@ -69,12 +69,12 @@ public class TransactionExecutionTest
             }
         };
 
-        var transactionOperationService =
-            new TransactionOperationService(NullLogger<TransactionOperationService>.Instance);
+        var operationService =
+            new OperationService(NullLogger<OperationService>.Instance);
 
         var httpClientFactory = new DefaultHttpClientFactory();
         var sut = new TransactionRunnerService(
-            transactionOperationService,
+            operationService,
             httpClientFactory,
             NullLogger<TransactionRunnerService>.Instance
         );

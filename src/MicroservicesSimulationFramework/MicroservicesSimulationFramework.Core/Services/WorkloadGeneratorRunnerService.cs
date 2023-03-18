@@ -9,18 +9,18 @@ namespace MicroservicesSimulationFramework.Core.Services;
 
 public class WorkloadGeneratorRunnerService : IWorkloadGeneratorRunnerService
 {
-    private readonly ITransactionOperationService _transactionOperationService;
+    private readonly IOperationService _operationService;
     private readonly ITransactionService _transactionService;
     private readonly IWorkloadService _workloadService;
     private readonly ILogger<WorkloadGeneratorRunnerService> _logger;
 
     public WorkloadGeneratorRunnerService(
-        ITransactionOperationService transactionOperationService,
+        IOperationService operationService,
         ITransactionService transactionService,
         IWorkloadService workloadService,
         ILogger<WorkloadGeneratorRunnerService> logger)
     {
-        _transactionOperationService = transactionOperationService;
+        _operationService = operationService;
         _transactionService = transactionService;
         _workloadService = workloadService;
         _logger = logger;
@@ -46,13 +46,13 @@ public class WorkloadGeneratorRunnerService : IWorkloadGeneratorRunnerService
     private (WorkloadGeneratorInputValidated? ScenarioValidated, string? ErrorMessage) TryGetValidatedScenario(WorkloadGeneratorInputUnvalidated workloadGeneratorInputUnvalidated)
     {
         var scenarioValidated = new WorkloadGeneratorInputValidated(
-            new Dictionary<string, ITransactionOperationUnresolved>(),
+            new Dictionary<string, IOperationUnresolved>(),
             new Dictionary<string, TransactionInputUnresolved>(),
             new Dictionary<string, WorkloadInputUnresolved>());
 
         foreach (var (fileName, content) in workloadGeneratorInputUnvalidated.Operations)
         {
-            var parsingResult = _transactionOperationService.TryParseInput(content, out var parsedOperation);
+            var parsingResult = _operationService.TryParseInput(content, out var parsedOperation);
             if (!parsingResult)
             {
                 return (null, $"Error while parsing {fileName}");

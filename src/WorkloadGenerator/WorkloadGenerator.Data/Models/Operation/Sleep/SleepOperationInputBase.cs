@@ -3,7 +3,7 @@ using WorkloadGenerator.Data.Models.Transaction;
 
 namespace WorkloadGenerator.Data.Models.Operation.Sleep;
 
-public abstract class SleepOperationInputBase : TransactionOperationInputBase
+public abstract class SleepOperationInputBase : OperationInputBase
 {
     public override OperationType Type => OperationType.Sleep;
 

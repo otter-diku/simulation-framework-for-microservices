@@ -5,7 +5,7 @@ using WorkloadGenerator.Data.Models.Operation.Sleep;
 
 namespace WorkloadGenerator.Data.Models.Operation;
 
-public interface ITransactionOperationUnresolved : ITransactionOperation
+public interface IOperationUnresolved : IOperation
 {
     void ValidateAndThrow();
 
@@ -15,16 +15,16 @@ public interface ITransactionOperationUnresolved : ITransactionOperation
 }
 
 // ReSharper disable once InconsistentNaming
-public class ITransactionOperationUnresolvedJsonConverter : JsonConverter<ITransactionOperationUnresolved>
+public class IOperationUnresolvedJsonConverter : JsonConverter<IOperationUnresolved>
 {
-    public override ITransactionOperationUnresolved? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+    public override IOperationUnresolved? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
     {
         if (reader.TokenType != JsonTokenType.StartObject)
             throw new JsonException();
 
         using var jsonDocument = JsonDocument.ParseValue(ref reader);
 
-        if (!jsonDocument.RootElement.TryGetProperty(nameof(TransactionOperationInputBase.Type).ToLower(),
+        if (!jsonDocument.RootElement.TryGetProperty(nameof(OperationInputBase.Type).ToLower(),
                 out var typeProperty))
         {
             throw new JsonException();
@@ -47,7 +47,7 @@ public class ITransactionOperationUnresolvedJsonConverter : JsonConverter<ITrans
         throw new ArgumentOutOfRangeException();
     }
 
-    public override void Write(Utf8JsonWriter writer, ITransactionOperationUnresolved value, JsonSerializerOptions options)
+    public override void Write(Utf8JsonWriter writer, IOperationUnresolved value, JsonSerializerOptions options)
     {
         switch (value)
         {

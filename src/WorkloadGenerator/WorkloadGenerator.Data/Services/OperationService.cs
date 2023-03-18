@@ -14,9 +14,9 @@ using HttpMethod = System.Net.Http.HttpMethod;
 
 namespace WorkloadGenerator.Data.Services;
 
-public class TransactionOperationService : ITransactionOperationService
+public class OperationService : IOperationService
 {
-    private readonly ILogger<TransactionOperationService> _logger;
+    private readonly ILogger<OperationService> _logger;
 
     // for payloads we need to replace the quotes since we might be replacing this string with a number/array/null/boolean
     // e.g. "key1": "{{arg1}}" => "key1": false
@@ -30,7 +30,7 @@ public class TransactionOperationService : ITransactionOperationService
     // for url paths we do not need expect any quotes so we just need to replace the `@@arg-name@@`
     private readonly Regex _urlPathReferenceRegex = new("@@([^}]*)@@");
 
-    public TransactionOperationService(ILogger<TransactionOperationService> logger)
+    public OperationService(ILogger<OperationService> logger)
     {
         _logger = logger;
     }
@@ -44,12 +44,12 @@ public class TransactionOperationService : ITransactionOperationService
         }
     };
 
-    public bool TryParseInput(string json, out ITransactionOperationUnresolved unresolvedInput)
+    public bool TryParseInput(string json, out IOperationUnresolved unresolvedInput)
     {
         unresolvedInput = null!;
         try
         {
-            var baseInput = JsonSerializer.Deserialize<TransactionOperationInputBase>(json, _jsonSerializerOptions);
+            var baseInput = JsonSerializer.Deserialize<OperationInputBase>(json, _jsonSerializerOptions);
             if (baseInput is null)
             {
                 return false;
@@ -80,7 +80,7 @@ public class TransactionOperationService : ITransactionOperationService
         }
     }
 
-    private ITransactionOperationUnresolved Parse<T>(string json) where T : ITransactionOperationUnresolved
+    private IOperationUnresolved Parse<T>(string json) where T : IOperationUnresolved
     {
         var operationUnresolved =
             JsonSerializer.Deserialize<T>(json, _jsonSerializerOptions);
@@ -95,8 +95,8 @@ public class TransactionOperationService : ITransactionOperationService
         return operationUnresolved;
     }
 
-    public bool TryResolve(ITransactionOperationUnresolved unresolvedInput, Dictionary<string, object> providedValues,
-        out ITransactionOperationResolved resolvedInput)
+    public bool TryResolve(IOperationUnresolved unresolvedInput, Dictionary<string, object> providedValues,
+        out IOperationResolved resolvedInput)
     {
         if (!Utilities.ValidateArguments(unresolvedInput.Arguments, providedValues))
         {
@@ -110,12 +110,12 @@ public class TransactionOperationService : ITransactionOperationService
         return true;
     }
 
-    public bool TryConvertToExecutable(ITransactionOperationResolved resolvedInput,
-        out TransactionOperationExecutableBase transactionOperationBaseExecutable)
+    public bool TryConvertToExecutable(IOperationResolved resolvedInput,
+        out OperationExecutableBase operationBaseExecutable)
     {
         try
         {
-            transactionOperationBaseExecutable = resolvedInput switch
+            operationBaseExecutable = resolvedInput switch
             {
                 HttpOperationInputResolved httpOperationInputResolved => ConvertToExecutableHttpOperation(
                     httpOperationInputResolved),
@@ -129,12 +129,12 @@ public class TransactionOperationService : ITransactionOperationService
         catch (Exception e)
         {
             _logger.LogWarning(e, "Failed converting to executable");
-            transactionOperationBaseExecutable = null!;
+            operationBaseExecutable = null!;
             return false;
         }
     }
 
-    private TransactionOperationExecutableBase ConvertToExecutableSleepOperation(SleepOperationInputResolved input)
+    private OperationExecutableBase ConvertToExecutableSleepOperation(SleepOperationInputResolved input)
     {
         var duration = decimal.ToDouble(input.Duration);
         var timespan = input.Units switch
@@ -145,13 +145,13 @@ public class TransactionOperationService : ITransactionOperationService
             _ => throw new ArgumentOutOfRangeException()
         };
 
-        return new SleepOperationTransactionExecutable
+        return new SleepOperationExecutable
         {
             Sleep = () => Task.Delay(timespan)
         };
     }
 
-    private TransactionOperationExecutableBase ConvertToExecutableHttpOperation(HttpOperationInputResolved input)
+    private OperationExecutableBase ConvertToExecutableHttpOperation(HttpOperationInputResolved input)
     {
         Action<HttpRequestMessage> func = httpRequest =>
         {
@@ -197,11 +197,11 @@ public class TransactionOperationService : ITransactionOperationService
             }
         };
 
-        return new HttpOperationTransactionExecutable() { PrepareRequestMessage = func };
+        return new HttpOperationExecutable() { PrepareRequestMessage = func };
     }
 
-    private ITransactionOperationResolved ResolveInternal(
-        ITransactionOperationUnresolved unresolvedInput,
+    private IOperationResolved ResolveInternal(
+        IOperationUnresolved unresolvedInput,
         Dictionary<string, object> providedValues)
     {
         return unresolvedInput switch
@@ -212,7 +212,7 @@ public class TransactionOperationService : ITransactionOperationService
         };
     }
 
-    private ITransactionOperationResolved ResolveHttpOperation(HttpOperationInputUnresolved unresolvedInput,
+    private IOperationResolved ResolveHttpOperation(HttpOperationInputUnresolved unresolvedInput,
         Dictionary<string, object> providedValues)
     {
         var _ = TryResolveRequestPayload(unresolvedInput, providedValues, out var resolvedPayload);
@@ -229,7 +229,7 @@ public class TransactionOperationService : ITransactionOperationService
         };
     }
 
-    private ITransactionOperationResolved ResolveSleepOperation(SleepOperationInputUnresolved sleepOperation,
+    private IOperationResolved ResolveSleepOperation(SleepOperationInputUnresolved sleepOperation,
         Dictionary<string, object> providedValues)
     {
         Decimal duration;
