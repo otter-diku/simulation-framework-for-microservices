@@ -9,5 +9,5 @@ public interface IWorkloadCoordinator
     Task ScheduleWorkload(
         WorkloadInputUnresolved workloadToRun,
         Dictionary<string, TransactionInputUnresolved> transactions,
-        Dictionary<string, ITransactionOperationUnresolved> operations);
+        Dictionary<string, IOperationUnresolved> operations);
 }

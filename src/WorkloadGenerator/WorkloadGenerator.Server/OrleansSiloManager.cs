@@ -44,7 +44,7 @@ namespace WorkloadGenerator.Server
                         {
                             sc.AddHttpClient<TransactionRunnerService>();
                             sc.AddSingleton<TransactionRunnerService>();
-                            sc.AddSingleton<ITransactionOperationService, TransactionOperationService>();
+                            sc.AddSingleton<IOperationService, OperationService>();
                         })
                         .AddMemoryStreams("StreamProvider")
                         .AddMemoryGrainStorage("PubSubStore")
@@ -62,7 +62,7 @@ namespace WorkloadGenerator.Server
                                 Converters =
                                 {
                                     new JsonStringEnumConverter(JsonNamingPolicy.CamelCase),
-                                    new ITransactionOperationUnresolvedJsonConverter()
+                                    new IOperationUnresolvedJsonConverter()
                                 }
                             })
                             );

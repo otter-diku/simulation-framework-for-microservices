@@ -4,7 +4,7 @@ using System.Text.Json.Serialization;
 
 namespace WorkloadGenerator.Data.Models.Operation.Http;
 
-public class HttpOperationInputResolved : HttpOperationInputBase, ITransactionOperationResolved
+public class HttpOperationInputResolved : HttpOperationInputBase, IOperationResolved
 {
     public HttpOperationRequestPayloadResolvedBase? RequestPayload { get; set; }
     public string TemplateId { get; set; }

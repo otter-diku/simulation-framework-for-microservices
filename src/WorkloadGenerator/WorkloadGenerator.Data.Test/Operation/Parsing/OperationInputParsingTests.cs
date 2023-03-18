@@ -9,7 +9,7 @@ public class OperationInputTests
     [TestCaseSource(typeof(ValidOperationInputCases))]
     public void TestValidCases(string fileName, string input)
     {
-        var sut = new TransactionOperationService(NullLogger<TransactionOperationService>.Instance);
+        var sut = new OperationService(NullLogger<OperationService>.Instance);
         var result = sut.TryParseInput(input, out var parsedInput);
         Assert.True(result);
         Assert.NotNull(parsedInput);
@@ -18,7 +18,7 @@ public class OperationInputTests
     [TestCaseSource(typeof(InvalidOperationInputCases))]
     public void TestInvalidCases(string fileName, string input)
     {
-        var sut = new TransactionOperationService(NullLogger<TransactionOperationService>.Instance);
+        var sut = new OperationService(NullLogger<OperationService>.Instance);
         var result = sut.TryParseInput(input, out var parsed);
         Assert.False(result);
     }

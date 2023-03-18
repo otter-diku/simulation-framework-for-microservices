@@ -2,7 +2,7 @@ using FluentValidation;
 
 namespace WorkloadGenerator.Data.Models.Operation.Http;
 
-public class HttpOperationInputUnresolved : HttpOperationInputBase, ITransactionOperationUnresolved
+public class HttpOperationInputUnresolved : HttpOperationInputBase, IOperationUnresolved
 {
     public Argument[]? Arguments { get; set; }
     public DynamicVariable[]? DynamicVariables { get; set; }
@@ -27,7 +27,7 @@ public class HttpOperationInputUnresolvedValidator : AbstractValidator<HttpOpera
 
         RuleFor(operation => operation.TemplateId)
             .NotEmpty()
-            .WithMessage($"{nameof(ITransactionOperationUnresolved)} ID needs to be a non-empty string");
+            .WithMessage($"{nameof(IOperationUnresolved)} ID needs to be a non-empty string");
 
         When(input => input.Arguments is not null && input.DynamicVariables is not null, () =>
         {

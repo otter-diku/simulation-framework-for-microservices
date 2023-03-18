@@ -10,6 +10,6 @@ public record WorkloadGeneratorInputUnvalidated(
     List<(string FileName, string Content)>? Workloads);
 
 public record WorkloadGeneratorInputValidated(
-    Dictionary<string, ITransactionOperationUnresolved> Operations,
+    Dictionary<string, IOperationUnresolved> Operations,
     Dictionary<string, TransactionInputUnresolved> Transactions,
     Dictionary<string, WorkloadInputUnresolved> Workloads);

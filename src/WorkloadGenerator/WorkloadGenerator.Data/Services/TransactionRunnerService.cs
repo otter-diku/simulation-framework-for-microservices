@@ -1,7 +1,6 @@
 using System.Diagnostics;
 using System.Text.Json;
 using Microsoft.Extensions.Logging;
-using Utilities;
 using WorkloadGenerator.Data.Models.Operation;
 using WorkloadGenerator.Data.Models.Operation.Http;
 using WorkloadGenerator.Data.Models.Operation.Sleep;
@@ -11,15 +10,15 @@ namespace WorkloadGenerator.Data.Services;
 
 public class TransactionRunnerService
 {
-    private readonly ITransactionOperationService _transactionOperationService;
+    private readonly IOperationService _operationService;
     private readonly IHttpClientFactory _httpClientFactory;
     private readonly ILogger<TransactionRunnerService> _logger;
 
-    public TransactionRunnerService(ITransactionOperationService transactionOperationService,
+    public TransactionRunnerService(IOperationService operationService,
         IHttpClientFactory httpClientFactory,
         ILogger<TransactionRunnerService> logger)
     {
-        _transactionOperationService = transactionOperationService;
+        _operationService = operationService;
         _httpClientFactory = httpClientFactory;
         _logger = logger;
     }
@@ -27,7 +26,7 @@ public class TransactionRunnerService
     public async Task Run(
         TransactionInputUnresolved transaction,
         Dictionary<string, object> providedValues,
-        Dictionary<string, ITransactionOperationUnresolved> operationsDictionary)
+        Dictionary<string, IOperationUnresolved> operationsDictionary)
     {
         var transactionStopwatch = Stopwatch.StartNew();
 
@@ -51,14 +50,14 @@ public class TransactionRunnerService
 
             // TODO: add logging of operation type and maybe some extra details
 
-            var didResolve = _transactionOperationService.TryResolve(operation, providedValues, out var resolved);
+            var didResolve = _operationService.TryResolve(operation, providedValues, out var resolved);
             if (!didResolve)
             {
                 _logger.LogWarning("Failed to resolve operation");
                 return;
             }
 
-            var didConvert = _transactionOperationService.TryConvertToExecutable(resolved, out var transactionOperationBaseExecutable);
+            var didConvert = _operationService.TryConvertToExecutable(resolved, out var transactionOperationBaseExecutable);
             if (!didConvert)
             {
                 _logger.LogWarning("Failed to convert operation into executable");
@@ -112,7 +111,7 @@ public class TransactionRunnerService
     }
 
     private async Task<Dictionary<string, object>> ExtractReturnValues(
-        ITransactionOperationUnresolved operation,
+        IOperationUnresolved operation,
         object result)
     {
 
@@ -212,35 +211,35 @@ public class TransactionRunnerService
         }
     }
 
-    private async Task<object> ExecuteOperation(TransactionOperationExecutableBase transactionOperationbaseExecutable,
+    private async Task<object> ExecuteOperation(OperationExecutableBase operationbaseExecutable,
         Guid operationCorrelationId)
     {
-        return transactionOperationbaseExecutable.Type switch
+        return operationbaseExecutable.Type switch
         {
-            OperationType.Http => await ExecuteHttpRequestOperation(transactionOperationbaseExecutable, operationCorrelationId),
-            OperationType.Sleep => await ExecuteSleepOperation(transactionOperationbaseExecutable),
+            OperationType.Http => await ExecuteHttpRequestOperation(operationbaseExecutable, operationCorrelationId),
+            OperationType.Sleep => await ExecuteSleepOperation(operationbaseExecutable),
             _ => throw new ArgumentOutOfRangeException()
         };
     }
 
     private async Task<HttpResponseMessage> ExecuteHttpRequestOperation(
-        TransactionOperationExecutableBase transactionOperationbaseExecutable,
+        OperationExecutableBase operationbaseExecutable,
         Guid operationCorrelationId)
     {
         var httpClient = _httpClientFactory.CreateClient();
         var requestMessage = new HttpRequestMessage();
 
         // TODO: is using explicit cast really best solution here?
-        var executable = (HttpOperationTransactionExecutable)transactionOperationbaseExecutable;
+        var executable = (HttpOperationExecutable)operationbaseExecutable;
         executable.PrepareRequestMessage(requestMessage);
         requestMessage.Headers.Add("X-Correlation-Id", operationCorrelationId.ToString());
         return await httpClient.SendAsync(requestMessage);
     }
 
     private async Task<object> ExecuteSleepOperation(
-        TransactionOperationExecutableBase transactionOperationBaseExecutable)
+        OperationExecutableBase operationBaseExecutable)
     {
-        var executable = (SleepOperationTransactionExecutable)transactionOperationBaseExecutable;
+        var executable = (SleepOperationExecutable)operationBaseExecutable;
         await executable.Sleep();
         return null;
     }

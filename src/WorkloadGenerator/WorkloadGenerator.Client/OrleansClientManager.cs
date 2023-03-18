@@ -47,7 +47,7 @@ public static class OrleansClientManager
                             Converters =
                             {
                                 new JsonStringEnumConverter(JsonNamingPolicy.CamelCase),
-                                new ITransactionOperationUnresolvedJsonConverter()
+                                new IOperationUnresolvedJsonConverter()
                             }
                         })
                     );

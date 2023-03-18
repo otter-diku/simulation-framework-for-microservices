@@ -2,7 +2,7 @@ using FluentValidation;
 
 namespace WorkloadGenerator.Data.Models.Operation.Http;
 
-public abstract class HttpOperationInputBase : TransactionOperationInputBase
+public abstract class HttpOperationInputBase : OperationInputBase
 {
     public override OperationType Type => OperationType.Http;
 
