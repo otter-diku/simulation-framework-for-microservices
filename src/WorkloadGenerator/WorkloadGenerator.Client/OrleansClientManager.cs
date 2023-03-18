@@ -40,17 +40,10 @@ public static class OrleansClientManager
                     serializerBuilder.AddJsonSerializer(
                         isSupported: type =>
                             type.Namespace!.StartsWith("WorkloadGenerator."),
-                        new JsonSerializerOptions(new JsonSerializerOptions()
+                        Utilities.SerializerUtils.GetGlobalJsonSerializerOptions(opt =>
                         {
-                            PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-                            PropertyNameCaseInsensitive = true,
-                            Converters =
-                            {
-                                new JsonStringEnumConverter(JsonNamingPolicy.CamelCase),
-                                new IOperationUnresolvedJsonConverter()
-                            }
-                        })
-                    );
+                            opt.Converters.Add(new IOperationUnresolvedJsonConverter());
+                        }));
                 });
             });
 

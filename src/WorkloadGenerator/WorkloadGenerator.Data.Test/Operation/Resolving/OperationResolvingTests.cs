@@ -3,6 +3,7 @@ using System.Text.Json;
 using System.Text.Json.Nodes;
 using System.Text.Json.Serialization;
 using Microsoft.Extensions.Logging.Abstractions;
+using Utilities;
 using WorkloadGenerator.Data.Models;
 using WorkloadGenerator.Data.Models.Operation;
 using WorkloadGenerator.Data.Models.Operation.Http;
@@ -30,15 +31,12 @@ public class OperationResolvingTests
         Assert.IsInstanceOf<HttpOperationInputResolved>(resolved);
 
         var expectedResolved =
-            JsonSerializer.Deserialize<HttpOperationInputResolved>(expectedResult, new JsonSerializerOptions()
-            {
-                Converters =
-                {
-                    new HttpOperationRequestPayloadResolvedBaseConverter(),
-                    new JsonStringEnumConverter(JsonNamingPolicy.CamelCase)
-                },
-                PropertyNameCaseInsensitive = true
-            });
+            JsonSerializer.Deserialize<HttpOperationInputResolved>(expectedResult,
+                SerializerUtils.GetGlobalJsonSerializerOptions(
+                    opt =>
+                    {
+                        opt.Converters.Add(new HttpOperationRequestPayloadResolvedBaseConverter());
+                    }));
 
         Assert.That(JsonSerializer.Serialize(expectedResolved), Is.EqualTo(JsonSerializer.Serialize(resolved as HttpOperationInputResolved)));
     }

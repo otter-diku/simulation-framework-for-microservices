@@ -1,6 +1,7 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using Microsoft.Extensions.Logging;
+using Utilities;
 using WorkloadGenerator.Data.Models.Transaction;
 
 namespace WorkloadGenerator.Data.Services;
@@ -17,15 +18,7 @@ public class TransactionService : ITransactionService
         _transactionInputUnresolvedValidator = new TransactionInputUnresolvedValidator();
     }
 
-    private readonly JsonSerializerOptions _jsonSerializerOptions = new()
-    {
-
-        PropertyNameCaseInsensitive = true,
-        Converters =
-        {
-            new JsonStringEnumConverter(JsonNamingPolicy.CamelCase)
-        }
-    };
+    private readonly JsonSerializerOptions _jsonSerializerOptions = SerializerUtils.GetGlobalJsonSerializerOptions();
 
     public bool TryParseInput(string json, out TransactionInputUnresolved transactionInputUnresolved)
     {

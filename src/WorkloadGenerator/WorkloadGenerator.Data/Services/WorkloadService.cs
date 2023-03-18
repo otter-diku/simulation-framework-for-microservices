@@ -1,6 +1,7 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using Microsoft.Extensions.Logging;
+using Utilities;
 using WorkloadGenerator.Data.Models.Generator;
 using WorkloadGenerator.Data.Models.Workload;
 
@@ -17,14 +18,7 @@ public class WorkloadService : IWorkloadService
         _workloadInputUnresolvedValidator = new WorkloadInputUnresolvedValidator();
     }
 
-    private readonly JsonSerializerOptions _jsonSerializerOptions = new()
-    {
-        PropertyNameCaseInsensitive = true,
-        Converters =
-        {
-            new JsonStringEnumConverter(JsonNamingPolicy.CamelCase)
-        }
-    };
+    private readonly JsonSerializerOptions _jsonSerializerOptions = SerializerUtils.GetGlobalJsonSerializerOptions();
 
     public bool TryParseInput(string json, out WorkloadInputUnresolved workloadInputUnresolved)
     {
