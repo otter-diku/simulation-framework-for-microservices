@@ -1,7 +1,5 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MicroservicesSimulationFramework.Core", "MicroservicesSimulationFramework.Core\MicroservicesSimulationFramework.Core.csproj", "{A87B9964-E751-4FBD-955A-10492F6DA28F}"
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WorkloadGenerator.Server", "..\WorkloadGenerator\WorkloadGenerator.Server\WorkloadGenerator.Server.csproj", "{F76065EB-08EF-4D3A-959C-73EB0883A77C}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WorkloadGenerator.Grains", "..\WorkloadGenerator\WorkloadGenerator.Grains\WorkloadGenerator.Grains.csproj", "{230F8134-8AAF-476D-9FB9-E8F58B4F8DA7}"
@@ -16,16 +14,16 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WorkloadGenerator.Data.Test
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WorkloadGenerator.Client", "..\WorkloadGenerator\WorkloadGenerator.Client\WorkloadGenerator.Client.csproj", "{99E110B9-21B9-455D-A739-7C1224543F50}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MicroservicesSimulationFramework.Cli", "MicroservicesSimulationFramework.Cli\MicroservicesSimulationFramework.Cli.csproj", "{8F28AF42-BD3C-4DD3-9555-839790BE3767}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MicroservicesSimulationFramework.Core", "MicroservicesSimulationFramework.Core\MicroservicesSimulationFramework.Core.csproj", "{A7506CDD-2B6F-407D-B739-AA6F59EB1671}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{A87B9964-E751-4FBD-955A-10492F6DA28F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{A87B9964-E751-4FBD-955A-10492F6DA28F}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{A87B9964-E751-4FBD-955A-10492F6DA28F}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{A87B9964-E751-4FBD-955A-10492F6DA28F}.Release|Any CPU.Build.0 = Release|Any CPU
 		{F76065EB-08EF-4D3A-959C-73EB0883A77C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{F76065EB-08EF-4D3A-959C-73EB0883A77C}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{F76065EB-08EF-4D3A-959C-73EB0883A77C}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -54,5 +52,13 @@ Global
 		{99E110B9-21B9-455D-A739-7C1224543F50}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{99E110B9-21B9-455D-A739-7C1224543F50}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{99E110B9-21B9-455D-A739-7C1224543F50}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8F28AF42-BD3C-4DD3-9555-839790BE3767}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8F28AF42-BD3C-4DD3-9555-839790BE3767}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8F28AF42-BD3C-4DD3-9555-839790BE3767}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8F28AF42-BD3C-4DD3-9555-839790BE3767}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A7506CDD-2B6F-407D-B739-AA6F59EB1671}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A7506CDD-2B6F-407D-B739-AA6F59EB1671}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A7506CDD-2B6F-407D-B739-AA6F59EB1671}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A7506CDD-2B6F-407D-B739-AA6F59EB1671}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

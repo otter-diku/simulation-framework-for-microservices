@@ -2,6 +2,7 @@
 using System.Text.Json.Serialization;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 using Orleans.Configuration;
 using Orleans.Serialization;
 using Utilities;
@@ -15,6 +16,11 @@ namespace WorkloadGenerator.Server
         public static async Task<IHost> StartSiloAsync()
         {
             var builder = new HostBuilder()
+                .ConfigureLogging((_, loggingBuilder) =>
+                {
+                    loggingBuilder.ClearProviders();
+                    loggingBuilder.AddSeq();
+                })
                 .UseOrleans(siloBuilder =>
                 {
                     siloBuilder
@@ -28,6 +34,11 @@ namespace WorkloadGenerator.Server
                         {
                             options.SiloPort = Constants.SiloPort; // silo-to-silo communication
                             options.GatewayPort = Constants.GatewayPort; // client-to-silo communication
+                        })
+                        .ConfigureLogging(loggingBuilder =>
+                        {
+                            loggingBuilder.ClearProviders();
+                            loggingBuilder.AddSeq();
                         })
                         .ConfigureServices((sc) =>
                         {

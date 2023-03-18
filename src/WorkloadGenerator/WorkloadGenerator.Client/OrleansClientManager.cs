@@ -1,6 +1,7 @@
 ﻿using System.Text.Json;
 using System.Text.Json.Serialization;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 using Orleans.Configuration;
 using Orleans.Serialization;
 using Utilities;
@@ -13,6 +14,11 @@ public static class OrleansClientManager
     public static async Task<IHost> StartClientAsync()
     {
         var builder = new HostBuilder()
+            .ConfigureLogging((_, loggingBuilder) =>
+            {
+                loggingBuilder.ClearProviders();
+                loggingBuilder.AddSeq();
+            })
             .UseOrleansClient(clientBuilder =>
             {
                 clientBuilder
