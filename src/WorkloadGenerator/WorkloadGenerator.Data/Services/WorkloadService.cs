@@ -60,7 +60,7 @@ public class WorkloadService : IWorkloadService
 
         resolved = new WorkloadInputResolved()
         {
-            Id = unresolved.Id,
+            TemplateId = unresolved.TemplateId,
             TransactionReferences = unresolved.Transactions
                 .ToDictionary(x => x.TransactionReferenceId, x => x),
             Generators = unresolved.Generators

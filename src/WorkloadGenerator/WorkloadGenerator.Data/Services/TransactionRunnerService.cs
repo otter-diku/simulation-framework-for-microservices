@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Text.Json;
 using Microsoft.Extensions.Logging;
 using Utilities;
@@ -28,30 +29,43 @@ public class TransactionRunnerService
         Dictionary<string, object> providedValues,
         Dictionary<string, ITransactionOperationUnresolved> operationsDictionary)
     {
+        var transactionStopwatch = Stopwatch.StartNew();
+
         // generate dynamic variable for transaction.DynamicVariables
-        for (var i = 0; i < transaction.Operations.Count; i++)
+        foreach (var operationReferenceId in transaction.Operations.Select(t => t.OperationReferenceId))
         {
-            var opRefId = transaction.Operations[i].OperationReferenceId;
-            if (!operationsDictionary.TryGetValue(opRefId, out var operation))
+            var operationStopwatch = Stopwatch.StartNew();
+
+            if (!operationsDictionary.TryGetValue(operationReferenceId, out var operation))
             {
-                throw new Exception($"Could not find operation with ID {opRefId}");
+                _logger.LogWarning("Could not find operation with ID {OperationReferenceId}", operationReferenceId);
+                return;
             }
+
+            var operationCorrelationId = Guid.NewGuid(); /* TODO: correlation IDs should be hierarchical and passed down */
+            using var _ = _logger.BeginScope(new Dictionary<string, object>
+            {
+                { "OperationReferenceId", operationReferenceId },
+                { "OperationCorrelationId",  operationCorrelationId },
+            });
+
+            // TODO: add logging of operation type and maybe some extra details
 
             var didResolve = _transactionOperationService.TryResolve(operation, providedValues, out var resolved);
             if (!didResolve)
             {
-                Console.WriteLine($"Failed to resolve Tx: {transaction.TemplateId}, Op: {opRefId}");
+                _logger.LogWarning("Failed to resolve operation");
                 return;
             }
+
             var didConvert = _transactionOperationService.TryConvertToExecutable(resolved, out var transactionOperationBaseExecutable);
             if (!didConvert)
             {
-                Console.WriteLine($"Failed to convert Tx: {transaction.TemplateId}, Op: {opRefId}");
+                _logger.LogWarning("Failed to convert operation into executable");
                 return;
             }
 
-
-            var result = await ExecuteOperation(transactionOperationBaseExecutable);
+            var result = await ExecuteOperation(transactionOperationBaseExecutable, operationCorrelationId);
 
             if (result is null)
             {
@@ -74,13 +88,10 @@ public class TransactionRunnerService
                 providedValues[p.Key] = p.Value;
             }
 
-
-            // TODO: need to write this to Kafka cluster instead
-            await using var logFile = new StreamWriter(Path.Combine(Directory.GetCurrentDirectory(), Constants.LogFile), true);
-            await logFile.WriteLineAsync($"[{DateTime.Now}]: Tx: {transaction.TemplateId}, Op: {opRefId}:");
-            await logFile.WriteLineAsync($"Result: {((HttpResponseMessage)result).ToString()}");
-            await logFile.WriteLineAsync("----------------------------------------------------------------");
+            _logger.LogInformation("Operation finished in {ElapsedMs} milliseconds", operationStopwatch.ElapsedMilliseconds);
         }
+
+        _logger.LogInformation("Transaction finished in {ElapsedMs} milliseconds", transactionStopwatch.ElapsedMilliseconds);
     }
 
     private async Task<Dictionary<string, object>> ExtractReturnValues(
@@ -201,19 +212,20 @@ public class TransactionRunnerService
         }
     }
 
-
-    private async Task<object> ExecuteOperation(TransactionOperationExecutableBase transactionOperationbaseExecutable)
+    private async Task<object> ExecuteOperation(TransactionOperationExecutableBase transactionOperationbaseExecutable,
+        Guid operationCorrelationId)
     {
         return transactionOperationbaseExecutable.Type switch
         {
-            OperationType.Http => await ExecuteHttpRequestOperation(transactionOperationbaseExecutable),
+            OperationType.Http => await ExecuteHttpRequestOperation(transactionOperationbaseExecutable, operationCorrelationId),
             OperationType.Sleep => await ExecuteSleepOperation(transactionOperationbaseExecutable),
             _ => throw new ArgumentOutOfRangeException()
         };
     }
 
     private async Task<HttpResponseMessage> ExecuteHttpRequestOperation(
-        TransactionOperationExecutableBase transactionOperationbaseExecutable)
+        TransactionOperationExecutableBase transactionOperationbaseExecutable,
+        Guid operationCorrelationId)
     {
         var httpClient = _httpClientFactory.CreateClient();
         var requestMessage = new HttpRequestMessage();
@@ -221,6 +233,7 @@ public class TransactionRunnerService
         // TODO: is using explicit cast really best solution here?
         var executable = (HttpOperationTransactionExecutable)transactionOperationbaseExecutable;
         executable.PrepareRequestMessage(requestMessage);
+        requestMessage.Headers.Add("X-Correlation-Id", operationCorrelationId.ToString());
         return await httpClient.SendAsync(requestMessage);
     }
 

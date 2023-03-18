@@ -11,4 +11,5 @@ public class ExecutableTransaction
 
     public Dictionary<string, object> ProvidedValues { get; set; }
 
+    public Guid WorkloadCorrelationId { get; set; }
 }

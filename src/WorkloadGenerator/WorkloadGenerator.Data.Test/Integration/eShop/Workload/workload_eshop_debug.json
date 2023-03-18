@@ -1,5 +1,5 @@
 {
-  "id": "workload-debug",
+  "templateId": "workload-eshop-debug",
   "generators": [
     {
       "id": "productId",

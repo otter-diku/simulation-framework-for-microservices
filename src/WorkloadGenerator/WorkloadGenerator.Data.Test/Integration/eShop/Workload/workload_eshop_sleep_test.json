@@ -1,5 +1,5 @@
 {
-  "id": "workload-id",
+  "templateId": "workload-eshop-sleep-test",
   "generators": [
     {
       "id": "productId",
