@@ -5,11 +5,14 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.HashSet;
+import java.util.Set;
 
 
 public class JsonParseTest {
@@ -21,8 +24,12 @@ public class JsonParseTest {
         ObjectMapper objectMapper = new ObjectMapper();
         try {
             JsonNode jsonNode = objectMapper.readTree(content);
-            JsonNode basket = jsonNode.get("Basket");
-            
+            JsonNode items = jsonNode.get("Basket").get("Items");
+
+            Set<Integer> productIds = Set.of(1,2,6);
+            items.forEach(item ->
+                    Assertions.assertTrue(productIds.contains(item.get("ProductId").asInt()))
+            );
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
