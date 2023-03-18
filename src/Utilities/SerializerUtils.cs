@@ -11,12 +11,12 @@ public static class SerializerUtils
         after(options);
         return options;
     }
-    
+
     public static JsonSerializerOptions GetGlobalJsonSerializerOptions()
     {
         return GetJsonSerializerOptions();
     }
-    
+
     private static JsonSerializerOptions GetJsonSerializerOptions() => new(
         new JsonSerializerOptions()
         {

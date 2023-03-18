@@ -139,7 +139,7 @@ public static class Program
             })
             .ConfigureServices(services =>
             {
-                
+
                 services.AddSingleton<IWorkloadGeneratorRunnerService, WorkloadGeneratorRunnerService>();
 
                 services.AddSingleton<IWorkloadService, WorkloadService>();
@@ -149,7 +149,7 @@ public static class Program
                 services.AddSingleton<IOperationExecutionService, HttpOperationExecutionService>();
                 services.AddHttpClient<HttpOperationExecutionService>();
                 services.AddSingleton<IOperationExecutionService, SleepOperationExecutionService>();
-                
+
                 services.AddSingleton<ITransactionExecutionService, TransactionExecutionService>();
 
                 services.AddSingleton<IWorkloadCoordinator, WorkloadCoordinator>();

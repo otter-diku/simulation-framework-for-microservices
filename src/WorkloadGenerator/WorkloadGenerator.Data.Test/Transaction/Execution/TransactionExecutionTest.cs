@@ -71,12 +71,12 @@ public class TransactionExecutionTest
 
         var httpOperationExecutionService =
             new HttpOperationExecutionService(
-                NullLogger<HttpOperationExecutionService>.Instance, 
-                new DefaultHttpClientFactory(), 
+                NullLogger<HttpOperationExecutionService>.Instance,
+                new DefaultHttpClientFactory(),
                 new OperationService(NullLogger<OperationService>.Instance));
 
         var sut = new TransactionExecutionService(
-            new [] { httpOperationExecutionService },
+            new[] { httpOperationExecutionService },
             NullLogger<TransactionExecutionService>.Instance
         );
 

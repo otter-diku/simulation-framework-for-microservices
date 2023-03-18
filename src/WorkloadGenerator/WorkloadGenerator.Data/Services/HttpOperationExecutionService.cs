@@ -13,7 +13,7 @@ public class HttpOperationExecutionService : IOperationExecutionService
     private readonly IOperationService _operationService;
 
     private readonly JsonSerializerOptions _jsonSerializerOptions = SerializerUtils.GetGlobalJsonSerializerOptions();
-    
+
     public HttpOperationExecutionService(ILogger<HttpOperationExecutionService> logger,
         IHttpClientFactory httpClientFactory,
         IOperationService operationService)
@@ -22,9 +22,9 @@ public class HttpOperationExecutionService : IOperationExecutionService
         _httpClientFactory = httpClientFactory;
         _operationService = operationService;
     }
-    
+
     public bool CanHandle(IOperationUnresolved operation) => operation.Type == OperationType.Http;
-    
+
     public async Task<Dictionary<string, object>> Execute(IOperationUnresolved unresolved, Dictionary<string, object> providedValues)
     {
         if (unresolved is not HttpOperationInputUnresolved httpOperationUnresolved)
@@ -32,14 +32,14 @@ public class HttpOperationExecutionService : IOperationExecutionService
             _logger.LogWarning("Invalid execution service picked");
             return providedValues;
         }
-        
+
         var didResolve = _operationService.TryResolve(httpOperationUnresolved, providedValues, out var resolved);
         if (!didResolve)
         {
             _logger.LogWarning("Failed to resolve operation");
             return providedValues;
         }
-        
+
         if (resolved is not HttpOperationInputResolved httpOperationResolved)
         {
             _logger.LogWarning("Invalid type of resolved operation");
@@ -52,22 +52,22 @@ public class HttpOperationExecutionService : IOperationExecutionService
             return providedValues;
         }
 
-        if (executable is not HttpOperationExecutable httpExecutable) 
+        if (executable is not HttpOperationExecutable httpExecutable)
         {
             _logger.LogWarning("Invalid executable type");
             return providedValues;
         }
-        
+
         var client = _httpClientFactory.CreateClient();
         var message = new HttpRequestMessage();
-        
+
         httpExecutable.PrepareRequestMessage!(message);
 
         var response = await client.SendAsync(message);
 
         return await ExtractReturnValues(httpOperationResolved, response);
     }
-    
+
     private async Task<Dictionary<string, object>> ExtractReturnValues(
         HttpOperationInputResolved operation,
         object result)

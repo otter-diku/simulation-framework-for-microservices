@@ -50,7 +50,7 @@ public class TransactionExecutionService : ITransactionExecutionService
             _logger.LogWarning(
                 "Could not find operation with ID {OperationReferenceId}, continuing with the next operation...",
                 operationReferenceId);
-            
+
             return providedValues;
         }
 
@@ -63,7 +63,7 @@ public class TransactionExecutionService : ITransactionExecutionService
     }
 
     private async Task<Dictionary<string, object>> ExecuteOperation(
-        IOperationUnresolved unresolved, 
+        IOperationUnresolved unresolved,
         Dictionary<string, object> providedValues)
     {
         var operationExecutionService

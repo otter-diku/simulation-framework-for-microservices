@@ -7,7 +7,7 @@ public class HttpOperationInputUnresolved : HttpOperationInputBase, IOperationUn
     public Argument[]? Arguments { get; set; }
     public DynamicVariable[]? DynamicVariables { get; set; }
     public HttpOperationRequestPayloadUnresolved? RequestPayload { get; set; }
-    
+
     public void ValidateAndThrow()
     {
         var validator = new HttpOperationInputUnresolvedValidator();

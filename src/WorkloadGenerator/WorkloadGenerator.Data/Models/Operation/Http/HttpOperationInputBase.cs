@@ -14,7 +14,7 @@ public abstract class HttpOperationInputBase : OperationInputBase
 
     // TODO: Query params should be parametrized 
     public List<QueryParameter>? QueryParameters { get; set; }
-    
+
     public HttpOperationResponseInput? Response { get; set; }
 }
 
