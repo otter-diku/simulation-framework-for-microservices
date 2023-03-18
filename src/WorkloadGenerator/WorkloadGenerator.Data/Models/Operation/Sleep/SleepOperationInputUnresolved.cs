@@ -2,7 +2,7 @@ using FluentValidation;
 
 namespace WorkloadGenerator.Data.Models.Operation.Sleep;
 
-public class SleepOperationInputUnresolved : SleepOperationInputBase, ITransactionOperationUnresolved
+public class SleepOperationInputUnresolved : SleepOperationInputBase, IOperationUnresolved
 {
     public Argument[]? Arguments { get; set; }
     public DynamicVariable[]? DynamicVariables { get; set; }
@@ -26,6 +26,6 @@ public class SleepOperationInputUnresolvedValidator : AbstractValidator<SleepOpe
 
         RuleFor(operation => operation.TemplateId)
             .NotEmpty()
-            .WithMessage($"{nameof(ITransactionOperationUnresolved)} ID needs to be a non-empty string");
+            .WithMessage($"{nameof(IOperationUnresolved)} ID needs to be a non-empty string");
     }
 }

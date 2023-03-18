@@ -1,6 +1,6 @@
 namespace WorkloadGenerator.Data.Models.Operation.Http;
 
-public class HttpOperationTransactionExecutable : TransactionOperationExecutableBase
+public class HttpOperationExecutable : OperationExecutableBase
 {
     public Action<HttpRequestMessage>? PrepareRequestMessage { get; set; }
 

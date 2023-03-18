@@ -28,13 +28,13 @@ public class OperationConvertTests
                 Url = "http://example.com"
             };
 
-        var sut = new TransactionOperationService(NullLogger<TransactionOperationService>.Instance);
+        var sut = new OperationService(NullLogger<OperationService>.Instance);
         var isConvertSuccessful = sut.TryConvertToExecutable(resolvedInput, out var executable);
         Assert.IsTrue(isConvertSuccessful);
 
         var httpMessage = new HttpRequestMessage();
 
-        var httpOperationExecutable = executable as HttpOperationTransactionExecutable;
+        var httpOperationExecutable = executable as HttpOperationExecutable;
         httpOperationExecutable.PrepareRequestMessage(httpMessage);
 
         Assert.That(httpMessage.RequestUri.AbsoluteUri, Is.EqualTo("http://example.com/?a=b"));
@@ -61,13 +61,13 @@ public class OperationConvertTests
                 Url = "http://example.com"
             };
 
-        var sut = new TransactionOperationService(NullLogger<TransactionOperationService>.Instance);
+        var sut = new OperationService(NullLogger<OperationService>.Instance);
         var isConvertSuccessful = sut.TryConvertToExecutable(resolvedInput, out var executable);
         Assert.IsTrue(isConvertSuccessful);
 
         var httpMessage = new HttpRequestMessage();
 
-        var httpOperationExecutable = executable as HttpOperationTransactionExecutable;
+        var httpOperationExecutable = executable as HttpOperationExecutable;
         httpOperationExecutable.PrepareRequestMessage(httpMessage);
 
         Assert.That(httpMessage.RequestUri.AbsoluteUri, Is.EqualTo("http://example.com/?a=b"));

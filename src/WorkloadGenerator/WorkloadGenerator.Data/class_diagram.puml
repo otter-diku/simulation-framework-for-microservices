@@ -1,19 +1,19 @@
 @startuml
-class TransactionOperationInputBase {
+class OperationInputBase {
   OperationType Type
 }
 
-abstract class TransactionOperationExecutableBase {
+abstract class OperationExecutableBase {
   OperationType Type
 }
 
-interface ITransactionOperationUnresolved
-interface ITransactionOperationResolved
+interface IOperationUnresolved
+interface IOperationResolved
 
 'http ops'
 
 abstract class HttpOperationInputBase
-TransactionOperationInputBase <|-- HttpOperationInputBase
+OperationInputBase <|-- HttpOperationInputBase
 
 class HttpOperationInputResolved 
 {
@@ -24,7 +24,7 @@ abstract class HttpOperationRequestPayloadResolvedBase
 
 HttpOperationInputResolved --* HttpOperationRequestPayloadResolvedBase
 HttpOperationInputBase <|-- HttpOperationInputResolved
-ITransactionOperationResolved <|-- HttpOperationInputResolved
+IOperationResolved <|-- HttpOperationInputResolved
 
 class JsonPayloadResolved
 {
@@ -47,19 +47,19 @@ class HttpOperationRequestPayloadUnresolved
 }
 
 HttpOperationInputUnresolved --|> HttpOperationInputBase
-HttpOperationInputUnresolved --|> ITransactionOperationUnresolved
+HttpOperationInputUnresolved --|> IOperationUnresolved
 JsonPayloadResolved --|> HttpOperationRequestPayloadResolvedBase
 
 'sleep ops'
 abstract class SleepOperationInputBase
  
-TransactionOperationInputBase <|-- SleepOperationInputBase 
+OperationInputBase <|-- SleepOperationInputBase 
 SleepOperationInputBase <|-- SleepOperationInputResolved
-ITransactionOperationResolved <|-- SleepOperationInputResolved
+IOperationResolved <|-- SleepOperationInputResolved
 
 class SleepOperationInputUnresolved
 SleepOperationInputUnresolved --|> SleepOperationInputBase
-SleepOperationInputUnresolved --|> ITransactionOperationUnresolved
+SleepOperationInputUnresolved --|> IOperationUnresolved
 
 class HttpOperationTransactionExecutable
 {
@@ -70,7 +70,7 @@ class SleepOperationTransactionExecutable
 {
     Func<Task> Sleep()
 }
-SleepOperationTransactionExecutable --|> TransactionOperationExecutableBase
+SleepOperationTransactionExecutable --|> OperationExecutableBase
 
-HttpOperationTransactionExecutable --|> TransactionOperationExecutableBase
+HttpOperationTransactionExecutable --|> OperationExecutableBase
 @enduml

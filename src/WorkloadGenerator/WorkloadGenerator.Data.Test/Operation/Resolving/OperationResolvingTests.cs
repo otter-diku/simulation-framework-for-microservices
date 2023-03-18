@@ -16,7 +16,7 @@ public class OperationResolvingTests
     [TestCaseSource(typeof(ValidOperationInputCases))]
     public void TestValidCases(string fileName, string input, string arguments, string expectedResult)
     {
-        var sut = new TransactionOperationService(NullLogger<TransactionOperationService>.Instance);
+        var sut = new OperationService(NullLogger<OperationService>.Instance);
         var parsingResult = sut.TryParseInput(input, out var parsedInput);
         Assert.True(parsingResult);
         Assert.NotNull(parsedInput);
@@ -60,7 +60,7 @@ public class OperationResolvingTests
                 Content = JsonSerializer.Deserialize<object>("{\"key1\": \"{{arg1}}\", \"key2\":\"{{var1}}\"}")!
             }
         };
-        var sut = new TransactionOperationService(NullLogger<TransactionOperationService>.Instance);
+        var sut = new OperationService(NullLogger<OperationService>.Instance);
         var didResolveSuccessfully = sut.TryResolve(unresolved, new Dictionary<string, object>()
         {
             { "arg1", 42 }
