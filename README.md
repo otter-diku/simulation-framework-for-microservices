@@ -4,6 +4,11 @@
 [![build and test](https://github.com/otter-diku/simulation-framework-for-microservices/actions/workflows/build-and-test.yml/badge.svg)](https://github.com/otter-diku/simulation-framework-for-microservices/actions/workflows/build-and-test.yml)
 
 
+## Logging
+We use  https://datalust.co/seq for logging, this requires running seq in docker:
+
+> docker run --name seq -d --restart unless-stopped -e ACCEPT_EULA=Y -p 5341:80 datalust/seq:latest
+
 
 ## Workload Generation
 
