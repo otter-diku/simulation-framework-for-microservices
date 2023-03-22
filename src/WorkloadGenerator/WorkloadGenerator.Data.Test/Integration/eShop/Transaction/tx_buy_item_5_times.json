@@ -1,5 +1,5 @@
 {
-  "templateId": "add-item-and-checkout-basket",
+  "templateId": "buy-item-5-times",
   "arguments": [
     {
       "name": "user-id",
@@ -8,16 +8,16 @@
   ],
   "operations": [
     {
-      "operationReferenceId": "catalog-get-items",
+      "operationReferenceId": "catalog-get-item-by-id",
       "id": "op-1"
     },
     {
-      "operationReferenceId": "basket-add-items",
+      "operationReferenceId": "basket-add-single-item-5-times",
       "id": "op-2"
     },
     {
       "operationReferenceId": "basket-checkout",
       "id": "op-3"
-    }    
+    }
   ]
 }

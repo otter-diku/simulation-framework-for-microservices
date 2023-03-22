@@ -1,0 +1,43 @@
+{
+  "templateId": "workload-eshop-debug-price-invariant",
+  "maxConcurrentTransactions": 5,
+  "generators": [
+    {
+      "id": "productId",
+      "type": "unsignedInt",
+      "distribution": "uniform",
+      "min": 30000,
+      "max": 30100
+    },
+    {
+      "id": "userId",
+      "type": "constant",
+      "constant": "10000000-0000-0000-0000-000000000000"
+    }
+  ],
+  "transactions": [
+    {
+      "id": "checkout-3-items",
+      "transactionReferenceId": "checkout-3-items",
+      "count": 1,
+      "data": [
+        {
+          "name":  "user-id",
+          "generatorReferenceId": "userId"
+        },
+        {
+          "name":  "product-id-1",
+          "generatorReferenceId": "productId"
+        },
+        {
+          "name":  "product-id-2",
+          "generatorReferenceId": "productId"
+        },
+        {
+          "name":  "product-id-3",
+          "generatorReferenceId": "productId"
+        }
+      ]
+    }
+  ]
+}

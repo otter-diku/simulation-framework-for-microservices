@@ -1,0 +1,12 @@
+{
+  "templateId": "delete-catalog-item",
+  "type": "http",
+  "httpMethod": "delete",
+  "arguments": [
+    {
+      "name": "product-id",
+      "type": "number"
+    }
+  ],
+  "url": "http://localhost:5101/catalog-api/api/v1/Catalog/{{product-id}}"
+}

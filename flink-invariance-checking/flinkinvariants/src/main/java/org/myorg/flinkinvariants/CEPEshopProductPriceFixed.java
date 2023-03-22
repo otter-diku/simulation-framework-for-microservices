@@ -32,16 +32,6 @@ public class CEPEshopProductPriceFixed {
         KafkaSource<EshopRecord> source = getEshopRecordKafkaSource(broker, topic, groupId);
         DataStreamSource<EshopRecord> input = env.fromSource(source, WatermarkStrategy.noWatermarks(), "Kafka Source");
 
-        // make this one oneOrMore and greedy such that we can take the most recent priceChanged Event only
-//        Pattern<EshopRecord, ?> priceChange = Pattern.<EshopRecord>begin("priceChange")
-//                .where(new SimpleCondition<EshopRecord>() {
-//                    @Override
-//                    public boolean filter(EshopRecord record){
-//                        return record.EventName.equals("ProductPriceChangedIntegrationEvent");
-//                    }
-//                }).oneOrMore().greedy();
-
-        // make this one oneOrMore and greedy such that we can take the most recent priceChanged Event only
         Pattern<EshopRecord, ?> priceChange = Pattern.<EshopRecord>begin("priceChange")
                 .where(new SimpleCondition<EshopRecord>() {
                     @Override
@@ -101,12 +91,10 @@ public class CEPEshopProductPriceFixed {
                         (p, o) -> {
                             StringBuilder builder = new StringBuilder();
 
-                            builder.append("Violation: ");
+                            builder.append("Violation of Price changed Invariant : ");
                             builder.append(p.get("priceChange").get(0));
                             builder.append("\n");
-                            builder.append("CreationDate: ");
-                            builder.append(p.get("userCheckout").get(0).EventBody.get("CreationDate"));
-                            builder.append(" Items: ");
+                            builder.append("Checkout Items: ");
                             builder.append(p.get("userCheckout").get(0).EventBody.get("Basket").get("Items"));
 
                             o.collect(builder.toString());
@@ -116,6 +104,7 @@ public class CEPEshopProductPriceFixed {
         violations.print();
 
         // Execute program, beginning computation.
+        System.out.println("Started CEP query for Price Changed Invariant..");
         env.execute("Flink Eshop Product Price Changed Invariant");
     }
 }

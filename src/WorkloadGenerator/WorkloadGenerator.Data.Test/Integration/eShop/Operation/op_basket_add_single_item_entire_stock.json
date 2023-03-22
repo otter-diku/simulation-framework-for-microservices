@@ -1,0 +1,39 @@
+{
+  "templateId": "basket-add-single-item-entire-stock",
+  "type": "http",
+  "httpMethod": "post",
+  "arguments": [
+    {
+      "name": "user-id",
+      "type": "string"
+    },
+    {
+      "name": "item-1",
+      "type": "object"
+    }
+  ],
+  "headers": [
+    {
+      "key": "user-id",
+      "value": "{{user-id}}"
+    }
+  ],
+  "requestPayload": {
+    "type": "json",
+    "content": {
+      "buyerId": "{{user-id}}",
+      "items": [
+        {
+          "id": "1",
+          "productId": "{{@@item-1.id@@}}",
+          "productName": "{{@@item-1.name@@}}",
+          "unitPrice": "{{@@item-1.price@@}}",
+          "oldUnitPrice": "{{@@item-1.price@@}}",
+          "quantity": "{{@@item-1.availableStock@@}}",
+          "pictureUrl": ""
+        }
+      ]
+    }
+  },
+  "url": "http://localhost:5103/basket-api/api/v1/Basket"
+}

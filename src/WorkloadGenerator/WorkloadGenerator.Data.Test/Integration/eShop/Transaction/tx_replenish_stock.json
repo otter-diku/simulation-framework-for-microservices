@@ -1,0 +1,19 @@
+{
+  "templateId": "replenish-stock",
+  "arguments": [
+    {
+      "name": "product-id",
+      "type": "number"
+    }    
+  ],
+  "operations": [
+    {
+      "operationReferenceId": "catalog-get-item-by-id",
+      "id": "op-1"
+    },
+    {
+      "operationReferenceId": "catalog-replenish-stock",
+      "id": "op-2"
+    }
+  ]
+}

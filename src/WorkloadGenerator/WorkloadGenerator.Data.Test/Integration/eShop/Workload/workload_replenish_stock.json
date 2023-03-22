@@ -1,0 +1,26 @@
+{
+  "templateId": "workload-eshop-replenish-stock",
+  "maxConcurrentTransactions": 10,
+  "generators": [
+    {
+      "id": "productIdPriceUpdate1",
+      "type": "unsignedInt",
+      "distribution": "uniform",
+      "min": 30000,
+      "max": 30100
+    }
+  ],
+  "transactions": [
+    {
+      "id": "replenish-stock",
+      "transactionReferenceId": "replenish-stock",
+      "count": 10000,
+      "data": [
+        {
+          "name":  "product-id",
+          "generatorReferenceId": "productIdPriceUpdate1"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,37 @@
+{
+  "templateId": "catalog-replenish-stock",
+  "type": "http",
+  "httpMethod": "put",
+  "arguments": [
+    {
+      "name": "item-1",
+      "type": "object"
+    }
+  ],
+  "dynamicVariables": [
+    {
+      "name": "new-stock",
+      "type": "unsignedInt"
+    }
+  ],  
+  "requestPayload": {
+    "type": "json",
+    "content": {
+      "id": "{{@@item-1.id@@}}",
+      "name": "{{@@item-1.name@@}}",
+      "description": "{{@@item-1.description@@}}",
+      "price": "{{@@item-1.price@@}}",
+      "pictureFileName": "{{@@item-1.pictureFileName@@}}",
+      "pictureUri": "{{@@item-1.pictureUri@@}}",
+      "catalogTypeId": "{{@@item-1.catalogTypeId@@}}",
+      "catalogType": null,
+      "catalogBrandId": "{{@@item-1.catalogBrandId@@}}",
+      "catalogBrand": null,
+      "availableStock": "{{new-stock}}",
+      "restockThreshold": "{{@@item-1.restockThreshold@@}}",
+      "maxStockThreshold": "{{@@item-1.maxStockThreshold@@}}",
+      "onReorder": "{{@@item-1.onReorder@@}}"
+    }
+  },
+  "url": "http://localhost:5101/catalog-api/api/v1/Catalog/items"
+}

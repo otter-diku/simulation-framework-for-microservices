@@ -1,0 +1,32 @@
+{
+  "templateId": "workload-eshop-delete-item-while-in-basket",
+  "generators": [
+    {
+      "id": "productIdToDelete",
+      "type": "constant",
+      "constant": 2
+    },
+    {
+      "id": "userId",
+      "type": "constant",
+      "constant": "10000000-0000-0000-0000-000000000000"
+    }
+  ],
+  "transactions": [
+    {
+      "id": "tx-1",
+      "transactionReferenceId": "delete-item-while-in-basket",
+      "count": 1,
+      "data": [
+        {
+          "name":  "product-id",
+          "generatorReferenceId": "productIdToDelete"
+        },
+        {
+          "name":  "user-id",
+          "generatorReferenceId": "userId"
+        }
+      ]
+    }
+  ]
+}

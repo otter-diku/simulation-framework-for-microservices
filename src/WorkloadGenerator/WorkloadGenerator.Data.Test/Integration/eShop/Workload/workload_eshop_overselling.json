@@ -1,0 +1,33 @@
+{
+  "templateId": "workload-eshop-overselling",
+  "maxConcurrentTransactions": 10,  
+  "generators": [
+    {
+      "id": "productIdToBuy",
+      "type": "constant",
+      "constant": 7
+    },
+    {
+      "id": "userId",
+      "type": "constant",
+      "constant": "10000000-0000-0000-0000-000000000000"
+    }
+  ],
+  "transactions": [
+    {
+      "id": "tx-1",
+      "transactionReferenceId": "buy-item-5-times",
+      "count": 2,
+      "data": [
+        {
+          "name":  "user-id",
+          "generatorReferenceId": "userId"
+        },
+        {
+          "name":  "product-id",
+          "generatorReferenceId": "productIdToBuy"
+        }
+      ]
+    }
+  ]
+}
