@@ -40,7 +40,7 @@ public class CEPEshopProductPriceFixed {
                     }
                 });
 
-        Pattern<EshopRecord, ?> priceChange2 = Pattern.<EshopRecord>begin("priceChange2")
+        Pattern<EshopRecord, ?> _priceChange2 = Pattern.<EshopRecord>begin("priceChange2")
                 .where(new SimpleCondition<EshopRecord>() {
                     @Override
                     public boolean filter(EshopRecord record){
@@ -57,7 +57,26 @@ public class CEPEshopProductPriceFixed {
                 });
 
         // productPrice  -> ... -> userCheckout
-        Pattern<EshopRecord, ?> priceInvariant = priceChange.notFollowedBy("priceChange2").followedBy("userCheckout")
+        Pattern<EshopRecord, ?> priceInvariant = priceChange
+                .notFollowedBy("priceChange2")
+                .where(new IterativeCondition<EshopRecord>() {
+                    @Override
+                    public boolean filter(EshopRecord record, Context<EshopRecord> ctx) throws Exception {
+                        if (!record.EventName.equals("ProductPriceChangedIntegrationEvent")) {
+                            return true;
+                        }
+                        int productId = record.EventBody.get("ProductId").asInt();
+
+                        for (EshopRecord event : ctx.getEventsForPattern("priceChange")) {
+                            int knownProductId = event.EventBody.get("ProductId").asInt();
+                            if (productId == knownProductId) {
+                                return false;
+                            }
+                        }
+                        return true;
+                    }
+                })
+                .followedBy("userCheckout")
                 .where(new IterativeCondition<EshopRecord>() {
                     @Override
                     public boolean filter(EshopRecord record, IterativeCondition.Context<EshopRecord> ctx) throws Exception {
