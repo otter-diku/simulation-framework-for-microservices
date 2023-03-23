@@ -1,6 +1,6 @@
 {
   "templateId": "workload-eshop-price-invariant",
-  "maxConcurrentTransactions": 10,
+  "maxConcurrentTransactions": 20,
   "generators": [
     {
       "id": "productId",
@@ -37,7 +37,7 @@
     {
       "id": "price-update-1",
       "transactionReferenceId": "update-catalog-item-price",
-      "count": 200,
+      "count": 1000,
       "data": [
         {
           "name":  "product-id",
@@ -48,7 +48,7 @@
     {
       "id": "checkout-3-items",
       "transactionReferenceId": "checkout-3-items",
-      "count": 200,
+      "count": 1000,
       "data": [
         {
           "name":  "user-id",
