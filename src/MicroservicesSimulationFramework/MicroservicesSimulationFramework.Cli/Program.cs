@@ -1,8 +1,10 @@
-﻿using MicroservicesSimulationFramework.Core.Models;
+﻿using System.Text.Json;
+using MicroservicesSimulationFramework.Core.Models;
 using MicroservicesSimulationFramework.Core.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Orleans.Serialization;
 using Utilities;
 using WorkloadGenerator.Client;
 using WorkloadGenerator.Data.Models.Workload;
