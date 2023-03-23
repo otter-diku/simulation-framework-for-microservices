@@ -56,6 +56,7 @@ public class CEPEshopProductPriceFixed {
                     }
                 });
 
+        // productPrice  -> ... -> userCheckout
         Pattern<EshopRecord, ?> priceInvariant = priceChange.notFollowedBy("priceChange2").followedBy("userCheckout")
                 .where(new IterativeCondition<EshopRecord>() {
                     @Override
@@ -68,7 +69,6 @@ public class CEPEshopProductPriceFixed {
                         List<JsonNode> items = new ArrayList<>();
                         record.EventBody.get("Basket").get("Items").forEach(items::add);
 
-                        // TODO: assert we use latest priceChanged event
                         EshopRecord priceChanged =  ctx.getEventsForPattern("priceChange")
                                 .iterator().next();
 
@@ -92,10 +92,15 @@ public class CEPEshopProductPriceFixed {
                             StringBuilder builder = new StringBuilder();
 
                             builder.append("Violation of Price changed Invariant : ");
-                            builder.append(p.get("priceChange").get(0));
                             builder.append("\n");
-                            builder.append("Checkout Items: ");
-                            builder.append(p.get("userCheckout").get(0).EventBody.get("Basket").get("Items"));
+                            builder.append("PriceChanged timestamp: ");
+                            builder.append(p.get("priceChange").get(0).EventBody.get("CreationDate"));
+                            builder.append(" " + p.get("priceChange").get(0).EventBody);
+
+                            builder.append("\n");
+                            builder.append("UserCheckout timestamp: ");
+                            builder.append(p.get("userCheckout").get(0).EventBody.get("CreationDate"));
+                            builder.append(" " + p.get("userCheckout").get(0).EventBody.get("Basket").get("Items"));
 
                             o.collect(builder.toString());
                         },

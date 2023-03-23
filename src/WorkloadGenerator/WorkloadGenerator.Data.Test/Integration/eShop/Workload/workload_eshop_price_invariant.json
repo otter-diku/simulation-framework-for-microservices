@@ -26,7 +26,7 @@
     {
       "id": "replenish-stock",
       "transactionReferenceId": "replenish-stock",
-      "count": 100,
+      "count": 10,
       "data": [
         {
           "name":  "product-id",
@@ -37,7 +37,7 @@
     {
       "id": "price-update-1",
       "transactionReferenceId": "update-catalog-item-price",
-      "count": 100,
+      "count": 200,
       "data": [
         {
           "name":  "product-id",
@@ -48,7 +48,7 @@
     {
       "id": "checkout-3-items",
       "transactionReferenceId": "checkout-3-items",
-      "count": 100,
+      "count": 200,
       "data": [
         {
           "name":  "user-id",
