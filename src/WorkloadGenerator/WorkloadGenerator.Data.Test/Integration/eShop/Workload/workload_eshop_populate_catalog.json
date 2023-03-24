@@ -1,0 +1,26 @@
+{
+  "templateId": "workload-eshop-populate_catalog",
+  "maxConcurrentTransactions": 10,
+  "generators": [
+    {
+      "id": "productId",
+      "type": "unsignedInt",
+      "distribution": "uniform",
+      "min": 100,
+      "max": 200
+    }
+  ],
+  "transactions": [
+    {
+      "id": "tx1",
+      "transactionReferenceId": "add-catalog-item",
+      "count": 1000,
+      "data": [
+        {
+          "name":  "product-id",
+          "generatorReferenceId": "productId"
+        }
+      ]
+    }
+  ]
+}

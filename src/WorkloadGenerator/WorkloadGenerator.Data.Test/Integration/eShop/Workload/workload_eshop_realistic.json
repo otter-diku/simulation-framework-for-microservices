@@ -1,0 +1,75 @@
+{
+  "templateId": "workload-eshop-realistic",
+  "maxConcurrentTransactions": 10,
+  "generators": [
+    {
+      "id": "productId",
+      "type": "unsignedInt",
+      "distribution": "uniform",
+      "min": 1,
+      "max": 1000
+    },
+    {
+      "id": "productIdPriceUpdate",
+      "type": "unsignedInt",
+      "distribution": "uniform",
+      "min": 1,
+      "max": 10000
+    },
+    {
+      "id": "sleepSeconds",
+      "type": "unsignedInt",
+      "distribution": "uniform",
+      "min": 1,
+      "max": 5
+    },
+    {
+      "id": "userId",
+      "type": "constant",
+      "constant": "10000000-0000-0000-0000-000000000000"
+    }
+  ],
+  "transactions": [
+    {
+      "id": "tx1",
+      "transactionReferenceId": "add-basket-item",
+      "count": 1000,
+      "data": [
+        {
+          "name":  "product-id",
+          "generatorReferenceId": "productIdPriceUpdate"
+        },
+        {
+          "name":  "user-id",
+          "generatorReferenceId": "userId"
+        }
+      ]
+    },
+    {
+      "id": "tx1-1",
+      "transactionReferenceId": "checkout-basket",
+      "count": 100,
+      "data": [
+        {
+          "name":  "user-id",
+          "generatorReferenceId": "userId"
+        }
+      ]
+    },    
+    {
+      "id": "tx2",
+      "transactionReferenceId": "update-catalog-price-sleep",
+      "count": 1000,
+      "data": [
+        {
+          "name":  "product-id",
+          "generatorReferenceId": "productIdPriceUpdate"
+        },
+        {
+          "name":  "sleep-time",
+          "generatorReferenceId": "sleepSeconds"
+        }
+      ]
+    }
+  ]
+}

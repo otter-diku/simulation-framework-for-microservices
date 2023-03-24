@@ -1,0 +1,35 @@
+{
+  "templateId": "checkout-3-items",
+  "arguments": [
+    {
+      "name": "user-id",
+      "type": "string"
+    },
+    {
+      "name": "product-id-1",
+      "type": "number"
+    },
+    {
+      "name": "product-id-2",
+      "type": "number"
+    },
+    {
+      "name": "product-id-3",
+      "type": "number"
+    }
+  ],
+  "operations": [
+    {
+      "operationReferenceId": "catalog-get-3-items",
+      "id": "op-1"
+    },
+    {
+      "operationReferenceId": "basket-add-3-items",
+      "id": "op-2"
+    },
+    {
+      "operationReferenceId": "basket-checkout",
+      "id": "op-3"
+    }
+  ]
+}

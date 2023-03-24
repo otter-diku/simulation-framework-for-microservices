@@ -1,10 +1,14 @@
 {
-  "templateId": "add-item-and-checkout-basket",
+  "templateId": "delete-item-while-in-basket",
   "arguments": [
     {
       "name": "user-id",
       "type": "string"
-    }
+    },
+    {
+      "name": "product-id",
+      "type": "number"
+    }    
   ],
   "operations": [
     {
@@ -16,8 +20,12 @@
       "id": "op-2"
     },
     {
-      "operationReferenceId": "basket-checkout",
+      "operationReferenceId": "delete-catalog-item",
       "id": "op-3"
+    },    
+    {
+      "operationReferenceId": "basket-checkout",
+      "id": "op-4"
     }    
   ]
 }

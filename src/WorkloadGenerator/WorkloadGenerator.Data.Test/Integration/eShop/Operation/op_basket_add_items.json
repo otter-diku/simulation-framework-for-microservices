@@ -1,0 +1,65 @@
+{
+  "templateId": "basket-add-items",
+  "type": "http",
+  "httpMethod": "post",
+  "arguments": [
+    {
+      "name": "user-id",
+      "type": "string"
+    },
+    {
+      "name": "item-1",
+      "type": "object"
+    },
+    {
+      "name": "item-2",
+      "type": "object"
+    },
+    {
+      "name": "item-3",
+      "type": "object"
+    }
+  ],
+  "headers": [
+    {
+      "key": "user-id",
+      "value": "{{user-id}}"
+    }
+  ],
+  "requestPayload": {
+    "type": "json",
+    "content": {
+      "buyerId": "{{user-id}}",
+      "items": [
+        {
+          "id": "1",
+          "productId": "{{@@item-1.id@@}}",
+          "productName": "{{@@item-1.name@@}}",
+          "unitPrice": "{{@@item-1.price@@}}",
+          "oldUnitPrice": "{{@@item-1.price@@}}",
+          "quantity": "1",
+          "pictureUrl": ""
+        },
+        {
+          "id": "2",
+          "productId": "{{@@item-2.id@@}}",
+          "productName": "{{@@item-2.name@@}}",
+          "unitPrice": "{{@@item-2.price@@}}",
+          "oldUnitPrice": "{{@@item-2.price@@}}",
+          "quantity": "1",
+          "pictureUrl": ""
+        },
+        {
+          "id": "3",
+          "productId": "{{@@item-3.id@@}}",
+          "productName": "{{@@item-3.name@@}}",
+          "unitPrice": "{{@@item-3.price@@}}",
+          "oldUnitPrice": "{{@@item-3.price@@}}",
+          "quantity": "1",
+          "pictureUrl": ""
+        }        
+      ]
+    }
+  },
+  "url": "http://localhost:5103/basket-api/api/v1/Basket"
+}

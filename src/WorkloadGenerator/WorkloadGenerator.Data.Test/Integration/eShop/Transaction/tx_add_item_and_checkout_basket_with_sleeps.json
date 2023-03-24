@@ -20,7 +20,7 @@
       "id": "sleep-1"
     },    
     {
-      "operationReferenceId": "basket-add-item",
+      "operationReferenceId": "basket-add-items",
       "id": "op-2"
     },
     {
