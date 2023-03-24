@@ -1,13 +1,20 @@
 {
   "templateId": "workload-eshop-multi-price-update",
-  "maxConcurrentTransactions": 5,  
   "generators": [
     {
       "id": "productIdPriceUpdate1",
-      "type": "unsignedInt",
-      "distribution": "uniform",
-      "min": 5,
-      "max": 10                    
+      "type": "constant",
+      "constant": 2
+    },
+    {
+      "id": "productIdPriceUpdate2",
+      "type": "constant",
+      "constant": 3
+    },
+    {
+      "id": "productIdPriceUpdate3",
+      "type": "constant",
+      "constant": 4
     },
     {
       "id": "userId",
@@ -19,7 +26,7 @@
     {
       "id": "price-update-1",
       "transactionReferenceId": "update-catalog-item-price",
-      "count": 100,
+      "count": 10,
       "data": [
         {
           "name":  "product-id",
@@ -28,9 +35,31 @@
       ]
     },
     {
+      "id": "price-update-2",
+      "transactionReferenceId": "update-catalog-item-price",
+      "count": 10,
+      "data": [
+        {
+          "name":  "product-id",
+          "generatorReferenceId": "productIdPriceUpdate2"
+        }
+      ]
+    },
+    {
+      "id": "price-update-3",
+      "transactionReferenceId": "update-catalog-item-price",
+      "count": 10,
+      "data": [
+        {
+          "name":  "product-id",
+          "generatorReferenceId": "productIdPriceUpdate3"
+        }
+      ]
+    },
+    {
       "id": "add-basket-item-1",
       "transactionReferenceId": "add-basket-item",
-      "count": 1000,
+      "count": 10,
       "data": [
         {
           "name":  "user-id",
@@ -43,9 +72,39 @@
       ]
     },
     {
+      "id": "add-basket-item-2",
+      "transactionReferenceId": "add-basket-item",
+      "count": 10,
+      "data": [
+        {
+          "name":  "user-id",
+          "generatorReferenceId": "userId"
+        },
+        {
+          "name":  "product-id",
+          "generatorReferenceId": "productIdPriceUpdate2"
+        }
+      ]
+    },
+    {
+      "id": "add-basket-item-3",
+      "transactionReferenceId": "add-basket-item",
+      "count": 10,
+      "data": [
+        {
+          "name":  "user-id",
+          "generatorReferenceId": "userId"
+        },
+        {
+          "name":  "product-id",
+          "generatorReferenceId": "productIdPriceUpdate3"
+        }
+      ]
+    },
+    {
       "id": "checkout-basket-1",
       "transactionReferenceId": "checkout-basket",
-      "count": 50,
+      "count": 10,
       "data": [
         {
           "name":  "user-id",

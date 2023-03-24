@@ -54,18 +54,10 @@ namespace WorkloadGenerator.Server
                         serializerBuilder.AddJsonSerializer(
                             isSupported: type =>
                                 type.Namespace!.StartsWith("WorkloadGenerator."),
-
-                            new JsonSerializerOptions(new JsonSerializerOptions()
+                            SerializerUtils.GetGlobalJsonSerializerOptions(opt =>
                             {
-                                PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-                                PropertyNameCaseInsensitive = true,
-                                Converters =
-                                {
-                                    new JsonStringEnumConverter(JsonNamingPolicy.CamelCase),
-                                    new IOperationUnresolvedJsonConverter()
-                                }
-                            })
-                            );
+                                opt.Converters.Add(new IOperationUnresolvedJsonConverter());
+                            }));
                     });
                 });
 

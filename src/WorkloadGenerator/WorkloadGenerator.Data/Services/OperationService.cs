@@ -6,6 +6,7 @@ using System.Text.Json.Serialization;
 using System.Text.RegularExpressions;
 using System.Web;
 using Microsoft.Extensions.Logging;
+using Utilities;
 using WorkloadGenerator.Data.Models;
 using WorkloadGenerator.Data.Models.Operation;
 using WorkloadGenerator.Data.Models.Operation.Http;
@@ -35,14 +36,7 @@ public class OperationService : IOperationService
         _logger = logger;
     }
 
-    private readonly JsonSerializerOptions _jsonSerializerOptions = new()
-    {
-        PropertyNameCaseInsensitive = true,
-        Converters =
-        {
-            new JsonStringEnumConverter(JsonNamingPolicy.CamelCase)
-        }
-    };
+    private readonly JsonSerializerOptions _jsonSerializerOptions = SerializerUtils.GetGlobalJsonSerializerOptions();
 
     public bool TryParseInput(string json, out IOperationUnresolved unresolvedInput)
     {
@@ -191,7 +185,7 @@ public class OperationService : IOperationService
             if (input.RequestPayload is not null)
             {
                 httpRequest.Content = new StringContent(
-                    JsonSerializer.Serialize(jsonPayload.Content, new JsonSerializerOptions() { WriteIndented = true }),
+                    JsonSerializer.Serialize(jsonPayload.Content, _jsonSerializerOptions),
                     Encoding.UTF8,
                     "application/json");
             }

@@ -1,6 +1,6 @@
 {
   "templateId": "workload-eshop-basic",
-  "maxConcurrentTransactions": 5,
+  "maxConcurrentTransactions": 1,
   "generators": [
     {
       "id": "productId",
