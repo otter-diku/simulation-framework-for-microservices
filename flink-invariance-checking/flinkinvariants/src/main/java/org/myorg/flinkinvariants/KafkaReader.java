@@ -2,23 +2,35 @@ package org.myorg.flinkinvariants;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.apache.flink.api.common.eventtime.WatermarkStrategy;
 import org.apache.flink.api.common.typeinfo.TypeInformation;
 import org.apache.flink.connector.kafka.source.KafkaSource;
 import org.apache.flink.connector.kafka.source.enumerator.initializer.OffsetsInitializer;
 import org.apache.flink.connector.kafka.source.reader.deserializer.KafkaRecordDeserializationSchema;
+import org.apache.flink.streaming.api.datastream.DataStreamSource;
+import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.streaming.connectors.kafka.KafkaDeserializationSchema;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.myorg.flinkinvariants.events.EshopRecord;
 
 import java.nio.charset.StandardCharsets;
 
-public class Connectors {
-    public static KafkaSource<EshopRecord> getEshopRecordKafkaSource(String broker, String topic, String groupId) {
+public class KafkaReader {
+    private static final String broker = "localhost:29092";
+    private static final String topic = "eshop_event_bus";
+    private static final String groupId = "flink-invariant-checker";
 
-        KafkaSource<EshopRecord> source = KafkaSource.<EshopRecord>builder()
-                .setBootstrapServers(broker)
-                .setTopics(topic)
-                .setGroupId(groupId)
+    public static DataStreamSource<EshopRecord> GetDataStreamSource(StreamExecutionEnvironment env) {
+        KafkaSource<EshopRecord> source = getEshopRecordKafkaSource();
+        return env.fromSource(source, WatermarkStrategy.noWatermarks(), "Kafka Source");
+    }
+
+    private static KafkaSource<EshopRecord> getEshopRecordKafkaSource() {
+
+        return KafkaSource.<EshopRecord>builder()
+                .setBootstrapServers(KafkaReader.broker)
+                .setTopics(KafkaReader.topic)
+                .setGroupId(KafkaReader.groupId)
                 .setStartingOffsets(OffsetsInitializer.earliest())
                 .setDeserializer(KafkaRecordDeserializationSchema.of(new KafkaDeserializationSchema<EshopRecord>() {
                     @Override
@@ -41,6 +53,5 @@ public class Connectors {
                     }
                 }))
                 .build();
-        return source;
     }
 }

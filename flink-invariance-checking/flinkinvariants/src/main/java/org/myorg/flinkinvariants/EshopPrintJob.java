@@ -18,40 +18,20 @@
 
 package org.myorg.flinkinvariants;
 
-import org.apache.flink.api.common.eventtime.WatermarkStrategy;
-import org.apache.flink.connector.kafka.source.KafkaSource;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
-import org.myorg.flinkinvariants.events.EshopRecord;
 
-import static org.myorg.flinkinvariants.Connectors.getEshopRecordKafkaSource;
 
 /**
  * Basic KafkaSource connector example.
  * Reads events from eshop_event_bus and prints them.
  */
 public class EshopPrintJob {
-
-
 	public static void main(String[] args) throws Exception {
-		String broker = "localhost:29092";
-		String topic = "eshop_event_bus";
-		String groupId = "flink-invariant-checker";
-
-		// Sets up the execution environment, which is the main entry point
-		// to building Flink applications.
 		final StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
-
-		KafkaSource<EshopRecord> source = getEshopRecordKafkaSource(broker, topic, groupId);
-
-		env.fromSource(source, WatermarkStrategy.noWatermarks(), "Kafka Source")
-				//.filter(r -> r.EventName.equals("ProductPriceChangedIntegrationEvent")
-				//		|| r.EventName.equals("UserCheckoutAcceptedIntegrationEvent"))
-				.print();
-
-		// Execute program, beginning computation.
+		var dataStreamSource = KafkaReader.GetDataStreamSource(env);
+		dataStreamSource.print();
 		env.execute("Flink Eshop Invariant Checker");
 	}
-
 }
 
 
