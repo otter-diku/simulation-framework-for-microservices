@@ -17,13 +17,7 @@ public class ProductOversoldInvariantChecker {
 
         var streamSource = FileReader.GetDataStreamSource(env, "/src/oversold_2.json");
 
-        var relevantEvents = streamSource.filter((FilterFunction<EshopRecord>) record ->
-                record.EventName.equals("ProductCreatedIntegrationEvent")
-             || record.EventName.equals("ProductStockChangedIntegrationEvent")
-             || record.EventName.equals("ProductDeletedIntegrationEvent")
-             || record.EventName.equals("ProductBoughtIntegrationEvent")).setParallelism(1);
-
-        var violations = relevantEvents
+        var violations = streamSource
                 .keyBy(r -> r.EventBody.get("ProductId"))
                 .flatMap(new OversoldMapper());
         violations.print();
