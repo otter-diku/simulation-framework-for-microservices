@@ -40,6 +40,12 @@ public class FileReader {
                     events.add(new EshopRecord(ProductBoughtIntegrationEvent.EventName, elem));
                 } else if (elem.has("ProductId")) {
                     events.add(new EshopRecord(ProductDeletedIntegrationEvent.EventName, elem));
+                } else if (elem.get("Type").asText().equals("OrderStatusChangedToSubmittedIntegrationEvent")) {
+                    events.add(new EshopRecord(OrderStatusChangedToSubmittedIntegrationEvent.EventName, elem));
+                } else if (elem.get("Type").asText().equals("OrderPaymentFailedIntegrationEvent")) {
+                    events.add(new EshopRecord(OrderPaymentFailedIntegrationEvent.EventName, elem));
+                } else if (elem.get("Type").asText().equals("OrderPaymentSucceededIntegrationEvent")) {
+                    events.add(new EshopRecord(OrderPaymentSucceededIntegrationEvent.EventName, elem));
                 } else {
                     events.add(new EshopRecord(UserCheckoutAcceptedIntegrationEvent.EventName, elem));
                 }
