@@ -1,0 +1,30 @@
+{
+	"name": "LackingPaymentEventInvariant",
+	"content": 
+	{
+		"type": "OrderStatusChangedToSubmittedIntegrationEvent",
+		"returnValues": [
+			{
+				"type": "integer",
+				"name": "orderId",
+				"value": "$.OrderId"		
+			}
+		],
+		"followedBy": {
+			"type": "OrderPaymentSucceededIntegrationEvent|OrderPaymentFailedIntegrationEvent",
+			"within": {
+				"unit": "seconds",
+				"duration": "300"
+			}
+			"condition": {
+				"operator": "equals",
+				"lhs": {
+					"value": "$.OrderId"
+				},
+				"rhs": {
+					"value": "{{orderId}}"
+				}
+			}
+		}
+	}
+}
