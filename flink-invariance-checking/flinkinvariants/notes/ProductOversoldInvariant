@@ -1,0 +1,109 @@
+{
+	"name": "ProductOversoldInvariant",
+	"type": "stream-processing"
+	"state": {
+		"name": "productCountById"
+		"type": "map",
+		"initialState": [
+			{ 1, 581 },
+			{ 2, 451 }
+		]
+	},
+	"content": [
+		{
+			"when": {
+				"type": "ProductCreatedIntegrationEvent"
+			},
+			"then": {
+				"action": "update-state",
+				"stateObject": "productCountById",
+				"key": "$.ProductId",
+				"newState": {
+					"type": "integer",
+					"value": "$.AvailableStock"
+				}
+			}
+		},
+		{
+			"when": {
+				"type": "ProductStockChangedIntegrationEvent"
+			},
+			"then": {
+				"action": "update-state",
+				"stateObject": "productCountById",
+				"key": "$.ProductId",
+				"newState": {
+					"type": "integer",
+					"value": "$.NewStock"
+				}
+			}
+		},
+		{
+			"when": {
+				"type": "ProductDeletedIntegrationEvent"
+			},
+			"then": {
+				"action": "update-state",
+				"stateObject": "productCountById",
+				"key": "$.ProductId",
+				"newState": {
+					"type": "integer",
+					"value": 0
+				}
+			}
+		},
+		{
+			"when": {
+				"type": "ProductBoughtIntegrationEvent",
+				"condition": {
+					"operator": "less or equal than",
+					"lhs": "$.Units",
+					"rhs": "productCountById[$.ProductId]"
+				}
+			},
+			"then": {
+				"action": "update-state",
+				"stateObject": "productCountById",
+				"key": "$.ProductId",
+				"newState": {
+					"type": "integer",
+					"value": {
+						"operator": "minus",
+						"lhs": "productCountById[$.ProductId]",
+						"rhs": "$.Units"
+					}
+				}
+			}
+		},
+		{
+			"when": {
+				"type": "ProductBoughtIntegrationEvent",
+				"condition": {
+					"operator": "greater or equal than",
+					"lhs": "$.Units",
+					"rhs": "productCountById[$.ProductId]"
+				}
+			},
+			"then": {
+				"action": "notify",
+				"messageTemplate": "Tried to buy product with ID {0} but there is only {1} items left",
+				"args": [ "$.ProductId", "productCountById[$.ProductId]" ]
+			}
+		},
+		{
+			"when": {
+				"type": "ProductBoughtIntegrationEvent",
+				"condition": {
+					"operator": "less than",
+					"lhs": "$.Units",
+					"rhs": "0"
+				}
+			},
+			"then": {
+				"action": "notify",
+				"messageTemplate": "Tried to buy negative number ({0}) of products with ID {1}",
+				"args": [ "$.Units", "$.ProductId" ]
+			}
+		}
+	]
+}
