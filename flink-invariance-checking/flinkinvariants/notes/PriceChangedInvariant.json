@@ -1,0 +1,59 @@
+{
+	"name": "ProductPriceChangedInvariant",
+	"content": 
+	{
+		"type": "ProductPriceChangedIntegrationEvent",
+		"returnValues": [
+			{
+				"type": "integer",
+				"name": "productId",
+				"value": "$.ProductId"		
+			},
+			{
+				"type": "double",
+				"name": "newPrice",
+				"value": "$.NewPrice"		
+			}
+		],
+		"notFollowedBy": {
+			"type": "ProductPriceChangedIntegrationEvent",
+			"condition": {
+				"lhs": {
+					"value": "$.ProductId"
+				},
+				"operator": "equals",
+				"rhs": {
+					"value": "{{productId}}"
+				}
+			}
+		},
+		"followedByAny": {
+			"type": "UserCheckoutAcceptedIntegrationEvent",
+			"condition": {
+				"operator": "any",
+				"path": "$.Basket.Items",
+				"predicate": {
+					"operator": "and",
+					"lhs": {
+						"operator": "equals",
+						"lhs": {
+							"value": "$.ProductId"
+						},
+						"rhs": {
+							"value": "{{productId}}"
+						}
+					},
+					"rhs": {
+						"operator": "does not equal",
+						"lhs": {
+							"value": "$.UnitPrice"
+						},
+						"rhs": {
+							"value": "{{newPrice}}"
+						}
+					}
+				}
+			}
+		}
+	}
+}
