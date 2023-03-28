@@ -25,18 +25,17 @@ public class LackingPaymentEventInvariantChecker {
     public static void main(String[] args) throws Exception {
         final StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
         var dataStreamSource = KafkaReader.GetDataStreamSource(env);
-        var streamSource = dataStreamSource.filter((FilterFunction<EShopIntegrationEvent>) record -> {
-            if (record.EventName.equals(EventType.OrderPaymentSucceededIntegrationEvent.name()) || record.EventName.equals(EventType.OrderPaymentFailedIntegrationEvent.name())) {
-                return false;
-            }
-            return true;
-        });
+
+        var streamSource = dataStreamSource.filter((FilterFunction<EShopIntegrationEvent>) record
+                -> !record.EventName.equals(EventType.OrderPaymentSucceededIntegrationEvent.name())
+                && !record.EventName.equals(EventType.OrderPaymentFailedIntegrationEvent.name()));
 
         var patternStream = CEP.pattern(streamSource, InvariantPattern);
 
         var matches = patternStream
                 .inProcessingTime()
                 .process(new MyPatternProcessFunction());
+
         matches.print().setParallelism(1);
 
         var partialMatches = matches.getSideOutput(outputTag);
