@@ -1,48 +1,38 @@
 package org.myorg.flinkinvariants.invariantcheckers;
 
-import org.apache.flink.api.common.eventtime.TimestampAssigner;
 import org.apache.flink.api.common.functions.FilterFunction;
 import org.apache.flink.cep.CEP;
 import org.apache.flink.cep.functions.PatternProcessFunction;
 import org.apache.flink.cep.functions.TimedOutPartialMatchHandler;
-import org.apache.flink.streaming.api.TimeCharacteristic;
+import org.apache.flink.cep.pattern.Pattern;
+import org.apache.flink.cep.pattern.conditions.IterativeCondition;
+import org.apache.flink.cep.pattern.conditions.SimpleCondition;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
+import org.apache.flink.streaming.api.windowing.time.Time;
 import org.apache.flink.util.Collector;
 import org.apache.flink.util.OutputTag;
-import org.myorg.flinkinvariants.FileReader;
-import org.myorg.flinkinvariants.FromElementsReader;
-import org.myorg.flinkinvariants.KafkaReader;
-import org.myorg.flinkinvariants.events.EshopRecord;
-import org.myorg.flinkinvariants.events.OrderPaymentFailedIntegrationEvent;
-import org.myorg.flinkinvariants.events.OrderPaymentSucceededIntegrationEvent;
-import org.myorg.flinkinvariants.patterns.LackingPaymentInvariant;
+import org.myorg.flinkinvariants.datastreamsourceproviders.KafkaReader;
+import org.myorg.flinkinvariants.events.EShopIntegrationEvent;
+import org.myorg.flinkinvariants.events.EventType;
 
 import java.util.List;
 import java.util.Map;
-import java.util.Scanner;
 
 public class LackingPaymentEventInvariantChecker {
-    final static OutputTag<String> outputTag = new OutputTag<String>("lacking-payments"){};
+    final static OutputTag<String> outputTag = new OutputTag<>("lacking-payments") {
+    };
 
     public static void main(String[] args) throws Exception {
         final StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
-
-        // var streamSource = FileReader.GetDataStreamSource(env, "/src/lacking_payment_1.json");
         var dataStreamSource = KafkaReader.GetDataStreamSource(env);
-        var streamSource = dataStreamSource.filter(new FilterFunction<EshopRecord>() {
-            @Override
-            public boolean filter(EshopRecord record) throws Exception {
-                if (record.EventName.equals(OrderPaymentSucceededIntegrationEvent.EventName) || record.EventName.equals(OrderPaymentFailedIntegrationEvent.EventName)) {
-                    return false;
-                }
-                return true;
+        var streamSource = dataStreamSource.filter((FilterFunction<EShopIntegrationEvent>) record -> {
+            if (record.EventName.equals(EventType.OrderPaymentSucceededIntegrationEvent.name()) || record.EventName.equals(EventType.OrderPaymentFailedIntegrationEvent.name())) {
+                return false;
             }
+            return true;
         });
 
-        // var streamSource = FromElementsReader.GetDataStreamSource(env);
-
-        // streamSource.print().setParallelism(1);
-        var patternStream = CEP.pattern(streamSource, LackingPaymentInvariant.InvariantPattern);
+        var patternStream = CEP.pattern(streamSource, InvariantPattern);
 
         var matches = patternStream
                 .inProcessingTime()
@@ -53,32 +43,48 @@ public class LackingPaymentEventInvariantChecker {
         partialMatches.print().setParallelism(1);
 
         System.out.println("Started CEP query for Price Changed Invariant..");
-        // System.out.println(env.getExecutionPlan());
         env.execute("Flink Eshop Product Price Changed Invariant");
     }
 
-
-    public static class MyEventTimestampAssigner implements TimestampAssigner<EshopRecord> {
-
-        @Override
-        public long extractTimestamp(EshopRecord record, long l) {
-            return record.getTimestamp();
-        }
-    }
-
-    public static class MyPatternProcessFunction extends PatternProcessFunction<EshopRecord, String> implements TimedOutPartialMatchHandler<EshopRecord> {
+    public static class MyPatternProcessFunction extends PatternProcessFunction<EShopIntegrationEvent, String> implements TimedOutPartialMatchHandler<EShopIntegrationEvent> {
 
         @Override
-        public void processMatch(Map map, Context context, Collector collector) throws Exception {
+        public void processMatch(Map map, Context context, Collector collector) {
             collector.collect("Correct Behaviour: " + map.toString());
         }
 
         @Override
-        public void processTimedOutMatch(Map<String, List<EshopRecord>> map, Context context) throws Exception {
+        public void processTimedOutMatch(Map<String, List<EShopIntegrationEvent>> map, Context context) {
             // timed out match means we are missing a payment event
             var orderSubmittedEvent = map.get("orderSubmitted").get(0);
             context.output(outputTag, "Violation missing payment event for: " + orderSubmittedEvent.toString());
         }
     }
 
+    public static Pattern<EShopIntegrationEvent, ?> InvariantPattern = Pattern.<EShopIntegrationEvent>begin("orderSubmitted")
+            .where(new SimpleCondition<>() {
+                @Override
+                public boolean filter(EShopIntegrationEvent eshopIntegrationEvent) {
+                    return eshopIntegrationEvent.EventName.equals(EventType.OrderStatusChangedToSubmittedIntegrationEvent.name());
+                }
+            })
+            .followedBy("paymentOutcome")
+            .where(new IterativeCondition<>() {
+                @Override
+                public boolean filter(EShopIntegrationEvent paymentEvent, Context<EShopIntegrationEvent> context) throws Exception {
+                    if (!(paymentEvent.EventName.equals(EventType.OrderPaymentSucceededIntegrationEvent.name())
+                            || paymentEvent.EventName.equals(EventType.OrderPaymentFailedIntegrationEvent.name()))) {
+                        return false;
+                    }
+
+                    for (var orderSubmittedEvent : context.getEventsForPattern("orderSubmitted")) {
+
+                        var affectedProductId = orderSubmittedEvent.EventBody.get("OrderId").asInt();
+                        return affectedProductId == paymentEvent.EventBody.get("OrderId").asInt();
+                    }
+
+                    return false;
+                }
+            })
+            .within(Time.seconds(5));
 }

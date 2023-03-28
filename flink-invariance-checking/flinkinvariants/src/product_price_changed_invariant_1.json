@@ -1,0 +1,77 @@
+[
+  {
+    "Type": "ProductPriceChangedIntegrationEvent",
+    "Content": {
+      "ProductId": 2,
+      "NewPrice": 52,
+      "OldPrice": 20.0,
+      "Id": "0e693c62-c349-447f-87df-6be170c099fa",
+      "CreationDate": "2023-03-17T11:19:18.5842496Z"
+    }
+  },
+  {
+    "Type": "ProductPriceChangedIntegrationEvent",
+    "Content": {
+      "ProductId": 1,
+      "NewPrice": 30,
+      "OldPrice": 40.0,
+      "Id": "0e693c62-c349-447f-87df-6be170c099fa",
+      "CreationDate": "2023-03-17T11:19:18.5842496Z"
+    }
+  },
+  {
+    "Type": "ProductPriceChangedIntegrationEvent",
+    "Content": {
+      "ProductId": 2,
+      "NewPrice": 50,
+      "OldPrice": 60.0,
+      "Id": "0e693c62-c349-447f-87df-6be170c099fa",
+      "CreationDate": "2023-03-17T11:19:18.5842496Z"
+    }
+  },
+  {
+    "Type": "UserCheckoutAcceptedIntegrationEvent",
+    "Content": {
+      "UserId": "10000000-0000-0000-0000-000000000000",
+      "UserName": "Dummy User Name",
+      "OrderNumber": 0,
+      "City": "string",
+      "Street": "string",
+      "State": "string",
+      "Country": "string",
+      "ZipCode": "string",
+      "CardNumber": "123457182756574",
+      "CardHolderName": "string",
+      "CardExpiration": "2028-03-09T08:33:48.16Z",
+      "CardSecurityNumber": "424",
+      "CardTypeId": 1,
+      "Buyer": "10000000-0000-0000-0000-000000000000",
+      "RequestId": "1b0a8809-6f78-41c6-a62c-4289b83b423d",
+      "Basket": {
+        "BuyerId": "10000000-0000-0000-0000-000000000000",
+        "Items": [
+          {
+            "Id": "1",
+            "ProductId": 1,
+            "ProductName": ".NET Black & White Mug",
+            "UnitPrice": 38.0,
+            "OldUnitPrice": 38.0,
+            "Quantity": 1,
+            "PictureUrl": ""
+          },
+          {
+            "Id": "2",
+            "ProductId": 2,
+            "ProductName": ".NET Blue Hoodie",
+            "UnitPrice": 10.0,
+            "OldUnitPrice": 10.0,
+            "Quantity": 1,
+            "PictureUrl": ""
+          }
+        ]
+      },
+      "Id": "421b7801-1014-4747-80d3-8097343c6e0e",
+      "CreationDate": "2023-03-17T11:19:20.8500702Z"
+    }
+  }
+]

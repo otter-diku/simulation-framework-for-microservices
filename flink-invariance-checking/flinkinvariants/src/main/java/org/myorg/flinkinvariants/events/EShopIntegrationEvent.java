@@ -1,17 +1,15 @@
 package org.myorg.flinkinvariants.events;
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.util.Objects;
 
-public class EshopRecord {
+public class EShopIntegrationEvent {
 
-    public String EventName;
+    public final String EventName;
 
-    public JsonNode EventBody;
+    public final JsonNode EventBody;
 
-
-    public EshopRecord(String EventName, JsonNode EventBody) {
+    public EShopIntegrationEvent(String EventName, JsonNode EventBody) {
         this.EventName = EventName;
         this.EventBody = EventBody;
     }
@@ -21,7 +19,6 @@ public class EshopRecord {
         return "EventName: " + EventName + ", " + "EventBody: " + EventBody;
     }
 
-
     /*
      * The events in the DataStream to which you want to apply pattern matching must implement proper equals() and hashCode()
      * methods because FlinkCEP uses them for comparing and matching events.
@@ -30,10 +27,10 @@ public class EshopRecord {
     public boolean equals(Object o) {
 
         if (o == this) return true;
-        if (!(o instanceof EshopRecord)) {
+        if (!(o instanceof EShopIntegrationEvent)) {
             return false;
         }
-        EshopRecord r = (EshopRecord) o;
+        EShopIntegrationEvent r = (EShopIntegrationEvent) o;
         return  Objects.equals(EventName, r.EventName) &&
                 Objects.equals(EventBody, r.EventBody);
     }
