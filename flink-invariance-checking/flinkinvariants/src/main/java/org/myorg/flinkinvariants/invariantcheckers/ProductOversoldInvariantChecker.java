@@ -22,7 +22,7 @@ public class ProductOversoldInvariantChecker {
         var violations = streamSource
                 .keyBy(r -> r.EventBody.get("ProductId"))
                 .flatMap(new OversoldMapper());
-        violations.print();
+        violations.print().setParallelism(1);
 
         System.out.println("Started Flink query for Oversold Invariant..");
         env.execute("Flink Eshop Product Oversold Invariant");

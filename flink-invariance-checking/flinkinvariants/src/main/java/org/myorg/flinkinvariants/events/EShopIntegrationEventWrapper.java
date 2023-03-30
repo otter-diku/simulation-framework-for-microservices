@@ -4,12 +4,16 @@ import com.fasterxml.jackson.databind.JsonNode;
 
 public class EShopIntegrationEventWrapper {
 
-    public final String Type;
+    public String Type;
 
-    public final JsonNode Content;
+    public JsonNode Content;
 
     public EShopIntegrationEventWrapper(String type, JsonNode content) {
         this.Type = type;
         this.Content = content;
+    }
+
+    // Dummy constructor for json serialization
+    public EShopIntegrationEventWrapper() {
     }
 }
