@@ -1,5 +1,6 @@
 package org.myorg.flinkinvariants.invariantcheckers;
 
+import org.apache.flink.api.common.eventtime.WatermarkStrategy;
 import org.apache.flink.api.common.functions.FilterFunction;
 import org.apache.flink.cep.CEP;
 import org.apache.flink.cep.functions.PatternProcessFunction;
@@ -9,12 +10,15 @@ import org.apache.flink.cep.pattern.conditions.IterativeCondition;
 import org.apache.flink.cep.pattern.conditions.SimpleCondition;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.streaming.api.windowing.time.Time;
+import org.apache.flink.table.api.bridge.java.StreamTableEnvironment;
 import org.apache.flink.util.Collector;
 import org.apache.flink.util.OutputTag;
+import org.myorg.flinkinvariants.datastreamsourceproviders.FileReader;
 import org.myorg.flinkinvariants.datastreamsourceproviders.KafkaReader;
 import org.myorg.flinkinvariants.events.EShopIntegrationEvent;
 import org.myorg.flinkinvariants.events.EventType;
 
+import java.time.Duration;
 import java.util.List;
 import java.util.Map;
 
@@ -24,16 +28,26 @@ public class LackingPaymentEventInvariantChecker {
 
     public static void main(String[] args) throws Exception {
         final StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
-        var dataStreamSource = KafkaReader.GetDataStreamSource(env);
 
-        var streamSource = dataStreamSource.filter((FilterFunction<EShopIntegrationEvent>) record
-                -> !record.EventName.equals(EventType.OrderPaymentSucceededIntegrationEvent.name())
-                && !record.EventName.equals(EventType.OrderPaymentFailedIntegrationEvent.name()));
+
+        // var dataStreamSource = KafkaReader.GetDataStreamSourceEventTime(env, Duration.ofSeconds(1));
+        // TODO: problems that streams from files are bounded
+        var streamSource = FileReader
+                .GetDataStreamSource(env, "/src/lacking_payment_1.json")
+                .assignTimestampsAndWatermarks(WatermarkStrategy.<EShopIntegrationEvent>
+                                forBoundedOutOfOrderness(Duration.ofSeconds(20))
+                        .withTimestampAssigner((event, timestamp) -> event.getTimestamp()));
+
+//        var streamSource = dataStreamSource.filter((FilterFunction<EShopIntegrationEvent>) record
+//                -> !record.EventName.equals(EventType.OrderPaymentSucceededIntegrationEvent.name())
+//                && !record.EventName.equals(EventType.OrderPaymentFailedIntegrationEvent.name()))
+//                .setParallelism(1);
+
+        // streamSource.print().setParallelism(1);
 
         var patternStream = CEP.pattern(streamSource, InvariantPattern);
-
         var matches = patternStream
-                .inProcessingTime()
+                .inEventTime()
                 .process(new MyPatternProcessFunction());
 
         matches.print().setParallelism(1);

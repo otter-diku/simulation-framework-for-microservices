@@ -1,17 +1,24 @@
 package org.myorg.flinkinvariants.invariantcheckers;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import org.apache.flink.api.common.eventtime.WatermarkStrategy;
+import org.apache.flink.api.java.tuple.Tuple2;
 import org.apache.flink.cep.CEP;
 import org.apache.flink.cep.functions.PatternProcessFunction;
 import org.apache.flink.cep.pattern.Pattern;
 import org.apache.flink.cep.pattern.conditions.IterativeCondition;
 import org.apache.flink.cep.pattern.conditions.SimpleCondition;
+import org.apache.flink.streaming.api.datastream.DataStream;
+import org.apache.flink.streaming.api.datastream.DataStreamSource;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
+import org.apache.flink.streaming.api.functions.sink.PrintSinkFunction;
+import org.apache.flink.streaming.api.functions.sink.SinkFunction;
 import org.apache.flink.util.Collector;
 import org.myorg.flinkinvariants.datastreamsourceproviders.FileReader;
 import org.myorg.flinkinvariants.events.EShopIntegrationEvent;
 import org.myorg.flinkinvariants.events.EventType;
 
+import java.time.Duration;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -19,23 +26,35 @@ import java.util.Map;
 
 public class ProductPriceChangedInvariantChecker {
 
+    private static final int MAX_LATENESS_OF_EVENT = 20;
+
     public static void main(String[] args) throws Exception {
         final StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
-        var streamSource = FileReader.GetDataStreamSource(env, "/src/product_price_changed_invariant_2.json");
+        var streamSource = FileReader
+                .GetDataStreamSource(env, "/src/product_price_changed_invariant_3.json")
+                .assignTimestampsAndWatermarks(WatermarkStrategy.<EShopIntegrationEvent>
+                                        forBoundedOutOfOrderness(Duration.ofSeconds(MAX_LATENESS_OF_EVENT))
+                        .withTimestampAssigner((event, timestamp) -> event.getTimestamp()));
 
-        var patternStream = CEP.pattern(streamSource, InvariantPattern);
+
+        CheckProductPriceChangedInvariant(env, streamSource, new PrintSinkFunction<>());
+    }
+
+    public static void CheckProductPriceChangedInvariant
+            (StreamExecutionEnvironment env,
+             DataStream<EShopIntegrationEvent> input,
+             SinkFunction<String> sinkFunction) throws  Exception {
+
+        var patternStream = CEP.pattern(input, InvariantPattern);
         var matches = patternStream
-                .inProcessingTime()
+                .inEventTime()
                 .process(new PatternProcessFunction<EShopIntegrationEvent, String>() {
                     @Override
                     public void processMatch(Map<String, List<EShopIntegrationEvent>> map, Context context, Collector<String> collector) {
                         collector.collect(map.toString());
                     }
-                });
+                }).addSink(sinkFunction);
 
-        matches.print();
-
-        System.out.println("Started CEP query for Price Changed Invariant..");
         env.execute("Flink Eshop Product Price Changed Invariant");
     }
 

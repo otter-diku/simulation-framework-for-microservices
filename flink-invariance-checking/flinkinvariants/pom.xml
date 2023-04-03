@@ -60,6 +60,7 @@ under the License.
 			<version>${flink.version}</version>
 			<scope>provided</scope>
 		</dependency>
+
 		<dependency>
 			<groupId>org.apache.flink</groupId>
 			<artifactId>flink-clients</artifactId>
@@ -67,13 +68,44 @@ under the License.
 			<scope>provided</scope>
 		</dependency>
 
+
+		<dependency>
+			<groupId>org.apache.flink</groupId>
+			<artifactId>flink-table-api-java</artifactId>
+			<version>${flink.version}</version>
+			<scope>provided</scope>
+		</dependency>
+
+		<dependency>
+			<groupId>org.apache.flink</groupId>
+			<artifactId>flink-table-api-java-bridge</artifactId>
+			<version>${flink.version}</version>
+			<scope>provided</scope>
+		</dependency>
+
+
+		<!-- Add connector dependencies here. They must be in the default scope (compile). -->
 		<dependency>
 			<groupId>org.apache.flink</groupId>
 			<artifactId>flink-cep</artifactId>
 			<version>${flink.version}</version>
 		</dependency>
 
-		<!-- Add connector dependencies here. They must be in the default scope (compile). -->
+
+
+		<dependency>
+			<groupId>org.apache.flink</groupId>
+			<artifactId>flink-table-runtime</artifactId>
+			<version>${flink.version}</version>
+		</dependency>
+
+		<dependency>
+			<groupId>org.apache.flink</groupId>
+			<artifactId>flink-table-planner-loader</artifactId>
+			<version>${flink.version}</version>
+		</dependency>
+
+
 		<dependency>
 			<groupId>com.fasterxml.jackson.dataformat</groupId>
 			<artifactId>jackson-dataformat-avro</artifactId>
@@ -85,6 +117,7 @@ under the License.
 			<artifactId>flink-connector-kafka</artifactId>
 			<version>${flink.version}</version>
 		</dependency>
+
 
 		<!-- Add logging framework, to produce console output when running in the IDE. -->
 		<!-- These dependencies are excluded from the application JAR by default. -->
@@ -110,6 +143,12 @@ under the License.
 			<groupId>org.junit.jupiter</groupId>
 			<artifactId>junit-jupiter</artifactId>
 			<version>RELEASE</version>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.flink</groupId>
+			<artifactId>flink-test-utils</artifactId>
+			<version>${flink.version}</version>
 			<scope>test</scope>
 		</dependency>
 	</dependencies>

@@ -1,6 +1,7 @@
 package org.myorg.flinkinvariants.events;
 import com.fasterxml.jackson.databind.JsonNode;
 
+import java.time.Instant;
 import java.util.Objects;
 
 public class EShopIntegrationEvent {
@@ -17,6 +18,12 @@ public class EShopIntegrationEvent {
     @Override
     public String toString() {
         return "EventName: " + EventName + ", " + "EventBody: " + EventBody;
+    }
+
+    public Long getTimestamp() {
+        var dateString = EventBody.get("CreationDate").asText();
+        Instant instant = Instant.parse(dateString);
+        return instant.toEpochMilli();
     }
 
     /*

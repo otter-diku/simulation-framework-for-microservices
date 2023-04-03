@@ -14,6 +14,7 @@ import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.myorg.flinkinvariants.events.EShopIntegrationEvent;
 
 import java.nio.charset.StandardCharsets;
+import java.time.Duration;
 
 public class KafkaReader {
     private static final String broker = "localhost:29092";
@@ -23,6 +24,13 @@ public class KafkaReader {
     public static DataStreamSource<EShopIntegrationEvent> GetDataStreamSource(StreamExecutionEnvironment env) {
         KafkaSource<EShopIntegrationEvent> source = getEshopRecordKafkaSource();
         return env.fromSource(source, WatermarkStrategy.noWatermarks(), "Kafka Source");
+    }
+
+    public static DataStreamSource<EShopIntegrationEvent> GetDataStreamSourceEventTime(StreamExecutionEnvironment env, Duration boundForOutOfOrderness) {
+        KafkaSource<EShopIntegrationEvent> source = getEshopRecordKafkaSource();
+        return env.fromSource(source,
+                WatermarkStrategy.<EShopIntegrationEvent>forBoundedOutOfOrderness(boundForOutOfOrderness)
+                        .withTimestampAssigner((event, timestamp) -> event.getTimestamp()), "Kafka Source");
     }
 
     private static KafkaSource<EShopIntegrationEvent> getEshopRecordKafkaSource() {
