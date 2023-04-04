@@ -60,7 +60,7 @@
       "ProductId": 1,
       "NewPrice": 30,
       "OldPrice": 40.0,
-      "Id": "0e693c62-c349-447f-87df-6be170c099fa",
+      "Id": "1e693c62-c349-447f-87df-6be170c099fa",
       "CreationDate": "2023-03-17T11:20:20.5842496Z"
     }
   },
@@ -70,7 +70,7 @@
       "ProductId": 2,
       "NewPrice": 50,
       "OldPrice": 60.0,
-      "Id": "0e693c62-c349-447f-87df-6be170c099fa",
+      "Id": "2e693c62-c349-447f-87df-6be170c099fa",
       "CreationDate": "2023-03-17T11:20:21.5842496Z"
     }
   }

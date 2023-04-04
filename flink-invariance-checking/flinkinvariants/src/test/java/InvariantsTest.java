@@ -17,6 +17,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.myorg.flinkinvariants.invariantcheckers.ProductPriceChangedInvariantChecker.CheckProductPriceChangedInvariant;
 
@@ -40,11 +41,26 @@ public class InvariantsTest {
                                 forBoundedOutOfOrderness(Duration.ofSeconds(20))
                         .withTimestampAssigner((event, timestamp) -> event.getTimestamp()));
 
+        // values are collected in a static variable
+        ViolationSink.values.clear();
 
         CheckProductPriceChangedInvariant(env, streamSource, new ViolationSink());
 
-        // assert on violations (string) we expect
-        // ViolationSink.values.stream()
+        var violations = ViolationSink.values;
+        assertEquals(2, violations.size());
+        var productPriceChangedEventId1 = "1e693c62-c349-447f-87df-6be170c099fa";
+        var productPriceChangedEventId2 = "2e693c62-c349-447f-87df-6be170c099fa";
+        var userCheckoutEventId = "421b7801-1014-4747-80d3-8097343c6e0e";
+
+        assertTrue(violations.stream().anyMatch(s ->
+                s.contains(productPriceChangedEventId1)
+                        && s.contains(userCheckoutEventId)
+        ));
+        assertTrue(violations.stream().anyMatch(s ->
+                s.contains(productPriceChangedEventId2)
+                        && s.contains(userCheckoutEventId)
+        ));
+
     }
     @Test
     public void testProductPriceChangedInvariant2() throws Exception {
@@ -55,11 +71,31 @@ public class InvariantsTest {
                                 forBoundedOutOfOrderness(Duration.ofSeconds(20))
                         .withTimestampAssigner((event, timestamp) -> event.getTimestamp()));
 
+        // values are collected in a static variable
+        ViolationSink.values.clear();
 
         CheckProductPriceChangedInvariant(env, streamSource, new ViolationSink());
 
-        // assert on violations (string) we expect
-        // ViolationSink.values.stream()
+        var violations = ViolationSink.values;
+        assertEquals(3, violations.size());
+
+        var productPriceChangedEventId1 = "0e693c62-c349-447f-87df-6be170c099fa";
+        var userCheckoutEventId1 = "021b7801-1014-4747-80d3-8097343c6e0e";
+        var userCheckoutEventId2 = "121b7801-1014-4747-80d3-8097343c6e0e";
+        var userCheckoutEventId3 = "321b7801-1014-4747-80d3-8097343c6e0e";
+
+        assertTrue(violations.stream().anyMatch(s ->
+                s.contains(productPriceChangedEventId1)
+             && s.contains(userCheckoutEventId1)
+        ));
+        assertTrue(violations.stream().anyMatch(s ->
+                s.contains(productPriceChangedEventId1)
+             && s.contains(userCheckoutEventId2)
+        ));
+        assertTrue(violations.stream().anyMatch(s ->
+                s.contains(productPriceChangedEventId1)
+             && s.contains(userCheckoutEventId3)
+        ));
     }
 
     @Test
@@ -75,30 +111,42 @@ public class InvariantsTest {
                                 forBoundedOutOfOrderness(Duration.ofSeconds(20))
                         .withTimestampAssigner((event, timestamp) -> event.getTimestamp()));
 
+        // values are collected in a static variable
+        ViolationSink.values.clear();
 
         CheckProductPriceChangedInvariant(env, streamSource, new ViolationSink());
 
-        // assert on violations (string) we expect
-        // ViolationSink.values.stream()
+        var violations = ViolationSink.values;
+        assertEquals(2, violations.size());
+        var productPriceChangedEventId1 = "1e693c62-c349-447f-87df-6be170c099fa";
+        var productPriceChangedEventId2 = "2e693c62-c349-447f-87df-6be170c099fa";
+        var userCheckoutEventId = "421b7801-1014-4747-80d3-8097343c6e0e";
+
+        assertTrue(violations.stream().anyMatch(s ->
+                s.contains(productPriceChangedEventId1)
+                        && s.contains(userCheckoutEventId)
+        ));
+        assertTrue(violations.stream().anyMatch(s ->
+                s.contains(productPriceChangedEventId2)
+                        && s.contains(userCheckoutEventId)
+        ));
     }
 
     @Test
     public void testProductPriceChangedInvariant4() throws Exception {
         final StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
 
-        // This input tests if event-time is working correctly
-        // by having the checkout come first in the file but its timestamp
-        // is after first two price changed events
         var streamSource = FileReader
                 .GetDataStreamSource(env, "/src/product_price_changed_invariant_4.json")
                 .assignTimestampsAndWatermarks(WatermarkStrategy.<EShopIntegrationEvent>
                                 forBoundedOutOfOrderness(Duration.ofSeconds(20))
                         .withTimestampAssigner((event, timestamp) -> event.getTimestamp()));
 
+        // values are collected in a static variable
+        ViolationSink.values.clear();
 
         CheckProductPriceChangedInvariant(env, streamSource, new ViolationSink());
 
-        // assert on violations (string) we expect
         assertTrue(ViolationSink.values.isEmpty());
     }
 
