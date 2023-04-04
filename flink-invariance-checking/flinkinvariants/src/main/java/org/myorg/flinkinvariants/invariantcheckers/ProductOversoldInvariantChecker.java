@@ -7,6 +7,7 @@ import org.apache.flink.api.common.state.ValueStateDescriptor;
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
+import org.apache.flink.streaming.api.functions.sink.SinkFunction;
 import org.apache.flink.table.api.Table;
 import org.apache.flink.table.api.bridge.java.StreamTableEnvironment;
 import org.apache.flink.types.Row;
@@ -24,25 +25,9 @@ public class ProductOversoldInvariantChecker {
         final StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
         StreamTableEnvironment tableEnv = StreamTableEnvironment.create(env);
 
-        var streamSource = FileReader.GetDataStreamSource(env, "/src/oversold_2.json").assignTimestampsAndWatermarks(WatermarkStrategy.<EShopIntegrationEvent>
+        var streamSource = FileReader.GetDataStreamSource(env, "/src/oversold_1.json").assignTimestampsAndWatermarks(WatermarkStrategy.<EShopIntegrationEvent>
                         forBoundedOutOfOrderness(Duration.ofSeconds(30))
                 .withTimestampAssigner((event, timestamp) -> event.getTimestamp()));
-
-        // TODO: need to sort stream according to timestamp, might use table api for this
-        DataStream<String> dataStream = env.fromElements("Alice", "Bob", "John");
-
-// interpret the insert-only DataStream as a Table
-        Table inputTable = tableEnv.fromDataStream(dataStream);
-
-// register the Table object as a view and query it
-        tableEnv.createTemporaryView("InputTable", inputTable);
-        Table resultTable = tableEnv.sqlQuery("SELECT UPPER(f0) FROM InputTable");
-
-// interpret the insert-only Table as a DataStream again
-        DataStream<Row> resultStream = tableEnv.toDataStream(resultTable);
-
-        resultStream.print();
-
 
         var violations = streamSource
                 .keyBy(r -> r.EventBody.get("ProductId"))
@@ -50,7 +35,20 @@ public class ProductOversoldInvariantChecker {
 
         violations.print().setParallelism(1);
 
-        System.out.println("Started Flink query for Oversold Invariant..");
+        env.execute("Flink Eshop Product Oversold Invariant");
+    }
+
+    public static void CheckOversoldInvariant(
+            StreamExecutionEnvironment env,
+            DataStream<EShopIntegrationEvent> input,
+            SinkFunction<String> sinkFunction
+    ) throws Exception {
+
+        var violations = input
+                .keyBy(r -> r.EventBody.get("ProductId"))
+                .flatMap(new OversoldMapper())
+                .addSink(sinkFunction);
+
         env.execute("Flink Eshop Product Oversold Invariant");
     }
 

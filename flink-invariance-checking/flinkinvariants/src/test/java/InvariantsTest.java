@@ -1,25 +1,28 @@
 import org.apache.flink.api.common.eventtime.WatermarkStrategy;
-import org.apache.flink.api.common.functions.MapFunction;
+import org.apache.flink.configuration.ConfigOption;
+import org.apache.flink.configuration.Configuration;
 import org.apache.flink.runtime.testutils.MiniClusterResourceConfiguration;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
-import org.apache.flink.streaming.api.functions.sink.PrintSinkFunction;
 import org.apache.flink.streaming.api.functions.sink.SinkFunction;
+import org.apache.flink.streaming.api.functions.source.RichParallelSourceFunction;
+import org.apache.flink.streaming.api.functions.source.RichSourceFunction;
 import org.apache.flink.test.util.MiniClusterWithClientResource;
 import org.junit.ClassRule;
 import org.junit.Test;
-import org.myorg.flinkinvariants.events.EShopIntegrationEvent;
 import org.myorg.flinkinvariants.datastreamsourceproviders.FileReader;
+import org.myorg.flinkinvariants.events.EShopIntegrationEvent;
 
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.myorg.flinkinvariants.invariantcheckers.LackingPaymentEventInvariantChecker.CheckLackingPaymentInvariantNotFollowed;
 import static org.myorg.flinkinvariants.invariantcheckers.ProductPriceChangedInvariantChecker.CheckProductPriceChangedInvariant;
+import static org.myorg.flinkinvariants.invariantcheckers.LackingPaymentEventInvariantChecker.CheckLackingPaymentInvariant;
+import static org.myorg.flinkinvariants.invariantcheckers.ProductOversoldInvariantChecker.CheckOversoldInvariant;
 
 public class InvariantsTest {
 
@@ -35,6 +38,7 @@ public class InvariantsTest {
     @Test
     public void testProductPriceChangedInvariant1() throws Exception {
         final StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
+
         var streamSource = FileReader
                 .GetDataStreamSource(env, "/src/product_price_changed_invariant_1.json")
                 .assignTimestampsAndWatermarks(WatermarkStrategy.<EShopIntegrationEvent>
@@ -150,6 +154,87 @@ public class InvariantsTest {
         assertTrue(ViolationSink.values.isEmpty());
     }
 
+    @Test
+    public void testLackingPaymentInvariant1() throws Exception {
+        final StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
+
+        var fileSource = new TimedFileSource("/src/lacking_payment_1.json", 100);
+
+        var streamSource = env.addSource(fileSource)
+                .assignTimestampsAndWatermarks(WatermarkStrategy.<EShopIntegrationEvent>
+                                forBoundedOutOfOrderness(Duration.ofSeconds(20))
+                        .withTimestampAssigner((event, timestamp) -> event.getTimestamp()));
+
+
+        // values are collected in a static variable
+        ViolationSink.values.clear();
+
+        CheckLackingPaymentInvariant(env, streamSource, new ViolationSink());
+
+        var violations = ViolationSink.values;
+        assertEquals(1, violations.size());
+    }
+
+    @Test
+    public void testLackingPaymentInvariant2() throws Exception {
+        final StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
+
+        var fileSource = new TimedFileSource("/src/lacking_payment_2.json", 100);
+
+        var streamSource = env.addSource(fileSource)
+                .assignTimestampsAndWatermarks(WatermarkStrategy.<EShopIntegrationEvent>
+                                forBoundedOutOfOrderness(Duration.ofSeconds(20))
+                        .withTimestampAssigner((event, timestamp) -> event.getTimestamp()));
+
+
+        // values are collected in a static variable
+        ViolationSink.values.clear();
+
+        CheckLackingPaymentInvariantNotFollowed(env, streamSource, new ViolationSink());
+
+        var violations = ViolationSink.values;
+        // TODO: for some reason timed out events violation are published twice
+        assertEquals(1, violations.size());
+    }
+
+    @Test
+    public void testProductOversoldInvariant1() throws Exception {
+        final StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
+
+        var streamSource = FileReader
+                .GetDataStreamSource(env, "/src/oversold_1.json")
+                .assignTimestampsAndWatermarks(WatermarkStrategy.<EShopIntegrationEvent>
+                                forBoundedOutOfOrderness(Duration.ofSeconds(20))
+                        .withTimestampAssigner((event, timestamp) -> event.getTimestamp()));
+
+        // values are collected in a static variable
+        ViolationSink.values.clear();
+
+        CheckOversoldInvariant(env, streamSource, new ViolationSink());
+
+        var violations = ViolationSink.values;
+        assertEquals(1, violations.size());
+    }
+
+    @Test
+    public void testProductOversoldInvariant2() throws Exception {
+        final StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
+
+        var streamSource = FileReader
+                .GetDataStreamSource(env, "/src/oversold_2.json")
+                .assignTimestampsAndWatermarks(WatermarkStrategy.<EShopIntegrationEvent>
+                                forBoundedOutOfOrderness(Duration.ofSeconds(20))
+                        .withTimestampAssigner((event, timestamp) -> event.getTimestamp()));
+
+        // values are collected in a static variable
+        ViolationSink.values.clear();
+
+        CheckOversoldInvariant(env, streamSource, new ViolationSink());
+
+        var violations = ViolationSink.values;
+        assertEquals(0, violations.size());
+    }
+
 
 
     private static class ViolationSink implements SinkFunction<String> {
@@ -160,6 +245,41 @@ public class InvariantsTest {
         @Override
         public void invoke(String value, SinkFunction.Context context) throws Exception {
             values.add(value);
+        }
+    }
+
+    private static class TimedFileSource extends RichParallelSourceFunction<EShopIntegrationEvent> {
+
+        private transient volatile boolean running = true;
+
+        private final String filename;
+
+        private final long waitTime;
+
+        @Override
+        public void open(Configuration parameters){
+            running = true;
+        }
+
+        public TimedFileSource(String filename, long waitTime) {
+            this.filename = filename;
+            this.waitTime = waitTime;
+        }
+
+        @Override
+        public void run(SourceContext<EShopIntegrationEvent> sourceContext) throws Exception {
+            var events = FileReader.GetEshopEventsFromFile(filename);
+
+            for (var event: events) {
+                sourceContext.collect(event);
+            }
+            // not canceling simulating unbounded stream
+            Thread.sleep(waitTime);
+        }
+
+        @Override
+        public void cancel() {
+            running = false;
         }
     }
 }

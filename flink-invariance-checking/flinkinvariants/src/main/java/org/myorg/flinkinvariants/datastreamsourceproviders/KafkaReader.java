@@ -15,6 +15,7 @@ import org.myorg.flinkinvariants.events.EShopIntegrationEvent;
 
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
+import java.time.Instant;
 
 public class KafkaReader {
     private static final String broker = "localhost:29092";
@@ -52,7 +53,7 @@ public class KafkaReader {
                         String value = new String(consumerRecord.value(), StandardCharsets.UTF_8);
                         ObjectMapper objectMapper = new ObjectMapper();
                         JsonNode jsonNode = objectMapper.readTree(value);
-                        return new EShopIntegrationEvent(key, jsonNode);
+                        return new EShopIntegrationEvent(key, jsonNode,  Instant.parse(jsonNode.get("CreationDate").asText()).toEpochMilli());
                     }
 
                     @Override

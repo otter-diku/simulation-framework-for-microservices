@@ -6,13 +6,20 @@ import java.util.Objects;
 
 public class EShopIntegrationEvent {
 
-    public final String EventName;
+    public String EventName;
 
-    public final JsonNode EventBody;
+    public JsonNode EventBody;
 
-    public EShopIntegrationEvent(String EventName, JsonNode EventBody) {
+    public Long eventTime;
+
+    public EShopIntegrationEvent() {
+
+    }
+
+    public EShopIntegrationEvent(String EventName, JsonNode EventBody, Long eventTime) {
         this.EventName = EventName;
         this.EventBody = EventBody;
+        this.eventTime = eventTime;
     }
 
     @Override
@@ -21,9 +28,7 @@ public class EShopIntegrationEvent {
     }
 
     public Long getTimestamp() {
-        var dateString = EventBody.get("CreationDate").asText();
-        Instant instant = Instant.parse(dateString);
-        return instant.toEpochMilli();
+        return eventTime;
     }
 
     /*

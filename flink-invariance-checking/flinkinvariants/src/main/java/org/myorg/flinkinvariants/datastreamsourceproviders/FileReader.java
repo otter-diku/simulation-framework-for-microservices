@@ -10,6 +10,7 @@ import org.myorg.flinkinvariants.events.EShopIntegrationEventWrapper;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.time.Instant;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -20,14 +21,14 @@ public class FileReader {
         return env.fromElements(list.toArray(new EShopIntegrationEvent[0]));
     }
 
-    private static List<EShopIntegrationEvent> GetEshopEventsFromFile(String file) {
+    public static List<EShopIntegrationEvent> GetEshopEventsFromFile(String file) {
         try {
             String content = GetFileContentAsString(file);
             ObjectMapper objectMapper = new ObjectMapper();
             List<EShopIntegrationEventWrapper> eventWrappers = objectMapper.readValue(content, new TypeReference<List<EShopIntegrationEventWrapper>>() {});
 
             return eventWrappers.stream()
-                    .map(eventWrapper -> new EShopIntegrationEvent(eventWrapper.Type, eventWrapper.Content))
+                    .map(eventWrapper -> new EShopIntegrationEvent(eventWrapper.Type, eventWrapper.Content, Instant.parse(eventWrapper.Content.get("CreationDate").asText()).toEpochMilli()))
                     .collect(Collectors.toList());
 
         } catch (IOException e) {
