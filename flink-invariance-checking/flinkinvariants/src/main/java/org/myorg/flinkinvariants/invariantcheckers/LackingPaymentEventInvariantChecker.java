@@ -1,5 +1,6 @@
 package org.myorg.flinkinvariants.invariantcheckers;
 
+import org.apache.flink.api.common.functions.FilterFunction;
 import org.apache.flink.cep.CEP;
 import org.apache.flink.cep.functions.PatternProcessFunction;
 import org.apache.flink.cep.functions.TimedOutPartialMatchHandler;
@@ -18,8 +19,10 @@ import org.myorg.flinkinvariants.events.EShopIntegrationEvent;
 import org.myorg.flinkinvariants.events.EventType;
 
 import java.time.Duration;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 public class LackingPaymentEventInvariantChecker {
     final static OutputTag<String> outputTag = new OutputTag<>("lacking-payments") {
@@ -28,7 +31,7 @@ public class LackingPaymentEventInvariantChecker {
     public static void main(String[] args) throws Exception {
         final StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
 
-        var streamSource = KafkaReader.GetDataStreamSourceEventTime(env, Duration.ofSeconds(1));
+        var streamSource = KafkaReader.GetDataStreamSourceEventTime(env, Duration.ofSeconds(20));
 
 //        var streamSource = dataStreamSource.filter((FilterFunction<EShopIntegrationEvent>) record
 //                -> !record.EventName.equals(EventType.OrderPaymentSucceededIntegrationEvent.name())
@@ -48,25 +51,22 @@ public class LackingPaymentEventInvariantChecker {
                 .inEventTime()
                 .process(new MyPatternProcessFunction());
 
-        var partialMatches = matches.getSideOutput(outputTag);
-        partialMatches.addSink(sinkFunction);
+        var distinctMatches = matches.getSideOutput(outputTag)
+                .filter(new FilterFunction<String>() {
+                    private final Set<String> seen = new HashSet<>();
 
-        env.execute("Flink Eshop Lacking Payment Invariant");
-    }
-
-    public static void CheckLackingPaymentInvariantNotFollowed(
-            StreamExecutionEnvironment env,
-            DataStream<EShopIntegrationEvent> input,
-            SinkFunction<String> sinkFunction) throws Exception {
-
-        var patternStream = CEP.pattern(input, InvariantPatternNotFollowed);
-        var matches = patternStream
-                .inEventTime()
-                .process(new MyPatternProcessFunction())
+                    @Override
+                    public boolean filter(String value) throws Exception {
+                        return seen.add(value);
+                    }
+                }).setParallelism(1);
+        distinctMatches
                 .addSink(sinkFunction);
 
+
         env.execute("Flink Eshop Lacking Payment Invariant");
     }
+
 
 
     public static class MyPatternProcessFunction extends PatternProcessFunction<EShopIntegrationEvent, String> implements TimedOutPartialMatchHandler<EShopIntegrationEvent> {

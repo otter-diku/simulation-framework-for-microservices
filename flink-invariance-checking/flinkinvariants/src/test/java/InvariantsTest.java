@@ -1,11 +1,9 @@
 import org.apache.flink.api.common.eventtime.WatermarkStrategy;
-import org.apache.flink.configuration.ConfigOption;
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.runtime.testutils.MiniClusterResourceConfiguration;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.streaming.api.functions.sink.SinkFunction;
 import org.apache.flink.streaming.api.functions.source.RichParallelSourceFunction;
-import org.apache.flink.streaming.api.functions.source.RichSourceFunction;
 import org.apache.flink.test.util.MiniClusterWithClientResource;
 import org.junit.ClassRule;
 import org.junit.Test;
@@ -19,10 +17,9 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.myorg.flinkinvariants.invariantcheckers.LackingPaymentEventInvariantChecker.CheckLackingPaymentInvariantNotFollowed;
-import static org.myorg.flinkinvariants.invariantcheckers.ProductPriceChangedInvariantChecker.CheckProductPriceChangedInvariant;
 import static org.myorg.flinkinvariants.invariantcheckers.LackingPaymentEventInvariantChecker.CheckLackingPaymentInvariant;
 import static org.myorg.flinkinvariants.invariantcheckers.ProductOversoldInvariantChecker.CheckOversoldInvariant;
+import static org.myorg.flinkinvariants.invariantcheckers.ProductPriceChangedInvariantChecker.CheckProductPriceChangedInvariant;
 
 public class InvariantsTest {
 
@@ -173,6 +170,7 @@ public class InvariantsTest {
 
         var violations = ViolationSink.values;
         assertEquals(1, violations.size());
+        assertTrue(violations.get(0).contains("\"OrderId\":9883"));
     }
 
     @Test
@@ -190,11 +188,12 @@ public class InvariantsTest {
         // values are collected in a static variable
         ViolationSink.values.clear();
 
-        CheckLackingPaymentInvariantNotFollowed(env, streamSource, new ViolationSink());
+        CheckLackingPaymentInvariant(env, streamSource, new ViolationSink());
 
         var violations = ViolationSink.values;
-        // TODO: for some reason timed out events violation are published twice
+        // TODO: timed out events violation are published twice for now just remove duplicates in operator
         assertEquals(1, violations.size());
+        assertTrue(violations.get(0).contains("\"OrderId\":9881"));
     }
 
     @Test
@@ -214,6 +213,7 @@ public class InvariantsTest {
 
         var violations = ViolationSink.values;
         assertEquals(1, violations.size());
+        assertTrue(violations.get(0).contains("Violation: stock not sufficient for ProductId: 42, current stock: 10, units bought: 20"));
     }
 
     @Test
@@ -234,6 +234,26 @@ public class InvariantsTest {
         var violations = ViolationSink.values;
         assertEquals(0, violations.size());
     }
+
+    @Test
+    public void testProductOversoldInvariant3() throws Exception {
+        final StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
+
+        var streamSource = FileReader
+                .GetDataStreamSource(env, "/src/oversold_3.json")
+                .assignTimestampsAndWatermarks(WatermarkStrategy.<EShopIntegrationEvent>
+                                forBoundedOutOfOrderness(Duration.ofSeconds(20))
+                        .withTimestampAssigner((event, timestamp) -> event.getTimestamp()));
+
+        // values are collected in a static variable
+        ViolationSink.values.clear();
+
+        CheckOversoldInvariant(env, streamSource, new ViolationSink());
+
+        var violations = ViolationSink.values;
+        assertEquals(0, violations.size());
+    }
+
 
 
 

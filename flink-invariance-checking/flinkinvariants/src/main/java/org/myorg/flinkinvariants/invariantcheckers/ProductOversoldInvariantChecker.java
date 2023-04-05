@@ -8,9 +8,9 @@ import org.apache.flink.configuration.Configuration;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.streaming.api.functions.sink.SinkFunction;
+import org.apache.flink.table.api.Schema;
 import org.apache.flink.table.api.Table;
 import org.apache.flink.table.api.bridge.java.StreamTableEnvironment;
-import org.apache.flink.types.Row;
 import org.apache.flink.util.Collector;
 import org.myorg.flinkinvariants.datastreamsourceproviders.FileReader;
 import org.myorg.flinkinvariants.events.EShopIntegrationEvent;
@@ -43,11 +43,28 @@ public class ProductOversoldInvariantChecker {
             DataStream<EShopIntegrationEvent> input,
             SinkFunction<String> sinkFunction
     ) throws Exception {
+        StreamTableEnvironment tableEnv = StreamTableEnvironment.create(env);
 
-        var violations = input
+        Table table =
+                tableEnv.fromDataStream(
+                        input,
+                        Schema.newBuilder()
+                                .columnByMetadata("rowtime", "TIMESTAMP_LTZ(3)")
+                                .watermark("rowtime", "SOURCE_WATERMARK()")
+                                .build());
+
+        tableEnv.createTemporaryView("events", table);
+        Table sorted = tableEnv.sqlQuery("SELECT * FROM events ORDER BY rowtime ASC");
+
+        // TODO: maybe more idiomatic way to convert row datastream instead of
+        //  map with parallelism set to 1
+        DataStream<EShopIntegrationEvent> sortedStream = tableEnv.toDataStream(sorted).map(r ->
+                new EShopIntegrationEvent(r.getFieldAs(0), r.getFieldAs(1), r.getFieldAs(2))).setParallelism(1);
+
+        var violations = sortedStream
                 .keyBy(r -> r.EventBody.get("ProductId"))
                 .flatMap(new OversoldMapper())
-                .addSink(sinkFunction);
+                .addSink(sinkFunction).setParallelism(1);
 
         env.execute("Flink Eshop Product Oversold Invariant");
     }

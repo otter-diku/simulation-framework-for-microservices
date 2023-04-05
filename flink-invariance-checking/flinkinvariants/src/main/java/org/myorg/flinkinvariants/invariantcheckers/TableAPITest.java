@@ -22,6 +22,7 @@ import org.myorg.flinkinvariants.datastreamsourceproviders.FileReader;
 import org.myorg.flinkinvariants.events.EShopIntegrationEvent;
 import org.myorg.flinkinvariants.events.EventType;
 
+import javax.xml.crypto.Data;
 import java.io.IOException;
 import java.time.Duration;
 import java.time.Instant;
@@ -46,21 +47,16 @@ public class TableAPITest {
                                 .columnByMetadata("rowtime", "TIMESTAMP_LTZ(3)")
                                 .watermark("rowtime", "SOURCE_WATERMARK()")
                                 .build());
-        table.printSchema();
-
-
         tableEnv.createTemporaryView("events", table);
         Table sorted = tableEnv.sqlQuery("SELECT * FROM events ORDER BY rowtime ASC");
+        DataStream<EShopIntegrationEvent> sortedStream = tableEnv.toDataStream(sorted).map(r ->
+                new EShopIntegrationEvent(r.getFieldAs(0), r.getFieldAs(1), r.getFieldAs(2)))
+                .setParallelism(1);
 
-        DataStream<Row> resultStream = tableEnv.toDataStream(sorted);
-        resultStream.print();
+
+        sortedStream.print();
 
         System.out.println("Started Flink query for Oversold Invariant..");
         env.execute("Flink Eshop Product Oversold Invariant");
-    }
-
-    private static long TimestampToLong(String dateString) {
-        Instant instant = Instant.parse(dateString);
-        return instant.toEpochMilli();
     }
 }

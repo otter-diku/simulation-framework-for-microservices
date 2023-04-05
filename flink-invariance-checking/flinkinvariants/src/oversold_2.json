@@ -40,7 +40,7 @@
   {
     "Type": "ProductStockChangedIntegrationEvent",
     "Content": {
-      "CreationDate": "2023-03-26T11:11:52.3968780Z",
+      "CreationDate": "2023-03-26T11:11:50.3968780Z",
       "Id": "46c5b4d5-5423-4c59-b539-c61391af1a5a",
       "NewStock": 235,
       "OldStock": 238,
@@ -50,7 +50,7 @@
   {
     "Type": "ProductBoughtIntegrationEvent",
     "Content": {
-      "CreationDate": "2023-03-26T11:11:50.0773887Z",
+      "CreationDate": "2023-03-26T11:11:51.0773887Z",
       "Id": "4b1a1099-fdba-48ba-9c79-947c94822fd9",
       "ProductId": 42,
       "Units": 20
@@ -59,7 +59,7 @@
   {
     "Type": "ProductBoughtIntegrationEvent",
     "Content": {
-      "CreationDate": "2023-03-26T11:11:48.0773887Z",
+      "CreationDate": "2023-03-26T11:11:52.0773887Z",
       "Id": "4b1a1099-fdba-48ba-9c79-947c94822fd9",
       "ProductId": 42,
       "Units": 20
