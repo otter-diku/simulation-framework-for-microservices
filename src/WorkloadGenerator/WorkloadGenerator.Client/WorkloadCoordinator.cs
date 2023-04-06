@@ -40,15 +40,19 @@ public class WorkloadCoordinator : IWorkloadCoordinator
         var txStack = GetTransactionsToExecute(workloadToRun);
 
         _logger.LogInformation("{TransactionCount} transactions to execute", txStack.Count);
+        
+        var generators = new Dictionary<String, IGenerator>();
+        foreach (var generator in workloadToRun.Generators)
+        {
+            generators.Add(generator.Id, GeneratorFactory.GetGenerator(generator));
+        }        
         while (txStack.Count != 0)
         {
-            // var txOpsRefs = tx.Operations.Select(o => o.OperationReferenceId).ToHashSet();
-            // var txOps =
-            //     operations.Where(o => txOpsRefs.Contains(o.Key))
-            //         .ToDictionary(x => x.Key, x => x.Value);
 
             // Generate providedValues with Generators
-            var executableTx = CreateExecutableTransaction(workloadCorrelationId, workloadToRun, txStack.Pop(), transactions, operations);
+            var executableTx = CreateExecutableTransaction(
+                workloadCorrelationId, workloadToRun, generators,
+                txStack.Pop(), transactions, operations);
 
             await _workloadScheduler.SubmitTransaction(executableTx);
         }
@@ -60,6 +64,7 @@ public class WorkloadCoordinator : IWorkloadCoordinator
     private static ExecutableTransaction CreateExecutableTransaction(
         Guid workloadCorrelationId,
         WorkloadInputUnresolved workloadToRun,
+        Dictionary<string, IGenerator> generators,
         string id,
         Dictionary<string, TransactionInputUnresolved> transactionsByReferenceId,
         Dictionary<string, IOperationUnresolved> operationsByReferenceId)
@@ -71,9 +76,7 @@ public class WorkloadCoordinator : IWorkloadCoordinator
 
         foreach (var genRef in txRef!.Data)
         {
-            var generatorInput = workloadToRun.Generators?.Find(g => g.Id == genRef.GeneratorReferenceId);
-            var generator = GeneratorFactory.GetGenerator(generatorInput!);
-            providedValues.Add(genRef.Name, generator.Next());
+            providedValues.Add(genRef.Name, generators[genRef.GeneratorReferenceId].Next());
         }
 
         var executableTx = new ExecutableTransaction()

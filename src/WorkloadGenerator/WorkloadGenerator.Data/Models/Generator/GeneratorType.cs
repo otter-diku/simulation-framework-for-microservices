@@ -6,5 +6,6 @@ public enum GeneratorType
     SignedInt = 20,
     String = 30,
     Guid = 40,
-    Constant = 50
+    Constant = 50,
+    Counter = 60
 }

@@ -9,6 +9,8 @@ public class GeneratorBase
     public DistributionType Distribution { get; set; }
 
     public object? Constant { get; set; }
+    
+    public int? Start { get; set; }
 
     public int? Min { get; set; }
 

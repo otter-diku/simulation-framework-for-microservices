@@ -10,7 +10,7 @@ public class EShopIntegrationEvent {
 
     public JsonNode EventBody;
 
-    public Long eventTime;
+    private Long eventTime;
 
     public EShopIntegrationEvent() {
 
@@ -24,7 +24,7 @@ public class EShopIntegrationEvent {
 
     @Override
     public String toString() {
-        return "EventName: " + EventName + ", " + "EventBody: " + EventBody;
+        return "EventName: " + EventName + ", " + "EventBody: " + EventBody + ", eventTime: " + eventTime;
     }
 
     public Long getTimestamp() {
@@ -44,11 +44,12 @@ public class EShopIntegrationEvent {
         }
         EShopIntegrationEvent r = (EShopIntegrationEvent) o;
         return  Objects.equals(EventName, r.EventName) &&
-                Objects.equals(EventBody, r.EventBody);
+                Objects.equals(EventBody, r.EventBody) &&
+                Objects.equals(eventTime, r.eventTime);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(EventName, EventBody);
+        return Objects.hash(EventName, EventBody, eventTime);
     }
 }

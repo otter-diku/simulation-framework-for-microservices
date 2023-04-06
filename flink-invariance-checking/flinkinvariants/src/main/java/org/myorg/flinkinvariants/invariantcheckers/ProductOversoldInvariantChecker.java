@@ -1,18 +1,20 @@
 package org.myorg.flinkinvariants.invariantcheckers;
 
 import org.apache.flink.api.common.eventtime.WatermarkStrategy;
+import org.apache.flink.api.common.functions.FilterFunction;
 import org.apache.flink.api.common.functions.RichFlatMapFunction;
 import org.apache.flink.api.common.state.ValueState;
 import org.apache.flink.api.common.state.ValueStateDescriptor;
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
+import org.apache.flink.streaming.api.functions.sink.PrintSinkFunction;
 import org.apache.flink.streaming.api.functions.sink.SinkFunction;
 import org.apache.flink.table.api.Schema;
 import org.apache.flink.table.api.Table;
 import org.apache.flink.table.api.bridge.java.StreamTableEnvironment;
 import org.apache.flink.util.Collector;
-import org.myorg.flinkinvariants.datastreamsourceproviders.FileReader;
+import org.myorg.flinkinvariants.datastreamsourceproviders.KafkaReader;
 import org.myorg.flinkinvariants.events.EShopIntegrationEvent;
 import org.myorg.flinkinvariants.events.EventType;
 
@@ -21,21 +23,18 @@ import java.time.Duration;
 
 public class ProductOversoldInvariantChecker {
 
+    private static final int MAX_LATENESS_OF_EVENT = 30;
+
     public static void main(String[] args) throws Exception {
-        final StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
-        StreamTableEnvironment tableEnv = StreamTableEnvironment.create(env);
+        final StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment().setParallelism(1);
 
-        var streamSource = FileReader.GetDataStreamSource(env, "/src/oversold_1.json").assignTimestampsAndWatermarks(WatermarkStrategy.<EShopIntegrationEvent>
-                        forBoundedOutOfOrderness(Duration.ofSeconds(30))
-                .withTimestampAssigner((event, timestamp) -> event.getTimestamp()));
+        var streamSource = KafkaReader.GetDataStreamSource(env)
+                .assignTimestampsAndWatermarks(WatermarkStrategy.<EShopIntegrationEvent>forBoundedOutOfOrderness(Duration.ofSeconds(MAX_LATENESS_OF_EVENT))
+                        //.withIdleness(Duration.ofSeconds(2))
+                        .withTimestampAssigner((event, timestamp) -> event.getTimestamp()));
 
-        var violations = streamSource
-                .keyBy(r -> r.EventBody.get("ProductId"))
-                .flatMap(new OversoldMapper());
 
-        violations.print().setParallelism(1);
-
-        env.execute("Flink Eshop Product Oversold Invariant");
+        CheckOversoldInvariant(env, streamSource, new PrintSinkFunction<>());
     }
 
     public static void CheckOversoldInvariant(
@@ -45,9 +44,17 @@ public class ProductOversoldInvariantChecker {
     ) throws Exception {
         StreamTableEnvironment tableEnv = StreamTableEnvironment.create(env);
 
+
+        var filteredInput = input.filter((FilterFunction<EShopIntegrationEvent>) record ->
+                        record.EventName.equals(EventType.ProductCreatedIntegrationEvent.name())
+                     || record.EventName.equals(EventType.ProductDeletedIntegrationEvent.name())
+                     || record.EventName.equals(EventType.ProductBoughtIntegrationEvent.name())
+                     || record.EventName.equals(EventType.ProductStockChangedIntegrationEvent.name()))
+                .setParallelism(1);
+
         Table table =
                 tableEnv.fromDataStream(
-                        input,
+                        filteredInput,
                         Schema.newBuilder()
                                 .columnByMetadata("rowtime", "TIMESTAMP_LTZ(3)")
                                 .watermark("rowtime", "SOURCE_WATERMARK()")
@@ -56,10 +63,8 @@ public class ProductOversoldInvariantChecker {
         tableEnv.createTemporaryView("events", table);
         Table sorted = tableEnv.sqlQuery("SELECT * FROM events ORDER BY rowtime ASC");
 
-        // TODO: maybe more idiomatic way to convert row datastream instead of
-        //  map with parallelism set to 1
         DataStream<EShopIntegrationEvent> sortedStream = tableEnv.toDataStream(sorted).map(r ->
-                new EShopIntegrationEvent(r.getFieldAs(0), r.getFieldAs(1), r.getFieldAs(2))).setParallelism(1);
+                            (EShopIntegrationEvent) r.getFieldAs(0)).setParallelism(1);
 
         var violations = sortedStream
                 .keyBy(r -> r.EventBody.get("ProductId"))

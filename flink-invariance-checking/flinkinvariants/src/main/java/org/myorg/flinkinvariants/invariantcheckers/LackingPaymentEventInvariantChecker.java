@@ -2,6 +2,7 @@ package org.myorg.flinkinvariants.invariantcheckers;
 
 import org.apache.flink.api.common.functions.FilterFunction;
 import org.apache.flink.cep.CEP;
+import org.apache.flink.api.common.eventtime.WatermarkStrategy;
 import org.apache.flink.cep.functions.PatternProcessFunction;
 import org.apache.flink.cep.functions.TimedOutPartialMatchHandler;
 import org.apache.flink.cep.pattern.Pattern;
@@ -28,15 +29,22 @@ public class LackingPaymentEventInvariantChecker {
     final static OutputTag<String> outputTag = new OutputTag<>("lacking-payments") {
     };
 
+    private static final int MAX_LATENESS_OF_EVENT = 1;
+
     public static void main(String[] args) throws Exception {
         final StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
 
-        var streamSource = KafkaReader.GetDataStreamSourceEventTime(env, Duration.ofSeconds(20));
+        var streamSource = KafkaReader.GetDataStreamSource(env)
+                .assignTimestampsAndWatermarks(WatermarkStrategy.<EShopIntegrationEvent>forBoundedOutOfOrderness(Duration.ofSeconds(MAX_LATENESS_OF_EVENT))
+                        .withIdleness(Duration.ofSeconds(2))
+                        .withTimestampAssigner((event, timestamp) -> event.getTimestamp()));
 
-//        var streamSource = dataStreamSource.filter((FilterFunction<EShopIntegrationEvent>) record
-//                -> !record.EventName.equals(EventType.OrderPaymentSucceededIntegrationEvent.name())
-//                && !record.EventName.equals(EventType.OrderPaymentFailedIntegrationEvent.name()))
-//                .setParallelism(1);
+        // TODO: lacking payment does not occur usually in eshop (therefore to trigger the
+        //  violation one needs to filter out the payment events.
+        // var streamSource = dataStreamSource.filter((FilterFunction<EShopIntegrationEvent>) record
+        //        -> !record.EventName.equals(EventType.OrderPaymentSucceededIntegrationEvent.name())
+        //        && !record.EventName.equals(EventType.OrderPaymentFailedIntegrationEvent.name()))
+        //        .setParallelism(1);
 
         CheckLackingPaymentInvariant(env, streamSource, new PrintSinkFunction<>());
     }

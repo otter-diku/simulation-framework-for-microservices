@@ -1,0 +1,96 @@
+{
+  "templateId": "workload-eshop-all-invariants",
+  "maxConcurrentTransactions": 15,
+  "generators": [
+    {
+      "id": "productId",
+      "type": "unsignedInt",
+      "distribution": "uniform",
+      "min": 1,
+      "max": 20
+    },
+    {
+      "id": "userId",
+      "type": "constant",
+      "constant": "10000000-0000-0000-0000-000000000000"
+    }
+  ],
+  "transactions": [
+    {
+      "id": "replenish-stock",
+      "transactionReferenceId": "replenish-stock",
+      "count": 5,
+      "data": [
+        {
+          "name":  "product-id",
+          "generatorReferenceId": "productId"
+        }
+      ]
+    },
+    {
+      "id": "price-update-1",
+      "transactionReferenceId": "update-catalog-item-price",
+      "count": 100,
+      "data": [
+        {
+          "name":  "product-id",
+          "generatorReferenceId": "productId"
+        }
+      ]
+    },
+    {
+      "id": "checkout-3-items",
+      "transactionReferenceId": "checkout-3-items",
+      "count": 10,
+      "data": [
+        {
+          "name":  "user-id",
+          "generatorReferenceId": "userId"
+        },
+        {
+          "name":  "product-id-1",
+          "generatorReferenceId": "productId"
+        },
+        {
+          "name":  "product-id-2",
+          "generatorReferenceId": "productId"
+        },
+        {
+          "name":  "product-id-3",
+          "generatorReferenceId": "productId"
+        }
+      ]
+    },
+    {
+      "id": "checkout-5-items",
+      "transactionReferenceId": "checkout-5-items",
+      "count": 1,
+      "data": [
+        {
+          "name":  "user-id",
+          "generatorReferenceId": "userId"
+        },
+        {
+          "name":  "product-id-1",
+          "generatorReferenceId": "productId"
+        },
+        {
+          "name":  "product-id-2",
+          "generatorReferenceId": "productId"
+        },
+        {
+          "name":  "product-id-3",
+          "generatorReferenceId": "productId"
+        },
+        {
+          "name":  "product-id-4",
+          "generatorReferenceId": "productId"
+        },
+        {
+          "name":  "product-id-5",
+          "generatorReferenceId": "productId"
+        }        
+      ]
+    }    
+  ]
+}

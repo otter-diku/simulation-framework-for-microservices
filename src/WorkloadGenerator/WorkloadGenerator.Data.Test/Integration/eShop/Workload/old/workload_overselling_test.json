@@ -1,18 +1,23 @@
 {
-  "templateId": "workload-eshop-populate-catalog",
+  "templateId": "workload-overselling-test",
   "maxConcurrentTransactions": 10,
   "generators": [
     {
       "id": "productId",
-      "type": "counter",
-      "start": 1
+      "type": "constant",
+      "constant": 7
+    },
+    {
+      "id": "userId",
+      "type": "constant",
+      "constant": "10000000-0000-0000-0000-000000000000"
     }
   ],
   "transactions": [
     {
       "id": "tx1",
       "transactionReferenceId": "add-catalog-item",
-      "count": 20,
+      "count": 1,
       "data": [
         {
           "name":  "product-id",

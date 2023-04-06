@@ -13,7 +13,7 @@ import org.apache.flink.streaming.api.functions.sink.PrintSinkFunction;
 import org.apache.flink.streaming.api.functions.sink.SinkFunction;
 import org.apache.flink.streaming.api.windowing.time.Time;
 import org.apache.flink.util.Collector;
-import org.myorg.flinkinvariants.datastreamsourceproviders.FileReader;
+import org.myorg.flinkinvariants.datastreamsourceproviders.KafkaReader;
 import org.myorg.flinkinvariants.events.EShopIntegrationEvent;
 import org.myorg.flinkinvariants.events.EventType;
 
@@ -25,16 +25,15 @@ import java.util.Map;
 
 public class ProductPriceChangedInvariantChecker {
 
-    private static final int MAX_LATENESS_OF_EVENT = 20;
+    private static final int MAX_LATENESS_OF_EVENT = 5;
 
     public static void main(String[] args) throws Exception {
-        final StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
-        var streamSource = FileReader
-                .GetDataStreamSource(env, "/src/product_price_changed_invariant_3.json")
-                .assignTimestampsAndWatermarks(WatermarkStrategy.<EShopIntegrationEvent>
-                                        forBoundedOutOfOrderness(Duration.ofSeconds(MAX_LATENESS_OF_EVENT))
-                        .withTimestampAssigner((event, timestamp) -> event.getTimestamp()));
+        final StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment().setParallelism(1);
 
+        var streamSource = KafkaReader.GetDataStreamSource(env)
+                .assignTimestampsAndWatermarks(WatermarkStrategy.<EShopIntegrationEvent>forBoundedOutOfOrderness(Duration.ofSeconds(MAX_LATENESS_OF_EVENT))
+                        //.withIdleness(Duration.ofSeconds(2))
+                        .withTimestampAssigner((event, timestamp) -> event.getTimestamp()));
 
         CheckProductPriceChangedInvariant(env, streamSource, new PrintSinkFunction<>());
     }
@@ -44,7 +43,11 @@ public class ProductPriceChangedInvariantChecker {
              DataStream<EShopIntegrationEvent> input,
              SinkFunction<String> sinkFunction) throws  Exception {
 
-        var patternStream = CEP.pattern(input, InvariantPattern);
+        var filteredStream = input.filter(e ->
+                e.EventName.equals("UserCheckoutAcceptedIntegrationEvent") ||
+                e.EventName.equals("ProductPriceChangedIntegrationEvent")).setParallelism(1);
+
+        var patternStream = CEP.pattern(filteredStream, InvariantPattern);
         var matches = patternStream
                 .inEventTime()
                 .process(new PatternProcessFunction<EShopIntegrationEvent, String>() {
@@ -52,7 +55,8 @@ public class ProductPriceChangedInvariantChecker {
                     public void processMatch(Map<String, List<EShopIntegrationEvent>> map, Context context, Collector<String> collector) {
                         collector.collect(map.toString());
                     }
-                }).addSink(sinkFunction);
+                })
+                .addSink(sinkFunction);
 
         env.execute("Flink Eshop Product Price Changed Invariant");
     }
