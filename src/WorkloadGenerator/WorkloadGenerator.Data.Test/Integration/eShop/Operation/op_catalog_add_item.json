@@ -48,15 +48,9 @@
       "pictureFileName": "",
       "pictureUri": "",
       "catalogTypeId": 1,
-      "catalogType": {
-        "id": 0,
-        "type": ""
-      },
+      "catalogType": null,
       "catalogBrandId": 1,
-      "catalogBrand": {
-        "id": 1,
-        "brand": "{{brand-name}}"
-      },
+      "catalogBrand": null,
       "availableStock": "{{available-stock}}",
       "restockThreshold": "{{restock-threshold}}",
       "maxStockThreshold": "{{max-stock-threshold}}",

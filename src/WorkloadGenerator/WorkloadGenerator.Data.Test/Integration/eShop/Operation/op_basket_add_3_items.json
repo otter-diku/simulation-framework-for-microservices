@@ -37,7 +37,7 @@
           "productName": "{{@@item-1.name@@}}",
           "unitPrice": "{{@@item-1.price@@}}",
           "oldUnitPrice": "{{@@item-1.price@@}}",
-          "quantity": "1",
+          "quantity": "5",
           "pictureUrl": ""
         },
         {
@@ -46,7 +46,7 @@
           "productName": "{{@@item-2.name@@}}",
           "unitPrice": "{{@@item-2.price@@}}",
           "oldUnitPrice": "{{@@item-2.price@@}}",
-          "quantity": "1",
+          "quantity": "5",
           "pictureUrl": ""
         },
         {
@@ -55,7 +55,7 @@
           "productName": "{{@@item-3.name@@}}",
           "unitPrice": "{{@@item-3.price@@}}",
           "oldUnitPrice": "{{@@item-3.price@@}}",
-          "quantity": "1",
+          "quantity": "5",
           "pictureUrl": ""
         }        
       ]

@@ -19,7 +19,7 @@
 package org.myorg.flinkinvariants;
 
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
-
+import org.myorg.flinkinvariants.datastreamsourceproviders.KafkaReader;
 
 /**
  * Basic KafkaSource connector example.

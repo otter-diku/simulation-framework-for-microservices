@@ -1,26 +1,35 @@
 package org.myorg.flinkinvariants.events;
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 
+import java.time.Instant;
 import java.util.Objects;
 
-public class EshopRecord {
+public class EShopIntegrationEvent {
 
     public String EventName;
 
     public JsonNode EventBody;
 
+    private Long eventTime;
 
-    public EshopRecord(String EventName, JsonNode EventBody) {
+    public EShopIntegrationEvent() {
+
+    }
+
+    public EShopIntegrationEvent(String EventName, JsonNode EventBody, Long eventTime) {
         this.EventName = EventName;
         this.EventBody = EventBody;
+        this.eventTime = eventTime;
     }
 
     @Override
     public String toString() {
-        return "EventName: " + EventName + ", " + "EventBody: " + EventBody;
+        return "EventName: " + EventName + ", " + "EventBody: " + EventBody + ", eventTime: " + eventTime;
     }
 
+    public Long getTimestamp() {
+        return eventTime;
+    }
 
     /*
      * The events in the DataStream to which you want to apply pattern matching must implement proper equals() and hashCode()
@@ -30,16 +39,17 @@ public class EshopRecord {
     public boolean equals(Object o) {
 
         if (o == this) return true;
-        if (!(o instanceof EshopRecord)) {
+        if (!(o instanceof EShopIntegrationEvent)) {
             return false;
         }
-        EshopRecord r = (EshopRecord) o;
+        EShopIntegrationEvent r = (EShopIntegrationEvent) o;
         return  Objects.equals(EventName, r.EventName) &&
-                Objects.equals(EventBody, r.EventBody);
+                Objects.equals(EventBody, r.EventBody) &&
+                Objects.equals(eventTime, r.eventTime);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(EventName, EventBody);
+        return Objects.hash(EventName, EventBody, eventTime);
     }
 }

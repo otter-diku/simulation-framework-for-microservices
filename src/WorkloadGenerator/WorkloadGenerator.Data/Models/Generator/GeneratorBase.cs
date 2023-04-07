@@ -10,6 +10,8 @@ public class GeneratorBase
 
     public object? Constant { get; set; }
 
+    public int? Start { get; set; }
+
     public int? Min { get; set; }
 
     public int? Max { get; set; }

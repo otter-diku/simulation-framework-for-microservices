@@ -1,10 +1,12 @@
 [
   {
     "Type": "OrderStatusChangedToSubmittedIntegrationEvent",
-    "BuyerName": "Dummy User Name",
-    "CreationDate": "2023-03-26T11:10:52.9241451Z",
-    "Id": "4f2250de-4c80-488f-ae7d-fb14d6709b8b",
-    "OrderId": 9881,
-    "OrderStatus": "submitted"
+    "Content": {
+      "BuyerName": "Dummy User Name",
+      "CreationDate": "2023-03-26T11:10:52.9241451Z",
+      "Id": "4f2250de-4c80-488f-ae7d-fb14d6709b8b",
+      "OrderId": 9881,
+      "OrderStatus": "submitted"
+    }
   }
 ]

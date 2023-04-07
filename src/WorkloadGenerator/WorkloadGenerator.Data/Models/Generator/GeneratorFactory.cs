@@ -16,6 +16,8 @@ public class GeneratorFactory
                 return new GuidGenerator();
             case GeneratorType.Constant:
                 return new ConstantGenerator(generatorBase.Constant);
+            case GeneratorType.Counter:
+                return new CounterGenerator(generatorBase.Start);
             default:
                 throw new ArgumentOutOfRangeException(nameof(generatorBase), generatorBase, null);
         }

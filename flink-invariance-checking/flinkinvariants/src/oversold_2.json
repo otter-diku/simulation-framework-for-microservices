@@ -1,50 +1,68 @@
 [
   {
-    "AvailableStock": 100,
-    "CatalogBrand": null,
-    "CatalogBrandId": 1,
-    "CatalogType": null,
-    "CatalogTypeId": 1,
-    "CreationDate": "2023-03-25T13:15:06.2174596Z",
-    "Description": "string",
-    "ProductId": 42,
-    "MaxStockThreshold": 0,
-    "Name": "test-item",
-    "OnReorder": false,
-    "PictureFileName": null,
-    "PictureUri": null,
-    "Price": 1,
-    "RestockThreshold": 0
+    "Type": "ProductCreatedIntegrationEvent",
+    "Content": {
+      "AvailableStock": 100,
+      "CatalogBrand": null,
+      "CatalogBrandId": 1,
+      "CatalogType": null,
+      "CatalogTypeId": 1,
+      "CreationDate": "2023-03-25T13:15:06.2174596Z",
+      "Description": "string",
+      "ProductId": 42,
+      "MaxStockThreshold": 0,
+      "Name": "test-item",
+      "OnReorder": false,
+      "PictureFileName": null,
+      "PictureUri": null,
+      "Price": 1,
+      "RestockThreshold": 0
+    }
   },
   {
-    "CreationDate": "2023-03-26T11:11:48.0773887Z",
-    "Id": "4b1a1099-fdba-48ba-9c79-947c94822fd9",
-    "ProductId": 42,
-    "Units": 40
+    "Type": "ProductBoughtIntegrationEvent",
+    "Content": {
+      "CreationDate": "2023-03-26T11:11:48.0773887Z",
+      "Id": "4b1a1099-fdba-48ba-9c79-947c94822fd9",
+      "ProductId": 42,
+      "Units": 40
+    }
   },
   {
-    "CreationDate": "2023-03-26T11:11:49.0773887Z",
-    "Id": "4b1a1099-fdba-48ba-9c79-947c94822fd9",
-    "ProductId": 42,
-    "Units": 50
+    "Type": "ProductBoughtIntegrationEvent",
+    "Content": {
+      "CreationDate": "2023-03-26T11:11:49.0773887Z",
+      "Id": "4b1a1099-fdba-48ba-9c79-947c94822fd9",
+      "ProductId": 42,
+      "Units": 50
+    }
   },
   {
-    "CreationDate": "2023-03-26T11:11:52.3968780Z",
-    "Id": "46c5b4d5-5423-4c59-b539-c61391af1a5a",
-    "NewStock": 235,
-    "OldStock": 238,
-    "ProductId": 42
+    "Type": "ProductStockChangedIntegrationEvent",
+    "Content": {
+      "CreationDate": "2023-03-26T11:11:50.3968780Z",
+      "Id": "46c5b4d5-5423-4c59-b539-c61391af1a5a",
+      "NewStock": 235,
+      "OldStock": 238,
+      "ProductId": 42
+    }
   },
   {
-    "CreationDate": "2023-03-26T11:11:50.0773887Z",
-    "Id": "4b1a1099-fdba-48ba-9c79-947c94822fd9",
-    "ProductId": 42,
-    "Units": 20
+    "Type": "ProductBoughtIntegrationEvent",
+    "Content": {
+      "CreationDate": "2023-03-26T11:11:51.0773887Z",
+      "Id": "4b1a1099-fdba-48ba-9c79-947c94822fd9",
+      "ProductId": 42,
+      "Units": 20
+    }
   },
   {
-    "CreationDate": "2023-03-26T11:11:48.0773887Z",
-    "Id": "4b1a1099-fdba-48ba-9c79-947c94822fd9",
-    "ProductId": 42,
-    "Units": 250
+    "Type": "ProductBoughtIntegrationEvent",
+    "Content": {
+      "CreationDate": "2023-03-26T11:11:52.0773887Z",
+      "Id": "4b1a1099-fdba-48ba-9c79-947c94822fd9",
+      "ProductId": 42,
+      "Units": 20
+    }
   }
 ]

@@ -1,5 +1,5 @@
 {
-  "templateId": "checkout-5-items-with-sleep",
+  "templateId": "checkout-5-items",
   "arguments": [
     {
       "name": "user-id",
@@ -36,16 +36,8 @@
       "id": "op-1"
     },
     {
-      "operationReferenceId": "sleep-in-sec",
-      "id": "sleep-1"
-    },
-    {
       "operationReferenceId": "basket-add-5-items",
       "id": "op-2"
-    },
-    {
-      "operationReferenceId": "sleep-in-sec",
-      "id": "sleep-2"
     },
     {
       "operationReferenceId": "basket-checkout",

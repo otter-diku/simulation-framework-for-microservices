@@ -1,0 +1,31 @@
+[
+  {
+    "Type": "ProductBoughtIntegrationEvent",
+    "Content": {
+      "CreationDate": "2023-03-26T11:11:48.0773887Z",
+      "Id": "4b1a1099-fdba-48ba-9c79-947c94822fd9",
+      "ProductId": 42,
+      "Units": 40
+    }
+  },
+  {
+    "Type": "ProductCreatedIntegrationEvent",
+    "Content": {
+      "AvailableStock": 100,
+      "CatalogBrand": null,
+      "CatalogBrandId": 1,
+      "CatalogType": null,
+      "CatalogTypeId": 1,
+      "CreationDate": "2023-03-26T11:11:38.0773887Z",
+      "Description": "string",
+      "ProductId": 42,
+      "MaxStockThreshold": 0,
+      "Name": "test-item",
+      "OnReorder": false,
+      "PictureFileName": null,
+      "PictureUri": null,
+      "Price": 1,
+      "RestockThreshold": 0
+    }
+  }
+]
