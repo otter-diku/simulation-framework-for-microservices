@@ -37,7 +37,7 @@ public class LackingPaymentEventInvariantChecker {
         var streamSource = KafkaReader.GetDataStreamSource(env)
                 .assignTimestampsAndWatermarks(WatermarkStrategy.<EShopIntegrationEvent>forBoundedOutOfOrderness(Duration.ofSeconds(MAX_LATENESS_OF_EVENT))
                         .withIdleness(Duration.ofSeconds(2))
-                        .withTimestampAssigner((event, timestamp) -> event.getTimestamp()));
+                        .withTimestampAssigner((event, timestamp) -> event.getEventTime()));
 
         // TODO: lacking payment does not occur usually in eshop (therefore to trigger the
         //  violation one needs to filter out the payment events.
@@ -96,22 +96,22 @@ public class LackingPaymentEventInvariantChecker {
             .where(new SimpleCondition<>() {
                 @Override
                 public boolean filter(EShopIntegrationEvent eshopIntegrationEvent) {
-                    return eshopIntegrationEvent.EventName.equals(EventType.OrderStatusChangedToSubmittedIntegrationEvent.name());
+                    return eshopIntegrationEvent.getEventName().equals(EventType.OrderStatusChangedToSubmittedIntegrationEvent.name());
                 }
             })
             .followedBy("paymentOutcome")
             .where(new IterativeCondition<>() {
                 @Override
                 public boolean filter(EShopIntegrationEvent paymentEvent, Context<EShopIntegrationEvent> context) throws Exception {
-                    if (!(paymentEvent.EventName.equals(EventType.OrderPaymentSucceededIntegrationEvent.name())
-                            || paymentEvent.EventName.equals(EventType.OrderPaymentFailedIntegrationEvent.name()))) {
+                    if (!(paymentEvent.getEventName().equals(EventType.OrderPaymentSucceededIntegrationEvent.name())
+                            || paymentEvent.getEventName().equals(EventType.OrderPaymentFailedIntegrationEvent.name()))) {
                         return false;
                     }
 
                     for (var orderSubmittedEvent : context.getEventsForPattern("orderSubmitted")) {
 
-                        var affectedProductId = orderSubmittedEvent.EventBody.get("OrderId").asInt();
-                        return affectedProductId == paymentEvent.EventBody.get("OrderId").asInt();
+                        var affectedProductId = orderSubmittedEvent.getEventBody().get("OrderId").asInt();
+                        return affectedProductId == paymentEvent.getEventBody().get("OrderId").asInt();
                     }
 
                     return false;
@@ -123,22 +123,22 @@ public class LackingPaymentEventInvariantChecker {
             .where(new SimpleCondition<>() {
                 @Override
                 public boolean filter(EShopIntegrationEvent eshopIntegrationEvent) {
-                    return eshopIntegrationEvent.EventName.equals(EventType.OrderStatusChangedToSubmittedIntegrationEvent.name());
+                    return eshopIntegrationEvent.getEventName().equals(EventType.OrderStatusChangedToSubmittedIntegrationEvent.name());
                 }
             })
             .notFollowedBy("paymentOutcome")
             .where(new IterativeCondition<>() {
                 @Override
                 public boolean filter(EShopIntegrationEvent paymentEvent, Context<EShopIntegrationEvent> context) throws Exception {
-                    if (!(paymentEvent.EventName.equals(EventType.OrderPaymentSucceededIntegrationEvent.name())
-                            || paymentEvent.EventName.equals(EventType.OrderPaymentFailedIntegrationEvent.name()))) {
+                    if (!(paymentEvent.getEventName().equals(EventType.OrderPaymentSucceededIntegrationEvent.name())
+                            || paymentEvent.getEventName().equals(EventType.OrderPaymentFailedIntegrationEvent.name()))) {
                         return false;
                     }
 
                     for (var orderSubmittedEvent : context.getEventsForPattern("orderSubmitted")) {
 
-                        var affectedProductId = orderSubmittedEvent.EventBody.get("OrderId").asInt();
-                        return affectedProductId == paymentEvent.EventBody.get("OrderId").asInt();
+                        var affectedProductId = orderSubmittedEvent.getEventBody().get("OrderId").asInt();
+                        return affectedProductId == paymentEvent.getEventBody().get("OrderId").asInt();
                     }
 
                     return false;

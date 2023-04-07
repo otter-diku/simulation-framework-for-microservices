@@ -31,7 +31,7 @@ public class ProductOversoldInvariantChecker {
         var streamSource = KafkaReader.GetDataStreamSource(env)
                 .assignTimestampsAndWatermarks(WatermarkStrategy.<EShopIntegrationEvent>forBoundedOutOfOrderness(Duration.ofSeconds(MAX_LATENESS_OF_EVENT))
                         //.withIdleness(Duration.ofSeconds(2))
-                        .withTimestampAssigner((event, timestamp) -> event.getTimestamp()));
+                        .withTimestampAssigner((event, timestamp) -> event.getEventTime()));
 
 
         CheckOversoldInvariant(env, streamSource, new PrintSinkFunction<>());
@@ -46,10 +46,10 @@ public class ProductOversoldInvariantChecker {
 
 
         var filteredInput = input.filter((FilterFunction<EShopIntegrationEvent>) record ->
-                        record.EventName.equals(EventType.ProductCreatedIntegrationEvent.name())
-                     || record.EventName.equals(EventType.ProductDeletedIntegrationEvent.name())
-                     || record.EventName.equals(EventType.ProductBoughtIntegrationEvent.name())
-                     || record.EventName.equals(EventType.ProductStockChangedIntegrationEvent.name()))
+                        record.getEventName().equals(EventType.ProductCreatedIntegrationEvent.name())
+                     || record.getEventName().equals(EventType.ProductDeletedIntegrationEvent.name())
+                     || record.getEventName().equals(EventType.ProductBoughtIntegrationEvent.name())
+                     || record.getEventName().equals(EventType.ProductStockChangedIntegrationEvent.name()))
                 .setParallelism(1);
 
         Table table =
@@ -67,7 +67,7 @@ public class ProductOversoldInvariantChecker {
                             (EShopIntegrationEvent) r.getFieldAs(0)).setParallelism(1);
 
         var violations = sortedStream
-                .keyBy(r -> r.EventBody.get("ProductId"))
+                .keyBy(r -> r.getEventBody().get("ProductId"))
                 .flatMap(new OversoldMapper())
                 .addSink(sinkFunction).setParallelism(1);
 
@@ -89,12 +89,12 @@ public class ProductOversoldInvariantChecker {
         @Override
         public void flatMap(EShopIntegrationEvent event, Collector<String> collector) throws Exception {
             // get the current stock for the key (Product)
-            var productId = event.EventBody.get("ProductId").asText();
-            var eventType = EventType.valueOf(event.EventName);
+            var productId = event.getEventBody().get("ProductId").asText();
+            var eventType = EventType.valueOf(event.getEventName());
 
             switch (eventType) {
-                case ProductCreatedIntegrationEvent -> currentStock.update(event.EventBody.get("AvailableStock").asInt());
-                case ProductStockChangedIntegrationEvent -> currentStock.update(event.EventBody.get("NewStock").asInt());
+                case ProductCreatedIntegrationEvent -> currentStock.update(event.getEventBody().get("AvailableStock").asInt());
+                case ProductStockChangedIntegrationEvent -> currentStock.update(event.getEventBody().get("NewStock").asInt());
                 case ProductDeletedIntegrationEvent -> currentStock.update(null);
                 case ProductBoughtIntegrationEvent -> HandleProductBoughtIntegrationEvent(event, collector, productId);
             }
@@ -107,7 +107,7 @@ public class ProductOversoldInvariantChecker {
                 collector.collect("Violation: Bought deleted Item with Id: " + productId);
                 return;
             }
-            var unitsBought = event.EventBody.get("Units").asInt();
+            var unitsBought = event.getEventBody().get("Units").asInt();
             if (unitsBought < 0) {
                 collector.collect("Violation: units bought negative for ProductId: " + productId
                         + ", units bought: " + unitsBought);

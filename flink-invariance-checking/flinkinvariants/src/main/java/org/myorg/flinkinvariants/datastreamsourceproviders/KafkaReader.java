@@ -31,7 +31,7 @@ public class KafkaReader {
         KafkaSource<EShopIntegrationEvent> source = getEshopRecordKafkaSource();
         return env.fromSource(source,
                 WatermarkStrategy.<EShopIntegrationEvent>forBoundedOutOfOrderness(boundForOutOfOrderness)
-                        .withTimestampAssigner((event, timestamp) -> event.getTimestamp()), "Kafka Source");
+                        .withTimestampAssigner((event, timestamp) -> event.getEventTime()), "Kafka Source");
     }
 
     private static KafkaSource<EShopIntegrationEvent> getEshopRecordKafkaSource() {

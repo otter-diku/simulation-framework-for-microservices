@@ -32,8 +32,7 @@ public class ProductPriceChangedInvariantChecker {
 
         var streamSource = KafkaReader.GetDataStreamSource(env)
                 .assignTimestampsAndWatermarks(WatermarkStrategy.<EShopIntegrationEvent>forBoundedOutOfOrderness(Duration.ofSeconds(MAX_LATENESS_OF_EVENT))
-                        //.withIdleness(Duration.ofSeconds(2))
-                        .withTimestampAssigner((event, timestamp) -> event.getTimestamp()));
+                        .withTimestampAssigner((event, timestamp) -> event.getEventTime()));
 
         CheckProductPriceChangedInvariant(env, streamSource, new PrintSinkFunction<>());
     }
@@ -44,8 +43,8 @@ public class ProductPriceChangedInvariantChecker {
              SinkFunction<String> sinkFunction) throws  Exception {
 
         var filteredStream = input.filter(e ->
-                e.EventName.equals("UserCheckoutAcceptedIntegrationEvent") ||
-                e.EventName.equals("ProductPriceChangedIntegrationEvent")).setParallelism(1);
+                e.getEventName().equals("UserCheckoutAcceptedIntegrationEvent") ||
+                e.getEventName().equals("ProductPriceChangedIntegrationEvent")).setParallelism(1);
 
         var patternStream = CEP.pattern(filteredStream, InvariantPattern);
         var matches = patternStream
@@ -65,18 +64,18 @@ public class ProductPriceChangedInvariantChecker {
             .where(new SimpleCondition<>() {
                 @Override
                 public boolean filter(EShopIntegrationEvent eshopIntegrationEvent) {
-                    return eshopIntegrationEvent.EventName.equals(EventType.ProductPriceChangedIntegrationEvent.name());
+                    return eshopIntegrationEvent.getEventName().equals(EventType.ProductPriceChangedIntegrationEvent.name());
                 }
             })
             .notFollowedBy("subsequentPriceChange")
             .where(new IterativeCondition<>() {
                 @Override
                 public boolean filter(EShopIntegrationEvent subsequentPriceChangeEvent, Context<EShopIntegrationEvent> context) throws Exception {
-                    if (!subsequentPriceChangeEvent.EventName.equals(EventType.ProductPriceChangedIntegrationEvent.name()))
+                    if (!subsequentPriceChangeEvent.getEventName().equals(EventType.ProductPriceChangedIntegrationEvent.name()))
                         return false;
 
                     for (var firstPriceChangeEvent : context.getEventsForPattern("firstPriceChange")) {
-                        return firstPriceChangeEvent.EventBody.get("ProductId").asInt() == subsequentPriceChangeEvent.EventBody.get("ProductId").asInt();
+                        return firstPriceChangeEvent.getEventBody().get("ProductId").asInt() == subsequentPriceChangeEvent.getEventBody().get("ProductId").asInt();
                     }
 
                     return false;
@@ -86,16 +85,16 @@ public class ProductPriceChangedInvariantChecker {
             .where(new IterativeCondition<>() {
                 @Override
                 public boolean filter(EShopIntegrationEvent userCheckoutEvent, Context<EShopIntegrationEvent> context) throws Exception {
-                    if (!userCheckoutEvent.EventName.equals("UserCheckoutAcceptedIntegrationEvent")) {
+                    if (!userCheckoutEvent.getEventName().equals("UserCheckoutAcceptedIntegrationEvent")) {
                         return false;
                     }
 
                     for (var priceChangeEvent : context.getEventsForPattern("firstPriceChange")) {
 
-                        var affectedProductId = priceChangeEvent.EventBody.get("ProductId").asInt();
-                        var newPrice = priceChangeEvent.EventBody.get("NewPrice").asDouble();
+                        var affectedProductId = priceChangeEvent.getEventBody().get("ProductId").asInt();
+                        var newPrice = priceChangeEvent.getEventBody().get("NewPrice").asDouble();
 
-                        for (Iterator<JsonNode> it = userCheckoutEvent.EventBody.get("Basket").get("Items").elements(); it.hasNext(); ) {
+                        for (Iterator<JsonNode> it = userCheckoutEvent.getEventBody().get("Basket").get("Items").elements(); it.hasNext(); ) {
                             var item = it.next();
                             if (affectedProductId == item.get("ProductId").asInt() && newPrice != item.get("UnitPrice").asDouble())
                                 return true;
