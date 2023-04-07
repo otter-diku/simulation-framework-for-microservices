@@ -1,16 +1,38 @@
 package org.myorg.flinkinvariants.events;
 import com.fasterxml.jackson.databind.JsonNode;
 
-import java.time.Instant;
 import java.util.Objects;
 
 public class EShopIntegrationEvent {
 
-    public String EventName;
+    private String EventName;
+    private JsonNode EventBody;
+    private Long EventTime;
 
-    public JsonNode EventBody;
+    public String getEventName() {
+        return EventName;
+    }
 
-    private Long eventTime;
+    public void setEventName(String eventName) {
+        EventName = eventName;
+    }
+
+    public JsonNode getEventBody() {
+        return EventBody;
+    }
+
+    public void setEventBody(JsonNode eventBody) {
+        EventBody = eventBody;
+    }
+
+    public Long getEventTime() {
+        return EventTime;
+    }
+
+    public void setEventTime(Long eventTime) {
+        EventTime = eventTime;
+    }
+
 
     public EShopIntegrationEvent() {
 
@@ -19,17 +41,14 @@ public class EShopIntegrationEvent {
     public EShopIntegrationEvent(String EventName, JsonNode EventBody, Long eventTime) {
         this.EventName = EventName;
         this.EventBody = EventBody;
-        this.eventTime = eventTime;
+        this.EventTime = eventTime;
     }
 
     @Override
     public String toString() {
-        return "EventName: " + EventName + ", " + "EventBody: " + EventBody + ", eventTime: " + eventTime;
+        return "EventName: " + EventName + ", " + "EventBody: " + EventBody + ", eventTime: " + EventTime;
     }
 
-    public Long getTimestamp() {
-        return eventTime;
-    }
 
     /*
      * The events in the DataStream to which you want to apply pattern matching must implement proper equals() and hashCode()
@@ -45,11 +64,11 @@ public class EShopIntegrationEvent {
         EShopIntegrationEvent r = (EShopIntegrationEvent) o;
         return  Objects.equals(EventName, r.EventName) &&
                 Objects.equals(EventBody, r.EventBody) &&
-                Objects.equals(eventTime, r.eventTime);
+                Objects.equals(EventTime, r.EventTime);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(EventName, EventBody, eventTime);
+        return Objects.hash(EventName, EventBody, EventTime);
     }
 }

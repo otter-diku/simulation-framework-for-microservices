@@ -40,7 +40,7 @@ public class InvariantsTest {
                 .GetDataStreamSource(env, "/src/product_price_changed_invariant_1.json")
                 .assignTimestampsAndWatermarks(WatermarkStrategy.<EShopIntegrationEvent>
                                 forBoundedOutOfOrderness(Duration.ofSeconds(20))
-                        .withTimestampAssigner((event, timestamp) -> event.getTimestamp()));
+                        .withTimestampAssigner((event, timestamp) -> event.getEventTime()));
 
         // values are collected in a static variable
         ViolationSink.values.clear();
@@ -70,7 +70,7 @@ public class InvariantsTest {
                 .GetDataStreamSource(env, "/src/product_price_changed_invariant_2.json")
                 .assignTimestampsAndWatermarks(WatermarkStrategy.<EShopIntegrationEvent>
                                 forBoundedOutOfOrderness(Duration.ofSeconds(20))
-                        .withTimestampAssigner((event, timestamp) -> event.getTimestamp()));
+                        .withTimestampAssigner((event, timestamp) -> event.getEventTime()));
 
         // values are collected in a static variable
         ViolationSink.values.clear();
@@ -110,7 +110,7 @@ public class InvariantsTest {
                 .GetDataStreamSource(env, "/src/product_price_changed_invariant_3.json")
                 .assignTimestampsAndWatermarks(WatermarkStrategy.<EShopIntegrationEvent>
                                 forBoundedOutOfOrderness(Duration.ofSeconds(20))
-                        .withTimestampAssigner((event, timestamp) -> event.getTimestamp()));
+                        .withTimestampAssigner((event, timestamp) -> event.getEventTime()));
 
         // values are collected in a static variable
         ViolationSink.values.clear();
@@ -141,7 +141,7 @@ public class InvariantsTest {
                 .GetDataStreamSource(env, "/src/product_price_changed_invariant_4.json")
                 .assignTimestampsAndWatermarks(WatermarkStrategy.<EShopIntegrationEvent>
                                 forBoundedOutOfOrderness(Duration.ofSeconds(20))
-                        .withTimestampAssigner((event, timestamp) -> event.getTimestamp()));
+                        .withTimestampAssigner((event, timestamp) -> event.getEventTime()));
 
         // values are collected in a static variable
         ViolationSink.values.clear();
@@ -160,7 +160,7 @@ public class InvariantsTest {
         var streamSource = env.addSource(fileSource)
                 .assignTimestampsAndWatermarks(WatermarkStrategy.<EShopIntegrationEvent>
                                 forBoundedOutOfOrderness(Duration.ofSeconds(20))
-                        .withTimestampAssigner((event, timestamp) -> event.getTimestamp()));
+                        .withTimestampAssigner((event, timestamp) -> event.getEventTime()));
 
 
         // values are collected in a static variable
@@ -182,7 +182,7 @@ public class InvariantsTest {
         var streamSource = env.addSource(fileSource)
                 .assignTimestampsAndWatermarks(WatermarkStrategy.<EShopIntegrationEvent>
                                 forBoundedOutOfOrderness(Duration.ofSeconds(20))
-                        .withTimestampAssigner((event, timestamp) -> event.getTimestamp()));
+                        .withTimestampAssigner((event, timestamp) -> event.getEventTime()));
 
 
         // values are collected in a static variable
@@ -204,7 +204,7 @@ public class InvariantsTest {
                 .GetDataStreamSource(env, "/src/oversold_1.json")
                 .assignTimestampsAndWatermarks(WatermarkStrategy.<EShopIntegrationEvent>
                                 forBoundedOutOfOrderness(Duration.ofSeconds(20))
-                        .withTimestampAssigner((event, timestamp) -> event.getTimestamp()));
+                        .withTimestampAssigner((event, timestamp) -> event.getEventTime()));
 
         // values are collected in a static variable
         ViolationSink.values.clear();
@@ -224,7 +224,7 @@ public class InvariantsTest {
                 .GetDataStreamSource(env, "/src/oversold_2.json")
                 .assignTimestampsAndWatermarks(WatermarkStrategy.<EShopIntegrationEvent>
                                 forBoundedOutOfOrderness(Duration.ofSeconds(20))
-                        .withTimestampAssigner((event, timestamp) -> event.getTimestamp()));
+                        .withTimestampAssigner((event, timestamp) -> event.getEventTime()));
 
         // values are collected in a static variable
         ViolationSink.values.clear();
@@ -243,7 +243,7 @@ public class InvariantsTest {
                 .GetDataStreamSource(env, "/src/oversold_3.json")
                 .assignTimestampsAndWatermarks(WatermarkStrategy.<EShopIntegrationEvent>
                                 forBoundedOutOfOrderness(Duration.ofSeconds(20))
-                        .withTimestampAssigner((event, timestamp) -> event.getTimestamp()));
+                        .withTimestampAssigner((event, timestamp) -> event.getEventTime()));
 
         // values are collected in a static variable
         ViolationSink.values.clear();
