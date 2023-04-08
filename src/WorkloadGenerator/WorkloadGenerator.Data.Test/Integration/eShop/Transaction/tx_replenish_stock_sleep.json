@@ -1,5 +1,5 @@
 {
-  "templateId": "update-catalog-item-price-sleep",
+  "templateId": "replenish-stock-sleep",
   "arguments": [
     {
       "name": "product-id",
@@ -8,20 +8,20 @@
     {
       "name": "sleep-time",
       "type": "number"
-    }    
+    }
   ],
   "operations": [
     {
       "operationReferenceId": "sleep-in-sec",
-      "id": "op-1"
-    },    
-    {
-      "operationReferenceId": "catalog-get-item-by-id",
-      "id": "op-2"
+      "id": "sleep-1"
     },
     {
-      "operationReferenceId": "catalog-update-price",
-      "id": "op-3"
+      "operationReferenceId": "catalog-get-item-by-id",
+      "id": "op-1"
+    },
+    {
+      "operationReferenceId": "catalog-replenish-stock",
+      "id": "op-2"
     }
   ]
 }

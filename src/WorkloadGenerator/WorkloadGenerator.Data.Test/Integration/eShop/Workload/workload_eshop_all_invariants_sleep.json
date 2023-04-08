@@ -1,0 +1,138 @@
+{
+  "templateId": "workload-eshop-all-invariants-sleep",
+  "maxConcurrentTransactions": 15,
+  "generators": [
+    {
+      "id": "productId",
+      "type": "unsignedInt",
+      "distribution": "uniform",
+      "min": 1,
+      "max": 20
+    },
+    {
+      "id": "sleepSeconds",
+      "type": "unsignedInt",
+      "distribution": "uniform",
+      "min": 1,
+      "max": 5
+    },
+    {
+      "id": "userId",
+      "type": "constant",
+      "constant": "10000000-0000-0000-0000-000000000000"
+    }
+  ],
+  "transactions": [
+    {
+      "id": "replenish-stock-sleep",
+      "transactionReferenceId": "replenish-stock-sleep",
+      "count": 100,
+      "data": [
+        {
+          "name":  "product-id",
+          "generatorReferenceId": "productId"
+        },
+        {
+          "name":  "sleep-time",
+          "generatorReferenceId": "sleepSeconds"
+        }
+      ]
+    },
+    {
+      "id": "buy-item-entire-stock-sleep",
+      "transactionReferenceId": "buy-item-entire-stock-sleep",
+      "count": 100,
+      "data": [
+        {
+          "name":  "user-id",
+          "generatorReferenceId": "userId"
+        },
+        {
+          "name":  "product-id",
+          "generatorReferenceId": "productId"
+        },
+        {
+          "name":  "sleep-time",
+          "generatorReferenceId": "sleepSeconds"
+        }        
+      ]
+    },
+    {
+      "id": "price-update-1-sleep",
+      "transactionReferenceId": "update-catalog-item-price-sleep",
+      "count": 100,
+      "data": [
+        {
+          "name":  "product-id",
+          "generatorReferenceId": "productId"
+        },
+        {
+          "name":  "sleep-time",
+          "generatorReferenceId": "sleepSeconds"
+        }          
+      ]
+    },
+    {
+      "id": "checkout-3-items-sleep",
+      "transactionReferenceId": "checkout-3-items-sleep",
+      "count": 100,
+      "data": [
+        {
+          "name":  "user-id",
+          "generatorReferenceId": "userId"
+        },
+        {
+          "name":  "product-id-1",
+          "generatorReferenceId": "productId"
+        },
+        {
+          "name":  "product-id-2",
+          "generatorReferenceId": "productId"
+        },
+        {
+          "name":  "product-id-3",
+          "generatorReferenceId": "productId"
+        },
+        {
+          "name":  "sleep-time",
+          "generatorReferenceId": "sleepSeconds"
+        }          
+      ]
+    },
+    {
+      "id": "checkout-5-items-sleep",
+      "transactionReferenceId": "checkout-5-items-sleep",
+      "count": 100,
+      "data": [
+        {
+          "name":  "user-id",
+          "generatorReferenceId": "userId"
+        },
+        {
+          "name":  "product-id-1",
+          "generatorReferenceId": "productId"
+        },
+        {
+          "name":  "product-id-2",
+          "generatorReferenceId": "productId"
+        },
+        {
+          "name":  "product-id-3",
+          "generatorReferenceId": "productId"
+        },
+        {
+          "name":  "product-id-4",
+          "generatorReferenceId": "productId"
+        },
+        {
+          "name":  "product-id-5",
+          "generatorReferenceId": "productId"
+        },
+        {
+          "name":  "sleep-time",
+          "generatorReferenceId": "sleepSeconds"
+        }          
+      ]
+    }
+  ]
+}
