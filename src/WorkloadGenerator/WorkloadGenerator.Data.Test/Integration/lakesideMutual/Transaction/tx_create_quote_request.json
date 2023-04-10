@@ -1,0 +1,9 @@
+{
+  "templateId": "create-quote-request",
+  "operations": [
+    {
+      "operationReferenceId": "create-insurance-quote-request",
+      "id": "op-1"
+    }
+  ]
+}
