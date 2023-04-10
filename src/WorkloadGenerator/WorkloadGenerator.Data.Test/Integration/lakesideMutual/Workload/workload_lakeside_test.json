@@ -1,0 +1,11 @@
+{
+  "templateId": "workload-lakeside-test",
+  "maxConcurrentTransactions": 15,
+  "transactions": [
+    {
+      "id": "tx-create-quote-request",
+      "transactionReferenceId": "create-quote-request",
+      "count": 20
+    }
+  ]
+}
