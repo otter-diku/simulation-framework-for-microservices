@@ -17,9 +17,9 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.myorg.flinkinvariants.invariantcheckers.LackingPaymentEventInvariantChecker.CheckLackingPaymentInvariant;
-import static org.myorg.flinkinvariants.invariantcheckers.ProductOversoldInvariantChecker.CheckOversoldInvariant;
-import static org.myorg.flinkinvariants.invariantcheckers.ProductPriceChangedInvariantChecker.CheckProductPriceChangedInvariant;
+import static org.myorg.flinkinvariants.invariantcheckers.eshop.LackingPaymentEventInvariantChecker.CheckLackingPaymentInvariant;
+import static org.myorg.flinkinvariants.invariantcheckers.eshop.ProductOversoldInvariantChecker.CheckOversoldInvariant;
+import static org.myorg.flinkinvariants.invariantcheckers.eshop.ProductPriceChangedInvariantChecker.CheckProductPriceChangedInvariant;
 
 public class InvariantsTest {
 

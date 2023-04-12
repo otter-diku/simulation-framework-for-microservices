@@ -1,4 +1,4 @@
-package org.myorg.flinkinvariants.invariantcheckers;
+package org.myorg.flinkinvariants.invariantcheckers.eshop;
 
 
 import org.apache.flink.api.common.RuntimeExecutionMode;
