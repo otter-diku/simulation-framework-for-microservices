@@ -1,9 +1,10 @@
 package org.myorg.flinkinvariants.invariantcheckers.lakeside;
 
+import org.apache.flink.api.common.functions.MapFunction;
+import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.myorg.flinkinvariants.datastreamsourceproviders.KafkaReader;
-
-import java.time.Duration;
+import org.myorg.flinkinvariants.events.Event;
 
 public class LakesidePrintJob {
 
@@ -13,8 +14,6 @@ public class LakesidePrintJob {
     private static final String TOPIC_4 = "insurance-quote-expired-event-queue";
     private static final String TOPIC_5 = "policy-created-event-queue";
     private static final String GROUP_ID = "Lakeside-print-job";
-
-    private static final int MAX_LATENESS_OF_EVENT = 20;
 
     public static void main(String[] args) throws Exception {
         final StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
