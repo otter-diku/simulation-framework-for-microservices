@@ -19,9 +19,12 @@ import org.apache.flink.util.Collector;
 import org.myorg.flinkinvariants.datastreamsourceproviders.KafkaReader;
 import org.myorg.flinkinvariants.events.EShopIntegrationEvent;
 import org.myorg.flinkinvariants.events.EventType;
+import org.myorg.flinkinvariants.events.InvariantViolationEvent;
+import org.myorg.flinkinvariants.sinks.SeqSink;
 
 import java.io.IOException;
 import java.time.Duration;
+import java.util.Map;
 
 public class ProductOversoldInvariantChecker {
 
@@ -36,13 +39,13 @@ public class ProductOversoldInvariantChecker {
                         .withTimestampAssigner((event, timestamp) -> event.getEventTime()));
 
 
-        CheckOversoldInvariant(env, streamSource, new PrintSinkFunction<>());
+        CheckOversoldInvariant(env, streamSource, new SeqSink());
     }
 
     public static void CheckOversoldInvariant(
             StreamExecutionEnvironment env,
             DataStream<EShopIntegrationEvent> input,
-            SinkFunction<String> sinkFunction
+            SinkFunction<InvariantViolationEvent> sinkFunction
     ) throws Exception {
         StreamTableEnvironment tableEnv = StreamTableEnvironment.create(env);
 
@@ -81,7 +84,7 @@ public class ProductOversoldInvariantChecker {
         env.execute("Flink Eshop Product Oversold Invariant");
     }
 
-    static class OversoldMapper extends RichFlatMapFunction<EShopIntegrationEvent, String> {
+    static class OversoldMapper extends RichFlatMapFunction<EShopIntegrationEvent, InvariantViolationEvent> {
 
         /** The state for the current key. */
         private ValueState<Integer> currentStock;
@@ -94,7 +97,7 @@ public class ProductOversoldInvariantChecker {
         }
 
         @Override
-        public void flatMap(EShopIntegrationEvent event, Collector<String> collector) throws Exception {
+        public void flatMap(EShopIntegrationEvent event, Collector<InvariantViolationEvent> collector) throws Exception {
             // get the current stock for the key (Product)
             var productId = event.getEventBody().get("ProductId").asText();
             var eventType = EventType.valueOf(event.getEventName());
@@ -107,24 +110,36 @@ public class ProductOversoldInvariantChecker {
             }
         }
 
-        private void HandleProductBoughtIntegrationEvent(EShopIntegrationEvent event, Collector<String> collector, String productId) throws IOException {
+        private void HandleProductBoughtIntegrationEvent(EShopIntegrationEvent event, Collector<InvariantViolationEvent> collector, String productId) throws IOException {
             Integer stock = currentStock.value();
             // null signals product is deleted
             if (stock == null) {
-                collector.collect("Violation: Bought deleted Item with Id: " + productId);
+                collector.collect(new InvariantViolationEvent(event.getEventTimeAsString(),
+                        "{InvariantName} invariant violated - {SubType}",
+                        Map.of("InvariantName", "ProductOversoldInvariant", "SubType", "Bought deleted item")));
+                // collector.collect("Violation: Bought deleted Item with Id: " + productId);
                 return;
             }
             var unitsBought = event.getEventBody().get("Units").asInt();
             if (unitsBought < 0) {
-                collector.collect("Violation: units bought negative for ProductId: " + productId
-                        + ", units bought: " + unitsBought);
+                collector.collect(new InvariantViolationEvent(event.getEventTimeAsString(),
+                        "{InvariantName} invariant violated - {SubType}",
+                        Map.of("InvariantName", "ProductOversoldInvariant", "SubType", "Bought negative number of units")));
+
+//                collector.collect("Violation: units bought negative for ProductId: " + productId
+//                        + ", units bought: " + unitsBought);
                 return;
             }
             // check if current stock allows
             if (stock < unitsBought) {
-                collector.collect("Violation: stock not sufficient for ProductId: " + productId
-                        + ", current stock: " + stock
-                        + ", units bought: " + unitsBought);
+
+                collector.collect(new InvariantViolationEvent(event.getEventTimeAsString(),
+                        "{InvariantName} invariant violated - {SubType}",
+                        Map.of("InvariantName", "ProductOversoldInvariant", "SubType", "Stock not sufficient")));
+
+//                collector.collect("Violation: stock not sufficient for ProductId: " + productId
+//                        + ", current stock: " + stock
+//                        + ", units bought: " + unitsBought);
 
                 // TODO: should we set stock to zero here?
             } else {
