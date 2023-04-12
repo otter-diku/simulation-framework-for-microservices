@@ -60,7 +60,7 @@ public class WorkloadCoordinator : IWorkloadCoordinator
         // TODO: we need to find a way of getting some information back from the grains to know that they are finished
         _logger.LogInformation("All transactions have been submitted to the scheduler");
     }
-    
+
     public async Task ScheduleWorkloadStages(
         WorkloadInputUnresolved workloadToRun,
         Dictionary<string, TransactionInputUnresolved> transactions,
@@ -81,21 +81,21 @@ public class WorkloadCoordinator : IWorkloadCoordinator
             return;
         }
         var txDistribution = new TransactionDistribution(workloadToRun.Transactions);
-        
+
         var generators = new Dictionary<String, IGenerator>();
         foreach (var generator in workloadToRun.Generators)
         {
             generators.Add(generator.Id, GeneratorFactory.GetGenerator(generator));
         }
-        
+
         // Execute stage for example for 30 seconds keep submitting
         // to 5 workers then for the next 30 seconds 
         // iterate through list of stages
-        
+
         // TODO: a little bit more complicated would need
         // response from workers to just keep them busy for 30 seconds
         // but not submit more!
-    }    
+    }
 
     private static ExecutableTransaction CreateExecutableTransaction(
         Guid workloadCorrelationId,
@@ -139,7 +139,7 @@ public class WorkloadCoordinator : IWorkloadCoordinator
 
         return maxRate;
     }
-    
+
     private static int GetMaxRateStages(WorkloadInputUnresolved workloadToRun)
     {
         var maxRate = 10;
@@ -149,7 +149,7 @@ public class WorkloadCoordinator : IWorkloadCoordinator
         }
 
         return maxRate;
-    }    
+    }
 
     private static Stack<string> GetTransactionsToExecute(WorkloadInputUnresolved workloadToRun)
     {

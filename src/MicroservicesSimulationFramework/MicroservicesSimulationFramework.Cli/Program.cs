@@ -51,7 +51,7 @@ public static class Program
                           "Exiting...");
         }
 
-        SelectWorkload:
+    SelectWorkload:
         var workloadSelected = SelectWorkload(scenarioValidated!.Workloads.Values.ToList());
         if (workloadSelected is null)
         {
