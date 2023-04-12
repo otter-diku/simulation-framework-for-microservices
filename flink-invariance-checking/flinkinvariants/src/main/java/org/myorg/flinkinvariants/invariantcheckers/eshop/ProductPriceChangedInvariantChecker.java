@@ -1,4 +1,4 @@
-package org.myorg.flinkinvariants.invariantcheckers;
+package org.myorg.flinkinvariants.invariantcheckers.eshop;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import org.apache.flink.api.common.eventtime.WatermarkStrategy;
