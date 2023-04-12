@@ -11,6 +11,8 @@ public abstract class WorkloadInputBase
 
     public List<GeneratorBase>? Generators { get; set; }
     public int? MaxConcurrentTransactions { get; set; }
+
+    public List<Stage>? Stages { get; set; }
 }
 
 public class WorkloadInputBaseValidator : AbstractValidator<WorkloadInputBase>

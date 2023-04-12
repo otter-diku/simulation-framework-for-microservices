@@ -11,6 +11,7 @@ namespace WorkloadGenerator.Grains;
 public class WorkGrain : Grain, IWorkGrain
 {
     private const string StreamNamespace = "TRANSACTIONDATA";
+    private const string StreamToCoordinator = "TRANSACTIONCOMPLETION";
     private const string StreamProviderName = "StreamProvider";
 
     private readonly TransactionRunnerService _runnerService;
@@ -69,5 +70,11 @@ public class WorkGrain : Grain, IWorkGrain
         {
             _logger.LogWarning(exception, "Failed trying to execute transaction");
         }
+        
+        // Notify coordinator that worker is free again
+        var streamProvider = this.GetStreamProvider(StreamProviderName);
+        var streamId = StreamId.Create(StreamToCoordinator, "0");
+        var streamToCoordinator = streamProvider.GetStream<long>(streamId);
+        await streamToCoordinator.OnNextAsync(this.GetPrimaryKeyLong());
     }
 }

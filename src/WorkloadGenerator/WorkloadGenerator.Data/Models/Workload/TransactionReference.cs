@@ -9,6 +9,8 @@ public class TransactionReference
     public string TransactionReferenceId { get; set; }
 
     public int Count { get; set; }
+    
+    public int? Percentage { get; set; }
 
     public List<GeneratorReference> Data { get; set; } = new();
 
