@@ -1,0 +1,121 @@
+{
+  "OwnerId": "user-admin",
+  "Title": "Eshop Dashboard",
+  "IsProtected": false,
+  "SignalExpression": null,
+  "Charts": [
+    {
+      "Id": "chart-34",
+      "Title": "Transactions Started",
+      "SignalExpression": null,
+      "Queries": [
+        {
+          "Id": "chartquery-35",
+          "Measurements": [
+            {
+              "Value": "count(*)",
+              "Label": "col0"
+            }
+          ],
+          "Where": "@Message = 'Starting to execute transaction'",
+          "SignalExpression": null,
+          "GroupBy": [
+            "TransactionTemplateId"
+          ],
+          "DisplayStyle": {
+            "Type": "Line",
+            "LineFillToZeroY": false,
+            "LineShowMarkers": true,
+            "BarOverlaySum": false,
+            "SuppressLegend": false,
+            "Palette": "Default"
+          },
+          "Having": null,
+          "OrderBy": [],
+          "Limit": null
+        }
+      ],
+      "DisplayStyle": {
+        "WidthColumns": 6,
+        "HeightRows": 2
+      }
+    },
+    {
+      "Id": "chart-17",
+      "Title": "Invariants Violations",
+      "SignalExpression": null,
+      "Queries": [
+        {
+          "Id": "chartquery-18",
+          "Measurements": [
+            {
+              "Value": "count(*)",
+              "Label": "col0"
+            }
+          ],
+          "Where": "@Message like '%invariant%'",
+          "SignalExpression": null,
+          "GroupBy": [
+            "InvariantName"
+          ],
+          "DisplayStyle": {
+            "Type": "Line",
+            "LineFillToZeroY": false,
+            "LineShowMarkers": true,
+            "BarOverlaySum": false,
+            "SuppressLegend": false,
+            "Palette": "Default"
+          },
+          "Having": null,
+          "OrderBy": [],
+          "Limit": null
+        }
+      ],
+      "DisplayStyle": {
+        "WidthColumns": 6,
+        "HeightRows": 2
+      }
+    },
+    {
+      "Id": "chart-65",
+      "Title": "Finished Tx and Violations",
+      "SignalExpression": null,
+      "Queries": [
+        {
+          "Id": "chartquery-66",
+          "Measurements": [
+            {
+              "Value": "count(*)",
+              "Label": "col0"
+            }
+          ],
+          "Where": "@Message like '%Transaction finished%' or @Message like '%Invariant%'",
+          "SignalExpression": null,
+          "GroupBy": [
+            "@EventType"
+          ],
+          "DisplayStyle": {
+            "Type": "Pie",
+            "LineFillToZeroY": false,
+            "LineShowMarkers": true,
+            "BarOverlaySum": false,
+            "SuppressLegend": false,
+            "Palette": "Default"
+          },
+          "Having": null,
+          "OrderBy": [],
+          "Limit": null
+        }
+      ],
+      "DisplayStyle": {
+        "WidthColumns": 6,
+        "HeightRows": 1
+      }
+    }
+  ],
+  "Id": "dashboard-34",
+  "Links": {
+    "Self": "api/dashboards/dashboard-34?version=7",
+    "Group": "api/dashboards/resources"
+  }
+}

@@ -1,0 +1,51 @@
+{
+  "templateId": "checkout-5-items-sleep",
+  "arguments": [
+    {
+      "name": "user-id",
+      "type": "string"
+    },
+    {
+      "name": "sleep-time",
+      "type": "number"
+    },
+    {
+      "name": "product-id-1",
+      "type": "number"
+    },
+    {
+      "name": "product-id-2",
+      "type": "number"
+    },
+    {
+      "name": "product-id-3",
+      "type": "number"
+    },
+    {
+      "name": "product-id-4",
+      "type": "number"
+    },
+    {
+      "name": "product-id-5",
+      "type": "number"
+    }
+  ],
+  "operations": [
+    {
+      "operationReferenceId": "sleep-in-sec",
+      "id": "sleep-1"
+    },    
+    {
+      "operationReferenceId": "catalog-get-5-items",
+      "id": "op-1"
+    },
+    {
+      "operationReferenceId": "basket-add-5-items",
+      "id": "op-2"
+    },
+    {
+      "operationReferenceId": "basket-checkout",
+      "id": "op-3"
+    }
+  ]
+}
