@@ -13,7 +13,10 @@ public class LakesidePrintJob {
     private static final String TOPIC_3 = "insurance-quote-response-event-queue";
     private static final String TOPIC_4 = "insurance-quote-expired-event-queue";
     private static final String TOPIC_5 = "policy-created-event-queue";
+
+    private static final String TOPIC_6 = "newpolicies";
     private static final String GROUP_ID = "Lakeside-print-job";
+
 
     public static void main(String[] args) throws Exception {
         final StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
@@ -32,6 +35,9 @@ public class LakesidePrintJob {
 
         var streamSource5 = KafkaReader.GetDataStreamSourceLakeside(env, TOPIC_5, GROUP_ID);
         streamSource5.map(event -> event.Type + ": " + event.Content.toString()).print();
+
+        var streamSource6 = KafkaReader.GetDataStreamSourceLakeside(env, TOPIC_6, GROUP_ID);
+        streamSource6.map(event -> event.Type + ": " + event.Content.toString()).print();
 
 
         env.execute("Lakeside print job");

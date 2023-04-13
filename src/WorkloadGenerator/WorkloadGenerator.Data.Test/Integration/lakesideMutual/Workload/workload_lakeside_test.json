@@ -5,7 +5,12 @@
     {
       "id": "tx-create-quote-request",
       "transactionReferenceId": "create-quote-request",
-      "count": 20
+      "count": 1
+    },
+    {
+      "id": "tx-create-policy",
+      "transactionReferenceId": "create-policy",
+      "count": 5
     }
   ]
 }

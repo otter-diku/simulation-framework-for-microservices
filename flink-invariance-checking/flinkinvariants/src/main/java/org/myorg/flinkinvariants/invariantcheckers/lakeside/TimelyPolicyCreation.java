@@ -14,8 +14,12 @@ import org.apache.flink.streaming.api.windowing.time.Time;
 import org.apache.flink.util.Collector;
 import org.myorg.flinkinvariants.datastreamsourceproviders.KafkaReader;
 import org.myorg.flinkinvariants.events.Event;
+import org.myorg.flinkinvariants.events.InvariantViolationEvent;
+import org.myorg.flinkinvariants.sinks.SeqSink;
 
 import java.time.Duration;
+import java.time.Instant;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -38,7 +42,6 @@ public class TimelyPolicyCreation {
 
         var combinedStream = streamSourceCustomer.union(streamSourcePolicy)
                 .assignTimestampsAndWatermarks(WatermarkStrategy.<Event>forBoundedOutOfOrderness(Duration.ofSeconds(MAX_LATENESS_OF_EVENT))
-                .withIdleness(Duration.ofSeconds(1))
                 .withTimestampAssigner((event, timestamp) -> event.Content.get("date").asLong()));
 
         var timelyCreationPattern = Pattern.<Event>begin("customerAccepted")
@@ -61,15 +64,18 @@ public class TimelyPolicyCreation {
                 }).within(Time.milliseconds(40));
 
 
-        DataStream<String> acceptedWithToLateCreationStream = CEP.pattern(combinedStream, timelyCreationPattern)
+        DataStream<InvariantViolationEvent> acceptedWithToLateCreationStream = CEP.pattern(combinedStream, timelyCreationPattern)
                 .inEventTime()
-                .process(new PatternProcessFunction<Event, String>() {
+                .process(new PatternProcessFunction<Event, InvariantViolationEvent>() {
                     @Override
-                    public void processMatch(Map<String, List<Event>> map, Context context, Collector<String> collector) {
-                        collector.collect(map.toString());
+                    public void processMatch(Map<String, List<Event>> map, Context context, Collector<InvariantViolationEvent> collector) {
+                        var event = map.get("customerAccepted").iterator().next();
+                        collector.collect(new InvariantViolationEvent(Instant.now().toString(),
+                                "{InvariantName} invariant violated",
+                                Collections.singletonMap("InvariantName", event.Type)));
                     }
                 });
-        acceptedWithToLateCreationStream.print();
+        acceptedWithToLateCreationStream.addSink(new SeqSink());
 
         env.execute("Lakeside print job");
     }

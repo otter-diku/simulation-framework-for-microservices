@@ -1,0 +1,12 @@
+{
+  "templateId": "op-delete-policy",
+  "type": "http",
+  "arguments": [
+    {
+      "name": "url",
+      "type": "string"
+    }
+  ],
+  "httpMethod": "delete",
+  "url": "{{url}}"
+}

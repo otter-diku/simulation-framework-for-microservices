@@ -1,0 +1,9 @@
+{
+  "templateId": "create-policy",
+  "operations": [
+    {
+      "operationReferenceId": "create-policy",
+      "id": "op-1"
+    }
+  ]
+}
