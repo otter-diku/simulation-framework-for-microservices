@@ -4,11 +4,13 @@ import org.apache.flink.api.common.eventtime.WatermarkStrategy;
 import org.apache.flink.cep.CEP;
 import org.apache.flink.cep.functions.PatternProcessFunction;
 import org.apache.flink.cep.pattern.Pattern;
+import org.apache.flink.cep.pattern.conditions.IterativeCondition;
 import org.apache.flink.cep.pattern.conditions.SimpleCondition;
 import org.apache.flink.streaming.api.TimeCharacteristic;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.streaming.api.functions.AssignerWithPeriodicWatermarks;
+import org.apache.flink.streaming.api.windowing.time.Time;
 import org.apache.flink.util.Collector;
 import org.myorg.flinkinvariants.datastreamsourceproviders.KafkaReader;
 import org.myorg.flinkinvariants.events.Event;
@@ -39,25 +41,35 @@ public class TimelyPolicyCreation {
                 .withIdleness(Duration.ofSeconds(1))
                 .withTimestampAssigner((event, timestamp) -> event.Content.get("date").asLong()));
 
-        // test sorting with flink cep
-        var sortPattern = Pattern.<Event>begin("everything")
+        var timelyCreationPattern = Pattern.<Event>begin("customerAccepted")
                 .where(new SimpleCondition<>() {
                     @Override
                     public boolean filter(Event event) {
-                        return true;
+                        return event.Type.equals(TOPIC_CUSTOMER_DECISION) && event.Content.get("quoteAccepted").asBoolean();
                     }
-                });
-        DataStream<Event> sortedStream = CEP.pattern(combinedStream, sortPattern)
-                .inEventTime()
-                .process(new PatternProcessFunction<Event, Event>() {
+                }).notFollowedBy("policyCreated")
+                .where(new IterativeCondition<Event>() {
                     @Override
-                    public void processMatch(Map<String, List<Event>> map, Context context, Collector<Event> collector) {
-                        collector.collect(map.get("everything").get(0));
+                    public boolean filter(Event event, Context<Event> context) throws Exception {
+                        if (!event.Type.equals(TOPIC_POLICY_CREATED)) {
+                            return false;
+                        }
+                        var acceptedEvent = context.getEventsForPattern("customerAccepted").iterator().next();
+                        return event.Content.get("insuranceQuoteRequestId").asInt()
+                                == acceptedEvent.Content.get("insuranceQuoteRequestId").asInt();
+                    }
+                }).within(Time.milliseconds(40));
+
+
+        DataStream<String> acceptedWithToLateCreationStream = CEP.pattern(combinedStream, timelyCreationPattern)
+                .inEventTime()
+                .process(new PatternProcessFunction<Event, String>() {
+                    @Override
+                    public void processMatch(Map<String, List<Event>> map, Context context, Collector<String> collector) {
+                        collector.collect(map.toString());
                     }
                 });
-        sortedStream.map(event -> event.Content.toString()).print();
-
-
+        acceptedWithToLateCreationStream.print();
 
         env.execute("Lakeside print job");
     }
