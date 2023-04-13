@@ -28,10 +28,11 @@ public class KafkaReader {
         return env.fromSource(source, WatermarkStrategy.noWatermarks(), "Kafka Source");
     }
 
-    public static DataStreamSource<Event> GetDataStreamSource(StreamExecutionEnvironment env, String topic, String groupid) {
-        KafkaSource<Event> source = getLakesideKafkaSource(topic, groupId);
-        return env.fromSource(source, WatermarkStrategy.noWatermarks(), "Lakeside Source");
+    public static DataStreamSource<Event> GetDataStreamSourceLakeside(StreamExecutionEnvironment env, String topic, String groupid) {
+        KafkaSource<Event> source = getLakesideKafkaSource(topic, groupid);
+        return env.fromSource(source, WatermarkStrategy.noWatermarks(), "Kafka Source");
     }
+
 
     public static DataStreamSource<EShopIntegrationEvent> GetDataStreamSourceEventTime(StreamExecutionEnvironment env, Duration boundForOutOfOrderness) {
         KafkaSource<EShopIntegrationEvent> source = getEshopRecordKafkaSource();
