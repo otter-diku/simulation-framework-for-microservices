@@ -2,6 +2,7 @@ package org.myorg.flinkinvariants.invariantcheckers.eshop;
 
 import org.apache.flink.api.common.eventtime.WatermarkStrategy;
 import org.apache.flink.api.common.functions.FilterFunction;
+import org.apache.flink.api.common.functions.MapFunction;
 import org.apache.flink.api.common.functions.RichFlatMapFunction;
 import org.apache.flink.api.common.state.ValueState;
 import org.apache.flink.api.common.state.ValueStateDescriptor;
@@ -13,6 +14,7 @@ import org.apache.flink.streaming.api.functions.sink.SinkFunction;
 import org.apache.flink.table.api.Schema;
 import org.apache.flink.table.api.Table;
 import org.apache.flink.table.api.bridge.java.StreamTableEnvironment;
+import org.apache.flink.types.Row;
 import org.apache.flink.util.Collector;
 import org.myorg.flinkinvariants.datastreamsourceproviders.KafkaReader;
 import org.myorg.flinkinvariants.events.EShopIntegrationEvent;
@@ -66,8 +68,13 @@ public class ProductOversoldInvariantChecker {
         tableEnv.createTemporaryView("events", table);
         Table sorted = tableEnv.sqlQuery("SELECT * FROM events ORDER BY rowtime ASC");
 
-        DataStream<EShopIntegrationEvent> sortedStream = tableEnv.toDataStream(sorted).map(r ->
-                            (EShopIntegrationEvent) r.getFieldAs(0)).setParallelism(1);
+        DataStream<EShopIntegrationEvent> sortedStream = tableEnv.toDataStream(sorted).map(
+                new MapFunction<Row, EShopIntegrationEvent>() {
+                    @Override
+                    public EShopIntegrationEvent map(Row row) throws Exception {
+                        return new EShopIntegrationEvent(row.getFieldAs(0), row.getFieldAs(1), row.getFieldAs(2));
+                    }
+                }).setParallelism(1);
 
         var violations = sortedStream
                 .keyBy(r -> r.getEventBody().get("ProductId"))
