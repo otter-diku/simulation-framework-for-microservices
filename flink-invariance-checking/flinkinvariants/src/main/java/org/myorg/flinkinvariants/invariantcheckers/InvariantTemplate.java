@@ -231,5 +231,30 @@ public class InvariantTemplate {
                  })
                  .within(Time.seconds(5));
 
-
+    /* Invariant for:
+               EVENT SEQ (E_1 e1, E_2 e2, E_3 e3)
+               WITHIN 5 sec
+             */
+    public static Pattern<Event, ?> ExampleInvariant4 = Pattern.<Event>begin("E_1")
+            .where(new SimpleCondition<>() {
+                @Override
+                public boolean filter(Event event) throws Exception {
+                    return event.Type.equals("E_1");
+                }
+            })
+            .notFollowedBy("E_2")
+            .where(new SimpleCondition<Event>() {
+                @Override
+                public boolean filter(Event event) throws Exception {
+                    return event.Type.equals("E_2");
+                }
+            })
+            .notFollowedBy("E_3")
+            .where(new SimpleCondition<Event>() {
+                @Override
+                public boolean filter(Event event) throws Exception {
+                    return event.Type.equals("E_3");
+                }
+            })
+            .within(Time.seconds(5));
 }
