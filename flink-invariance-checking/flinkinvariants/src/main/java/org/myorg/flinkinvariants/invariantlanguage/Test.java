@@ -1,31 +1,33 @@
 package org.myorg.flinkinvariants.invariantlanguage;
 
-import org.apache.flink.cep.pattern.Pattern;
-import org.apache.flink.cep.pattern.conditions.SimpleCondition;
-import org.apache.flink.streaming.api.windowing.time.Time;
-import org.myorg.flinkinvariants.events.Event;
-import org.myorg.invariants.parser.*;
-import org.antlr.v4.runtime.*;
-import org.antlr.v4.runtime.tree.*;
+import org.antlr.v4.runtime.ANTLRInputStream;
+import org.antlr.v4.runtime.CommonTokenStream;
+import org.antlr.v4.runtime.tree.ParseTree;
+import org.antlr.v4.runtime.tree.ParseTreeWalker;
+import org.myorg.invariants.parser.InvariantsBaseListener;
+import org.myorg.invariants.parser.InvariantsLexer;
+import org.myorg.invariants.parser.InvariantsParser;
 
-import static org.apache.flink.cep.pattern.Pattern.begin;
+import java.util.ArrayList;
+import java.util.List;
 
 public class Test {
 
     public static class InvariantLanguage2CEPListener extends InvariantsBaseListener {
         public Boolean firstEvent = true;
+        public int equalityNum = 0;
+        public List<String> equalities = new ArrayList<>();
 
-
-        // TODO use pattern directly / patter builder?
+        public StringBuilder invariantBuilder = new StringBuilder();
 
         String templateFirstEvent = """
-            Pattern.<Event>begin("IDENTIFIER")
-            .where(new SimpleCondition<>() {
-                @Override
-                public boolean filter(Event event) throws Exception {
-                    return event.Type.equals("IDENTIFIER");
-                }
-            })""";
+                public static Pattern<Event, ?> invariant = Pattern.<Event>begin("IDENTIFIER")
+                .where(new SimpleCondition<>() {
+                    @Override
+                    public boolean filter(Event event) throws Exception {
+                        return event.Type.equals("IDENTIFIER");
+                    }
+                })""";
 
         String templateSubsequentEvent = """
             .notFollowedBy("IDENTIFIER")
@@ -37,34 +39,94 @@ public class Test {
             })""";
 
         @Override
-        public void enterEventSchema(InvariantsParser.EventSchemaContext ctx) {
+        public void enterEventId(InvariantsParser.EventIdContext ctx) {
 
             if (firstEvent) {
-                System.out.println(templateFirstEvent.replace("IDENTIFIER", ctx.IDENTIFIER().toString()));
+                invariantBuilder.append(templateFirstEvent.replace("IDENTIFIER", ctx.IDENTIFIER().toString()));
                 firstEvent = false;
                 return;
             }
-            System.out.println(templateSubsequentEvent.replace("IDENTIFIER", ctx.IDENTIFIER().toString()));
-            //super.enterEventSchema(ctx);
+            invariantBuilder.append(templateSubsequentEvent.replace("IDENTIFIER", ctx.IDENTIFIER().toString()));
         }
 
         @Override
+        public void enterWhere_clause(InvariantsParser.Where_clauseContext ctx) {
+            String startIterativeCondition = """
+            .where(new IterativeCondition<>() {
+                @Override
+                public boolean filter(Event event, Context<Event> context) throws Exception {
+                """;
+            invariantBuilder.append(startIterativeCondition);
+        }
+
+        @Override
+        public void exitWhere_clause(InvariantsParser.Where_clauseContext ctx) {
+
+            var operators = ctx.OP();
+            invariantBuilder.append("return ");
+
+            var it = equalities.iterator();
+            for (int i = 0; i < equalities.size() - 1; i++) {
+                invariantBuilder.append(it.next());
+
+                var op = operators.get(i);
+                var javaOp = switch (op.toString()) {
+                    case "AND" -> " && ";
+                    case "OR" -> " || ";
+                    default -> "Unexpected Operator";
+                };
+                invariantBuilder.append(javaOp);
+            }
+            invariantBuilder.append(it.next()).append(";");
+
+
+            String endIterativeCondition = """
+                  }
+              })""";
+            invariantBuilder.append(endIterativeCondition);
+        }
+
+
+        @Override
+        public void enterEquality(InvariantsParser.EqualityContext ctx) {
+            String template = """
+                     context.getEventsForPattern("EVENT1").iterator().next().Content.get("ATTR1").equals(
+                     context.getEventsForPattern("EVENT2").iterator().next().Content.get("ATTR2"))""";
+
+            var event1 = ctx.children.get(0).getChild(0);
+            var attribute1 = ctx.children.get(0).getChild(2);
+            var operator = ctx.children.get(1);
+            var event2 = ctx.children.get(2).getChild(0);
+            var attribute2 = ctx.children.get(2).getChild(2);
+            var result = template.replace("EVENT1", event1.toString())
+                    .replace("EVENT2", event2.toString())
+                    .replace("ATTR1", attribute1.toString())
+                    .replace("ATTR2", attribute2.toString())
+                    .replace("EQ", "eq" + equalityNum);
+            equalityNum++;
+            equalities.add(result);
+        }
+
+
+
+        @Override
         public void enterTime(InvariantsParser.TimeContext ctx) {
-            Integer duration = Integer.parseInt(ctx.INT().toString());
+            int duration = Integer.parseInt(ctx.INT().toString());
             String unit = ctx.TIME().toString();
 
-            switch (unit) {
-                case "sec" -> System.out.println(".within(Time.seconds(%d));".formatted(duration));
-                case "min" -> System.out.println(".within(Time.min(%d));".formatted(duration));
-                case "hour" -> System.out.println(".within(Time.hour(%d));".formatted(duration));
-                default -> System.out.println("Unexpected time unit");
-            }
-            //super.enterTime(ctx);
+            var within = switch (unit) {
+                case "sec" -> ".within(Time.seconds("+ duration + "));";
+                case "min" -> ".within(Time.min(" + duration + "));";
+                case "hour" -> ".within(Time.hour(" + duration + "));";
+                default -> "Unexpected time unit";
+            };
+            invariantBuilder.append(within);
         }
 
         @Override
         public void exitInvariant(InvariantsParser.InvariantContext ctx) {
-            super.exitInvariant(ctx);
+            var invariantCode = invariantBuilder.toString();
+            System.out.println(invariantCode);
         }
     }
 
@@ -73,10 +135,10 @@ public class Test {
         var invariant = "EVENT SEQ (E_1 e_1, E_2 e_2, E_3 e_3) WITHIN 5 sec";
         var invariant2 = """
                 EVENT SEQ (E_1 e_1, E_2 e_2, E_3 e_3)
-                WHERE e_1.id = e_2.id AND e_2.id = e_3.id
+                WHERE e_1.id = e_2.id AND e_2.id = e_3.id AND e_1.id = e_3.id
                 WITHIN 5 sec""";
 
-        ANTLRInputStream input = new ANTLRInputStream(invariant);
+        ANTLRInputStream input = new ANTLRInputStream(invariant2);
         // create a lexer that feeds off of input CharStream
         InvariantsLexer lexer = new InvariantsLexer(input);
 
@@ -90,6 +152,5 @@ public class Test {
         InvariantLanguage2CEPListener translator = new InvariantLanguage2CEPListener();
 
         walker.walk(translator, tree);
-        // System.out.println(tree.toStringTree(parser)); // print LISP-style tree
-    }
+     }
 }

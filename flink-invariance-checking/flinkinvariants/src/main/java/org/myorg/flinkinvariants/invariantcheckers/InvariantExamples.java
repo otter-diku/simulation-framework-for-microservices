@@ -17,7 +17,7 @@ import org.myorg.flinkinvariants.events.Event;
 import java.util.List;
 import java.util.Map;
 
-public class InvariantTemplate {
+public class InvariantExamples {
     private static final int MAX_LATENESS_OF_EVENT = 5;
 
     public static void main(String[] args) throws Exception {
@@ -256,5 +256,43 @@ public class InvariantTemplate {
                     return event.Type.equals("E_3");
                 }
             })
+            .within(Time.seconds(5));
+
+    public static Pattern<Event, ?> test = Pattern.<Event>begin("e_1")
+.where(new SimpleCondition<>() {
+        @Override
+        public boolean filter(Event event) throws Exception {
+            return event.Type.equals("e_1");
+        }
+    })
+            .notFollowedBy("e_2")
+.where(new SimpleCondition<Event>() {
+        @Override
+        public boolean filter(Event event) throws Exception {
+            return event.Type.equals("e_2");
+        }
+    })
+            .notFollowedBy("e_3")
+.where(new SimpleCondition<Event>() {
+        @Override
+        public boolean filter(Event event) throws Exception {
+            return event.Type.equals("e_3");
+        }
+    })
+            .where(new IterativeCondition<>() {
+        @Override
+        public boolean filter(Event event, Context<Event> context) throws Exception {
+
+            return
+                    context.getEventsForPattern("e_1").iterator().next().Content.get("id").equals(
+                            context.getEventsForPattern("e_2").iterator().next().Content.get("id"))
+                            &&
+                            context.getEventsForPattern("e_2").iterator().next().Content.get("id").equals(
+                                    context.getEventsForPattern("e_3").iterator().next().Content.get("id"))
+                            &&
+                            context.getEventsForPattern("e_1").iterator().next().Content.get("id").equals(
+                                    context.getEventsForPattern("e_3").iterator().next().Content.get("id"));
+        }
+    })
             .within(Time.seconds(5));
 }

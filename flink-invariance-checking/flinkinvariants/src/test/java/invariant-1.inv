@@ -1,0 +1,6 @@
+Schema:
+
+
+EVENT SEQ (E_1 e_1, E_2 e_2, E_3 e_3)
+WHERE e_1.id = e_2.id AND e_2.id = e_3.id AND e_1.id = e_3.id
+WITHIN 5 sec""";
