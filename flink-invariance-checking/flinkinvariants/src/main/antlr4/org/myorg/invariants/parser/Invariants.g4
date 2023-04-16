@@ -1,15 +1,25 @@
 grammar Invariants;
 
-invariant
-      : 'EVENT SEQ' '(' events ')' '\n'?
-        ('WHERE' where_clause)? '\n'?
-        ('ORDERING' orderings)? '\n'?
-        'WITHIN' time
-      | 'EVENTS' '(' events ')' '\n'?
-        ('WHERE' where_clause)? '\n'?
-        ('ORDERING' orderings)? '\n'?
-        'WINDOW' time
-        ;
+invariant: eventDefinition* query;
+
+query
+   : 'EVENT SEQ' '(' events ')' '\n'?
+     ('WHERE' where_clause)? '\n'?
+     ('ORDERING' orderings)? '\n'?
+     'WITHIN' time
+   | 'EVENTS' '(' events ')' '\n'?
+     ('WHERE' where_clause)? '\n'?
+     ('ORDERING' orderings)? '\n'?
+     'WINDOW' time;
+
+eventDefinition: eventName
+                 'topic:' topic
+                 'schema:' schema
+                 ;
+eventName: IDENTIFIER;
+topic: IDENTIFIER;
+schema: '{' IDENTIFIER (',' IDENTIFIER)* '}';
+
 
 events: event (',' event)*;
 event: eventSchema eventId;
@@ -32,12 +42,13 @@ time: INT TIME;
 OP: 'AND' | 'OR';
 INT: [0-9]+;
 TIME
-    : 'sec'
+    : 'milli'
+    | 'sec'
     | 'min'
     | 'hour'
     ;
 IDENTIFIER
-    : (LETTER | DIGIT | '_')+
+    : (LETTER | DIGIT | '_' | '-')+
     ;
 DIGIT: [0-9];
 LETTER: [A-Z] | [a-z];

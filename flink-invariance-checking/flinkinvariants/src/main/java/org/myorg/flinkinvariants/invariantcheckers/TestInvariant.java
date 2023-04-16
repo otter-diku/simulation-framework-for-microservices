@@ -1,4 +1,4 @@
-package org.myorg.flinkinvariants.invariantlanguage;
+package org.myorg.flinkinvariants.invariantcheckers;
 
 import org.apache.flink.api.common.eventtime.WatermarkStrategy;
 import org.apache.flink.cep.CEP;
@@ -21,7 +21,7 @@ import java.util.Map;
 
 
 
-public class InvariantTemplate {
+public class TestInvariant {
 
     private static final int MAX_LATENESS_OF_EVENT = 1;
 
@@ -31,9 +31,11 @@ public class InvariantTemplate {
 
         String groupId = "invariant-checker";
 
-        // STREAMS
+var streamSource0 = KafkaReader.GetEventDataStreamSource(env, "customer-decision-event-queue", groupId);
+var streamSource1 = KafkaReader.GetEventDataStreamSource(env, "policy-created-event-queue", groupId);
 
-        DataStream<Event> inputStream = null;
+
+DataStream<Event> inputStream = streamSource0.union(streamSource1);
 
         var streamSource = inputStream
                 .assignTimestampsAndWatermarks(WatermarkStrategy.<Event>forBoundedOutOfOrderness(Duration.ofSeconds(MAX_LATENESS_OF_EVENT))
@@ -61,5 +63,22 @@ public class InvariantTemplate {
     }
 
     // INVARIANT
-    public static Pattern<Event, ?> invariant;
+public static Pattern<Event, ?> invariant = Pattern.<Event>begin("customer-decision-event-queue")
+.where(new SimpleCondition<>() {
+    @Override
+    public boolean filter(Event event) throws Exception {
+        return event.Type.equals("customer-decision-event-queue");
+    }
+}).notFollowedBy("policy-created-event-queue")
+.where(new SimpleCondition<Event>() {
+    @Override
+    public boolean filter(Event event) throws Exception {
+        return event.Type.equals("policy-created-event-queue");
+    }
+}).where(new IterativeCondition<>() {
+    @Override
+    public boolean filter(Event event, Context<Event> context) throws Exception {
+return context.getEventsForPattern("customer-decision-event-queue").iterator().next().Content.get("insuranceQuoteRequestId").equals(
+event.Content.get("insuranceQuoteRequestId"));    }
+}).within(Time.milliseconds(10));
 }

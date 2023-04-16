@@ -24,7 +24,9 @@ public class InvariantExamples {
         final StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment()
                 .setParallelism(1);
 
-        var streamSource = KafkaReader.GetEventDataStreamSource(env);
+        String topic = "example";
+        String groupId = "example";
+        var streamSource = KafkaReader.GetEventDataStreamSource(env, topic, groupId);
 
         CheckInvariant(env, streamSource, new PrintSinkFunction<>());
     }

@@ -28,8 +28,9 @@ public class KafkaReader {
         return env.fromSource(source, WatermarkStrategy.noWatermarks(), "Kafka Source");
     }
 
-    public static DataStreamSource<Event> GetEventDataStreamSource(StreamExecutionEnvironment env) {
-        KafkaSource<Event> source = getEventKafkaSource();
+
+    public static DataStreamSource<Event> GetEventDataStreamSource(StreamExecutionEnvironment env, String topic, String groupId) {
+        KafkaSource<Event> source = getEventKafkaSource(topic, groupId);
         return env.fromSource(source, WatermarkStrategy.noWatermarks(), "Kafka Source");
     }
 
@@ -70,12 +71,12 @@ public class KafkaReader {
                 .build();
     }
 
-    private static KafkaSource<Event> getEventKafkaSource() {
+    private static KafkaSource<Event> getEventKafkaSource(String topic, String groupId) {
 
         return KafkaSource.<Event>builder()
                 .setBootstrapServers(KafkaReader.broker)
-                .setTopics(KafkaReader.topic)
-                .setGroupId(KafkaReader.groupId)
+                .setTopics(topic)
+                .setGroupId(groupId)
                 .setStartingOffsets(OffsetsInitializer.earliest())
                 .setDeserializer(KafkaRecordDeserializationSchema.of(new KafkaDeserializationSchema<Event>() {
                     @Override
@@ -85,11 +86,10 @@ public class KafkaReader {
 
                     @Override
                     public Event deserialize(ConsumerRecord<byte[], byte[]> consumerRecord) throws Exception {
-                        String key = new String(consumerRecord.key(), StandardCharsets.UTF_8);
                         String value = new String(consumerRecord.value(), StandardCharsets.UTF_8);
                         ObjectMapper objectMapper = new ObjectMapper();
                         JsonNode jsonNode = objectMapper.readTree(value);
-                        return new Event(key, jsonNode);
+                        return new Event(topic, jsonNode);
                     }
 
                     @Override

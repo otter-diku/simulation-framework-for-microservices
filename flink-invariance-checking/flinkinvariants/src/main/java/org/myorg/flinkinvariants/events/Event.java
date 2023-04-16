@@ -11,4 +11,12 @@ public class Event {
         Type = type;
         Content = content;
     }
+
+    @Override
+    public String toString() {
+        return "Event{" +
+                "Type='" + Type + '\'' +
+                ", Content=" + Content +
+                '}';
+    }
 }
