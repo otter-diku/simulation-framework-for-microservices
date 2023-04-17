@@ -89,7 +89,7 @@ public class KafkaReader {
                         String value = new String(consumerRecord.value(), StandardCharsets.UTF_8);
                         ObjectMapper objectMapper = new ObjectMapper();
                         JsonNode jsonNode = objectMapper.readTree(value);
-                        return new Event(topic, jsonNode);
+                        return new Event(topic.replace("-queue", ""), jsonNode);
                     }
 
                     @Override

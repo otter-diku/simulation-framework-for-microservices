@@ -27,10 +27,20 @@ eventSchema: IDENTIFIER;
 eventId: IDENTIFIER;
 
 where_clause: equality (OP equality)*;
-equality: qualifiedName '=' qualifiedName;
+equality: quantity EQ_OP quantity;
+quantity
+    : qualifiedName
+    | atom
+    ;
+
 
 orderings: ordering (OP ordering)*;
 ordering: '<' IDENTIFIER (',' IDENTIFIER)* '>';
+
+atom
+    : BOOL
+    | INT
+    ;
 
 qualifiedName
     : IDENTIFIER ('.' IDENTIFIER)*
@@ -40,6 +50,7 @@ time: INT TIME;
 
 
 OP: 'AND' | 'OR';
+EQ_OP: '=' | '!=' | '<' | '<=' | '>' | '>=';
 INT: [0-9]+;
 TIME
     : 'milli'
@@ -47,6 +58,7 @@ TIME
     | 'min'
     | 'hour'
     ;
+BOOL: 'true' | 'false';
 IDENTIFIER
     : (LETTER | DIGIT | '_' | '-')+
     ;

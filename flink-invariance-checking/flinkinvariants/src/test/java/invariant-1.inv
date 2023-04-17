@@ -2,7 +2,7 @@ CUSTOMER_DECISION
   topic: customer-decision-event-queue
   schema: {date, insuranceQuoteRequestId, quoteAccepted}
 
-POLICY_CREATED:
+POLICY_CREATED
   topic: policy-created-event-queue
   schema: {date, insuranceQuoteRequestId, policyId}
 

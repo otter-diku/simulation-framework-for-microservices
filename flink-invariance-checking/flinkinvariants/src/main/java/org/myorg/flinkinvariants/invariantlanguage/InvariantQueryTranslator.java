@@ -20,6 +20,7 @@ public class InvariantQueryTranslator {
         public String invariantName;
         public String outputFile;
         public Boolean firstEvent = true;
+        public String lastEvent;
         public int equalityNum = 0;
         public int eventDefinitionNum = 0;
         public List<String> equalities = new ArrayList<>();
@@ -69,6 +70,7 @@ public class InvariantQueryTranslator {
 
         @Override
         public void enterEvent(InvariantsParser.EventContext ctx) {
+            lastEvent = ctx.eventId().IDENTIFIER().toString();
             eventId2EventName.put(ctx.eventId().IDENTIFIER().toString(), ctx.eventSchema().IDENTIFIER().toString());
 
             if (firstEvent) {
@@ -118,33 +120,54 @@ public class InvariantQueryTranslator {
             invariantBuilder.append(endIterativeCondition);
         }
 
-
         @Override
         public void enterEquality(InvariantsParser.EqualityContext ctx) {
             // TODO: have to handle last event in event sequence special (is event in iterative condition
-            String template = """
-                     context.getEventsForPattern("EVENT1").iterator().next().Content.get("ATTR1").equals(
-                     context.getEventsForPattern("EVENT2").iterator().next().Content.get("ATTR2"))""";
+            StringBuilder equalityBuilder = new StringBuilder();
+            String templateLastEvent = """
+                    event.Content.get("ATTR").toString()
+                    """;
+            String templateOthers = """
+                     context.getEventsForPattern("EVENT").iterator().next().Content.get("ATTR").toString()
+                     """;
 
-            var event1 =  eventId2EventName.get(ctx.children.get(0).getChild(0).toString());
-            var event2 = eventId2EventName.get(ctx.children.get(2).getChild(0).toString());
-            var operator = ctx.children.get(1);
+            var quantity1Code = createEqualityCode(ctx.quantity(0), templateLastEvent, templateOthers);
+            var quantity2Code = createEqualityCode(ctx.quantity(1), templateLastEvent, templateOthers);
 
-            // TODO: comparing event against concrete value
-            //if (ctx.qualifiedName().stream().anyMatch(q -> q.IDENTIFIER().size() == 1)) {
+            switch (ctx.EQ_OP().toString()) {
+                case "="  -> equalityBuilder.append(quantity1Code).append(".equals(").append(quantity2Code).append(")");
+                case "!=" -> equalityBuilder.append('!').append(quantity1Code).append(".equals(").append(quantity2Code).append(")");
+                case "<"  -> equalityBuilder.append(quantity1Code).append(" < ").append(quantity2Code);
+                case ">"  -> equalityBuilder.append(quantity1Code).append(" >").append(quantity2Code);
+                case "<=" -> equalityBuilder.append(quantity1Code).append(" <= ").append(quantity2Code);
+                case ">=" -> equalityBuilder.append(quantity1Code).append(" >= ").append(quantity2Code);
+                default ->  equalityBuilder.append("Unexpected equality operator: ").append(ctx.EQ_OP().toString());
+            }
 
-            var attribute1 = ctx.children.get(0).getChild(2);
-            var attribute2 = ctx.children.get(2).getChild(2);
-            var result = template.replace("EVENT1", event1.toString())
-                    .replace("EVENT2", event2.toString())
-                    .replace("ATTR1", attribute1.toString())
-                    .replace("ATTR2", attribute2.toString())
-                    .replace("EQ", "eq" + equalityNum);
             equalityNum++;
-            equalities.add(result);
+            equalities.add(equalityBuilder.toString());
         }
 
-
+        private String createEqualityCode(InvariantsParser.QuantityContext quantity,
+                                          String templateLastEvent, String templateOthers) {
+            if (quantity.qualifiedName() != null) {
+                var eventId = quantity.qualifiedName().IDENTIFIER(0).toString();
+                var attribute = quantity.qualifiedName().IDENTIFIER(1).toString();
+                if (eventId.equals(lastEvent)) {
+                    return templateLastEvent.replace("ATTR", attribute);
+                } else {
+                    return templateOthers
+                            .replace("EVENT", eventId)
+                            .replace("ATTR", attribute);
+                }
+            } else {
+                if (quantity.atom().INT() != null) {
+                    return quantity.atom().INT().toString();
+                } else {
+                    return "\"" + quantity.atom().BOOL().toString() + "\"";
+                }
+            }
+        }
 
         @Override
         public void enterTime(InvariantsParser.TimeContext ctx) {
