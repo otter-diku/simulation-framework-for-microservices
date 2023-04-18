@@ -14,6 +14,5 @@ public class EShopIntegrationEventWrapper {
     }
 
     // Dummy constructor for json serialization
-    public EShopIntegrationEventWrapper() {
-    }
+    public EShopIntegrationEventWrapper() {}
 }

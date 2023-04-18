@@ -2,6 +2,7 @@ package org.myorg.flinkinvariants.datastreamsourceproviders;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+
 import org.apache.flink.api.common.eventtime.WatermarkStrategy;
 import org.apache.flink.api.common.typeinfo.TypeInformation;
 import org.apache.flink.connector.kafka.source.KafkaSource;
@@ -23,22 +24,27 @@ public class KafkaReader {
     private static final String topic = "eshop_event_bus";
     private static final String groupId = "flink-invariant-checker";
 
-    public static DataStreamSource<EShopIntegrationEvent> GetDataStreamSource(StreamExecutionEnvironment env) {
+    public static DataStreamSource<EShopIntegrationEvent> GetDataStreamSource(
+            StreamExecutionEnvironment env) {
         KafkaSource<EShopIntegrationEvent> source = getEshopRecordKafkaSource();
         return env.fromSource(source, WatermarkStrategy.noWatermarks(), "Kafka Source");
     }
 
-
-    public static DataStreamSource<Event> GetEventDataStreamSource(StreamExecutionEnvironment env, String topic, String groupId) {
+    public static DataStreamSource<Event> GetEventDataStreamSource(
+            StreamExecutionEnvironment env, String topic, String groupId) {
         KafkaSource<Event> source = getEventKafkaSource(topic, groupId);
         return env.fromSource(source, WatermarkStrategy.noWatermarks(), "Kafka Source");
     }
 
-    public static DataStreamSource<EShopIntegrationEvent> GetDataStreamSourceEventTime(StreamExecutionEnvironment env, Duration boundForOutOfOrderness) {
+    public static DataStreamSource<EShopIntegrationEvent> GetDataStreamSourceEventTime(
+            StreamExecutionEnvironment env, Duration boundForOutOfOrderness) {
         KafkaSource<EShopIntegrationEvent> source = getEshopRecordKafkaSource();
-        return env.fromSource(source,
-                WatermarkStrategy.<EShopIntegrationEvent>forBoundedOutOfOrderness(boundForOutOfOrderness)
-                        .withTimestampAssigner((event, timestamp) -> event.getEventTime()), "Kafka Source");
+        return env.fromSource(
+                source,
+                WatermarkStrategy.<EShopIntegrationEvent>forBoundedOutOfOrderness(
+                                boundForOutOfOrderness)
+                        .withTimestampAssigner((event, timestamp) -> event.getEventTime()),
+                "Kafka Source");
     }
 
     private static KafkaSource<EShopIntegrationEvent> getEshopRecordKafkaSource() {
@@ -48,26 +54,42 @@ public class KafkaReader {
                 .setTopics(KafkaReader.topic)
                 .setGroupId(KafkaReader.groupId)
                 .setStartingOffsets(OffsetsInitializer.earliest())
-                .setDeserializer(KafkaRecordDeserializationSchema.of(new KafkaDeserializationSchema<EShopIntegrationEvent>() {
-                    @Override
-                    public boolean isEndOfStream(EShopIntegrationEvent eshopIntegrationEvent) {
-                        return false;
-                    }
+                .setDeserializer(
+                        KafkaRecordDeserializationSchema.of(
+                                new KafkaDeserializationSchema<EShopIntegrationEvent>() {
+                                    @Override
+                                    public boolean isEndOfStream(
+                                            EShopIntegrationEvent eshopIntegrationEvent) {
+                                        return false;
+                                    }
 
-                    @Override
-                    public EShopIntegrationEvent deserialize(ConsumerRecord<byte[], byte[]> consumerRecord) throws Exception {
-                        String key = new String(consumerRecord.key(), StandardCharsets.UTF_8);
-                        String value = new String(consumerRecord.value(), StandardCharsets.UTF_8);
-                        ObjectMapper objectMapper = new ObjectMapper();
-                        JsonNode jsonNode = objectMapper.readTree(value);
-                        return new EShopIntegrationEvent(key, jsonNode,  Instant.parse(jsonNode.get("CreationDate").asText()).toEpochMilli());
-                    }
+                                    @Override
+                                    public EShopIntegrationEvent deserialize(
+                                            ConsumerRecord<byte[], byte[]> consumerRecord)
+                                            throws Exception {
+                                        String key =
+                                                new String(
+                                                        consumerRecord.key(),
+                                                        StandardCharsets.UTF_8);
+                                        String value =
+                                                new String(
+                                                        consumerRecord.value(),
+                                                        StandardCharsets.UTF_8);
+                                        ObjectMapper objectMapper = new ObjectMapper();
+                                        JsonNode jsonNode = objectMapper.readTree(value);
+                                        return new EShopIntegrationEvent(
+                                                key,
+                                                jsonNode,
+                                                Instant.parse(jsonNode.get("CreationDate").asText())
+                                                        .toEpochMilli());
+                                    }
 
-                    @Override
-                    public TypeInformation<EShopIntegrationEvent> getProducedType() {
-                        return TypeInformation.of(EShopIntegrationEvent.class);
-                    }
-                }))
+                                    @Override
+                                    public TypeInformation<EShopIntegrationEvent>
+                                            getProducedType() {
+                                        return TypeInformation.of(EShopIntegrationEvent.class);
+                                    }
+                                }))
                 .build();
     }
 
@@ -78,25 +100,32 @@ public class KafkaReader {
                 .setTopics(topic)
                 .setGroupId(groupId)
                 .setStartingOffsets(OffsetsInitializer.earliest())
-                .setDeserializer(KafkaRecordDeserializationSchema.of(new KafkaDeserializationSchema<Event>() {
-                    @Override
-                    public boolean isEndOfStream(Event event) {
-                        return false;
-                    }
+                .setDeserializer(
+                        KafkaRecordDeserializationSchema.of(
+                                new KafkaDeserializationSchema<Event>() {
+                                    @Override
+                                    public boolean isEndOfStream(Event event) {
+                                        return false;
+                                    }
 
-                    @Override
-                    public Event deserialize(ConsumerRecord<byte[], byte[]> consumerRecord) throws Exception {
-                        String value = new String(consumerRecord.value(), StandardCharsets.UTF_8);
-                        ObjectMapper objectMapper = new ObjectMapper();
-                        JsonNode jsonNode = objectMapper.readTree(value);
-                        return new Event(topic.replace("-queue", ""), jsonNode);
-                    }
+                                    @Override
+                                    public Event deserialize(
+                                            ConsumerRecord<byte[], byte[]> consumerRecord)
+                                            throws Exception {
+                                        String value =
+                                                new String(
+                                                        consumerRecord.value(),
+                                                        StandardCharsets.UTF_8);
+                                        ObjectMapper objectMapper = new ObjectMapper();
+                                        JsonNode jsonNode = objectMapper.readTree(value);
+                                        return new Event(topic.replace("-queue", ""), jsonNode);
+                                    }
 
-                    @Override
-                    public TypeInformation<Event> getProducedType() {
-                        return TypeInformation.of(Event.class);
-                    }
-                }))
+                                    @Override
+                                    public TypeInformation<Event> getProducedType() {
+                                        return TypeInformation.of(Event.class);
+                                    }
+                                }))
                 .build();
     }
 }

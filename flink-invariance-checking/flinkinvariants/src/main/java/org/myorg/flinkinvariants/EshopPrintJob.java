@@ -21,17 +21,12 @@ package org.myorg.flinkinvariants;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.myorg.flinkinvariants.datastreamsourceproviders.KafkaReader;
 
-/**
- * Basic KafkaSource connector example.
- * Reads events from eshop_event_bus and prints them.
- */
+/** Basic KafkaSource connector example. Reads events from eshop_event_bus and prints them. */
 public class EshopPrintJob {
-	public static void main(String[] args) throws Exception {
-		final StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
-		var dataStreamSource = KafkaReader.GetDataStreamSource(env);
-		dataStreamSource.print();
-		env.execute("Flink Eshop Invariant Checker");
-	}
+    public static void main(String[] args) throws Exception {
+        final StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
+        var dataStreamSource = KafkaReader.GetDataStreamSource(env);
+        dataStreamSource.print();
+        env.execute("Flink Eshop Invariant Checker");
+    }
 }
-
-

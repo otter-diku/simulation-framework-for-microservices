@@ -1,3 +1,9 @@
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.myorg.flinkinvariants.invariantcheckers.LackingPaymentEventInvariantChecker.CheckLackingPaymentInvariant;
+import static org.myorg.flinkinvariants.invariantcheckers.ProductOversoldInvariantChecker.CheckOversoldInvariant;
+import static org.myorg.flinkinvariants.invariantcheckers.ProductPriceChangedInvariantChecker.CheckProductPriceChangedInvariant;
+
 import org.apache.flink.api.common.eventtime.WatermarkStrategy;
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.runtime.testutils.MiniClusterResourceConfiguration;
@@ -15,12 +21,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.myorg.flinkinvariants.invariantcheckers.LackingPaymentEventInvariantChecker.CheckLackingPaymentInvariant;
-import static org.myorg.flinkinvariants.invariantcheckers.ProductOversoldInvariantChecker.CheckOversoldInvariant;
-import static org.myorg.flinkinvariants.invariantcheckers.ProductPriceChangedInvariantChecker.CheckProductPriceChangedInvariant;
-
 public class InvariantsTest {
 
     @ClassRule
@@ -31,16 +31,17 @@ public class InvariantsTest {
                             .setNumberTaskManagers(1)
                             .build());
 
-
     @Test
     public void testProductPriceChangedInvariant1() throws Exception {
         final StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
 
-        var streamSource = FileReader
-                .GetDataStreamSource(env, "/src/product_price_changed_invariant_1.json")
-                .assignTimestampsAndWatermarks(WatermarkStrategy.<EShopIntegrationEvent>
-                                forBoundedOutOfOrderness(Duration.ofSeconds(20))
-                        .withTimestampAssigner((event, timestamp) -> event.getEventTime()));
+        var streamSource =
+                FileReader.GetDataStreamSource(env, "/src/product_price_changed_invariant_1.json")
+                        .assignTimestampsAndWatermarks(
+                                WatermarkStrategy.<EShopIntegrationEvent>forBoundedOutOfOrderness(
+                                                Duration.ofSeconds(20))
+                                        .withTimestampAssigner(
+                                                (event, timestamp) -> event.getEventTime()));
 
         // values are collected in a static variable
         ViolationSink.values.clear();
@@ -53,24 +54,30 @@ public class InvariantsTest {
         var productPriceChangedEventId2 = "2e693c62-c349-447f-87df-6be170c099fa";
         var userCheckoutEventId = "421b7801-1014-4747-80d3-8097343c6e0e";
 
-        assertTrue(violations.stream().anyMatch(s ->
-                s.contains(productPriceChangedEventId1)
-                        && s.contains(userCheckoutEventId)
-        ));
-        assertTrue(violations.stream().anyMatch(s ->
-                s.contains(productPriceChangedEventId2)
-                        && s.contains(userCheckoutEventId)
-        ));
-
+        assertTrue(
+                violations.stream()
+                        .anyMatch(
+                                s ->
+                                        s.contains(productPriceChangedEventId1)
+                                                && s.contains(userCheckoutEventId)));
+        assertTrue(
+                violations.stream()
+                        .anyMatch(
+                                s ->
+                                        s.contains(productPriceChangedEventId2)
+                                                && s.contains(userCheckoutEventId)));
     }
+
     @Test
     public void testProductPriceChangedInvariant2() throws Exception {
         final StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
-        var streamSource = FileReader
-                .GetDataStreamSource(env, "/src/product_price_changed_invariant_2.json")
-                .assignTimestampsAndWatermarks(WatermarkStrategy.<EShopIntegrationEvent>
-                                forBoundedOutOfOrderness(Duration.ofSeconds(20))
-                        .withTimestampAssigner((event, timestamp) -> event.getEventTime()));
+        var streamSource =
+                FileReader.GetDataStreamSource(env, "/src/product_price_changed_invariant_2.json")
+                        .assignTimestampsAndWatermarks(
+                                WatermarkStrategy.<EShopIntegrationEvent>forBoundedOutOfOrderness(
+                                                Duration.ofSeconds(20))
+                                        .withTimestampAssigner(
+                                                (event, timestamp) -> event.getEventTime()));
 
         // values are collected in a static variable
         ViolationSink.values.clear();
@@ -85,18 +92,24 @@ public class InvariantsTest {
         var userCheckoutEventId2 = "121b7801-1014-4747-80d3-8097343c6e0e";
         var userCheckoutEventId3 = "321b7801-1014-4747-80d3-8097343c6e0e";
 
-        assertTrue(violations.stream().anyMatch(s ->
-                s.contains(productPriceChangedEventId1)
-             && s.contains(userCheckoutEventId1)
-        ));
-        assertTrue(violations.stream().anyMatch(s ->
-                s.contains(productPriceChangedEventId1)
-             && s.contains(userCheckoutEventId2)
-        ));
-        assertTrue(violations.stream().anyMatch(s ->
-                s.contains(productPriceChangedEventId1)
-             && s.contains(userCheckoutEventId3)
-        ));
+        assertTrue(
+                violations.stream()
+                        .anyMatch(
+                                s ->
+                                        s.contains(productPriceChangedEventId1)
+                                                && s.contains(userCheckoutEventId1)));
+        assertTrue(
+                violations.stream()
+                        .anyMatch(
+                                s ->
+                                        s.contains(productPriceChangedEventId1)
+                                                && s.contains(userCheckoutEventId2)));
+        assertTrue(
+                violations.stream()
+                        .anyMatch(
+                                s ->
+                                        s.contains(productPriceChangedEventId1)
+                                                && s.contains(userCheckoutEventId3)));
     }
 
     @Test
@@ -106,11 +119,13 @@ public class InvariantsTest {
         // This input tests if event-time is working correctly
         // by having the checkout come first in the file but its timestamp
         // is after first two price changed events
-        var streamSource = FileReader
-                .GetDataStreamSource(env, "/src/product_price_changed_invariant_3.json")
-                .assignTimestampsAndWatermarks(WatermarkStrategy.<EShopIntegrationEvent>
-                                forBoundedOutOfOrderness(Duration.ofSeconds(20))
-                        .withTimestampAssigner((event, timestamp) -> event.getEventTime()));
+        var streamSource =
+                FileReader.GetDataStreamSource(env, "/src/product_price_changed_invariant_3.json")
+                        .assignTimestampsAndWatermarks(
+                                WatermarkStrategy.<EShopIntegrationEvent>forBoundedOutOfOrderness(
+                                                Duration.ofSeconds(20))
+                                        .withTimestampAssigner(
+                                                (event, timestamp) -> event.getEventTime()));
 
         // values are collected in a static variable
         ViolationSink.values.clear();
@@ -123,25 +138,31 @@ public class InvariantsTest {
         var productPriceChangedEventId2 = "2e693c62-c349-447f-87df-6be170c099fa";
         var userCheckoutEventId = "421b7801-1014-4747-80d3-8097343c6e0e";
 
-        assertTrue(violations.stream().anyMatch(s ->
-                s.contains(productPriceChangedEventId1)
-                        && s.contains(userCheckoutEventId)
-        ));
-        assertTrue(violations.stream().anyMatch(s ->
-                s.contains(productPriceChangedEventId2)
-                        && s.contains(userCheckoutEventId)
-        ));
+        assertTrue(
+                violations.stream()
+                        .anyMatch(
+                                s ->
+                                        s.contains(productPriceChangedEventId1)
+                                                && s.contains(userCheckoutEventId)));
+        assertTrue(
+                violations.stream()
+                        .anyMatch(
+                                s ->
+                                        s.contains(productPriceChangedEventId2)
+                                                && s.contains(userCheckoutEventId)));
     }
 
     @Test
     public void testProductPriceChangedInvariant4() throws Exception {
         final StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
 
-        var streamSource = FileReader
-                .GetDataStreamSource(env, "/src/product_price_changed_invariant_4.json")
-                .assignTimestampsAndWatermarks(WatermarkStrategy.<EShopIntegrationEvent>
-                                forBoundedOutOfOrderness(Duration.ofSeconds(20))
-                        .withTimestampAssigner((event, timestamp) -> event.getEventTime()));
+        var streamSource =
+                FileReader.GetDataStreamSource(env, "/src/product_price_changed_invariant_4.json")
+                        .assignTimestampsAndWatermarks(
+                                WatermarkStrategy.<EShopIntegrationEvent>forBoundedOutOfOrderness(
+                                                Duration.ofSeconds(20))
+                                        .withTimestampAssigner(
+                                                (event, timestamp) -> event.getEventTime()));
 
         // values are collected in a static variable
         ViolationSink.values.clear();
@@ -157,11 +178,13 @@ public class InvariantsTest {
 
         var fileSource = new TimedFileSource("/src/lacking_payment_1.json", 100);
 
-        var streamSource = env.addSource(fileSource)
-                .assignTimestampsAndWatermarks(WatermarkStrategy.<EShopIntegrationEvent>
-                                forBoundedOutOfOrderness(Duration.ofSeconds(20))
-                        .withTimestampAssigner((event, timestamp) -> event.getEventTime()));
-
+        var streamSource =
+                env.addSource(fileSource)
+                        .assignTimestampsAndWatermarks(
+                                WatermarkStrategy.<EShopIntegrationEvent>forBoundedOutOfOrderness(
+                                                Duration.ofSeconds(20))
+                                        .withTimestampAssigner(
+                                                (event, timestamp) -> event.getEventTime()));
 
         // values are collected in a static variable
         ViolationSink.values.clear();
@@ -179,11 +202,13 @@ public class InvariantsTest {
 
         var fileSource = new TimedFileSource("/src/lacking_payment_2.json", 100);
 
-        var streamSource = env.addSource(fileSource)
-                .assignTimestampsAndWatermarks(WatermarkStrategy.<EShopIntegrationEvent>
-                                forBoundedOutOfOrderness(Duration.ofSeconds(20))
-                        .withTimestampAssigner((event, timestamp) -> event.getEventTime()));
-
+        var streamSource =
+                env.addSource(fileSource)
+                        .assignTimestampsAndWatermarks(
+                                WatermarkStrategy.<EShopIntegrationEvent>forBoundedOutOfOrderness(
+                                                Duration.ofSeconds(20))
+                                        .withTimestampAssigner(
+                                                (event, timestamp) -> event.getEventTime()));
 
         // values are collected in a static variable
         ViolationSink.values.clear();
@@ -191,7 +216,8 @@ public class InvariantsTest {
         CheckLackingPaymentInvariant(env, streamSource, new ViolationSink());
 
         var violations = ViolationSink.values;
-        // TODO: timed out events violation are published twice for now just remove duplicates in operator
+        // TODO: timed out events violation are published twice for now just remove duplicates in
+        // operator
         assertEquals(1, violations.size());
         assertTrue(violations.get(0).contains("\"OrderId\":9881"));
     }
@@ -200,11 +226,13 @@ public class InvariantsTest {
     public void testProductOversoldInvariant1() throws Exception {
         final StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
 
-        var streamSource = FileReader
-                .GetDataStreamSource(env, "/src/oversold_1.json")
-                .assignTimestampsAndWatermarks(WatermarkStrategy.<EShopIntegrationEvent>
-                                forBoundedOutOfOrderness(Duration.ofSeconds(20))
-                        .withTimestampAssigner((event, timestamp) -> event.getEventTime()));
+        var streamSource =
+                FileReader.GetDataStreamSource(env, "/src/oversold_1.json")
+                        .assignTimestampsAndWatermarks(
+                                WatermarkStrategy.<EShopIntegrationEvent>forBoundedOutOfOrderness(
+                                                Duration.ofSeconds(20))
+                                        .withTimestampAssigner(
+                                                (event, timestamp) -> event.getEventTime()));
 
         // values are collected in a static variable
         ViolationSink.values.clear();
@@ -213,18 +241,24 @@ public class InvariantsTest {
 
         var violations = ViolationSink.values;
         assertEquals(1, violations.size());
-        assertTrue(violations.get(0).contains("Violation: stock not sufficient for ProductId: 42, current stock: 10, units bought: 20"));
+        assertTrue(
+                violations
+                        .get(0)
+                        .contains(
+                                "Violation: stock not sufficient for ProductId: 42, current stock: 10, units bought: 20"));
     }
 
     @Test
     public void testProductOversoldInvariant2() throws Exception {
         final StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
 
-        var streamSource = FileReader
-                .GetDataStreamSource(env, "/src/oversold_2.json")
-                .assignTimestampsAndWatermarks(WatermarkStrategy.<EShopIntegrationEvent>
-                                forBoundedOutOfOrderness(Duration.ofSeconds(20))
-                        .withTimestampAssigner((event, timestamp) -> event.getEventTime()));
+        var streamSource =
+                FileReader.GetDataStreamSource(env, "/src/oversold_2.json")
+                        .assignTimestampsAndWatermarks(
+                                WatermarkStrategy.<EShopIntegrationEvent>forBoundedOutOfOrderness(
+                                                Duration.ofSeconds(20))
+                                        .withTimestampAssigner(
+                                                (event, timestamp) -> event.getEventTime()));
 
         // values are collected in a static variable
         ViolationSink.values.clear();
@@ -239,11 +273,13 @@ public class InvariantsTest {
     public void testProductOversoldInvariant3() throws Exception {
         final StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
 
-        var streamSource = FileReader
-                .GetDataStreamSource(env, "/src/oversold_3.json")
-                .assignTimestampsAndWatermarks(WatermarkStrategy.<EShopIntegrationEvent>
-                                forBoundedOutOfOrderness(Duration.ofSeconds(20))
-                        .withTimestampAssigner((event, timestamp) -> event.getEventTime()));
+        var streamSource =
+                FileReader.GetDataStreamSource(env, "/src/oversold_3.json")
+                        .assignTimestampsAndWatermarks(
+                                WatermarkStrategy.<EShopIntegrationEvent>forBoundedOutOfOrderness(
+                                                Duration.ofSeconds(20))
+                                        .withTimestampAssigner(
+                                                (event, timestamp) -> event.getEventTime()));
 
         // values are collected in a static variable
         ViolationSink.values.clear();
@@ -253,9 +289,6 @@ public class InvariantsTest {
         var violations = ViolationSink.values;
         assertEquals(0, violations.size());
     }
-
-
-
 
     private static class ViolationSink implements SinkFunction<String> {
 
@@ -277,7 +310,7 @@ public class InvariantsTest {
         private final long waitTime;
 
         @Override
-        public void open(Configuration parameters){
+        public void open(Configuration parameters) {
             running = true;
         }
 
@@ -290,7 +323,7 @@ public class InvariantsTest {
         public void run(SourceContext<EShopIntegrationEvent> sourceContext) throws Exception {
             var events = FileReader.GetEshopEventsFromFile(filename);
 
-            for (var event: events) {
+            for (var event : events) {
                 sourceContext.collect(event);
             }
             // not canceling simulating unbounded stream
@@ -303,4 +336,3 @@ public class InvariantsTest {
         }
     }
 }
-

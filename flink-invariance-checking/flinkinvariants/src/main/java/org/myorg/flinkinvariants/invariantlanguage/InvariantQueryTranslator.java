@@ -36,7 +36,8 @@ public class InvariantQueryTranslator {
             this.invariantName = invariantName;
         }
 
-        String templateFirstEvent = """
+        String templateFirstEvent =
+                """
                 public static Pattern<Event, ?> invariant = Pattern.<Event>begin("IDENTIFIER")
                 .where(new SimpleCondition<>() {
                     @Override
@@ -45,7 +46,8 @@ public class InvariantQueryTranslator {
                     }
                 })""";
 
-        String templateSubsequentEvent = """
+        String templateSubsequentEvent =
+                """
             .notFollowedBy("IDENTIFIER")
             .where(new SimpleCondition<Event>() {
                 @Override
@@ -54,12 +56,12 @@ public class InvariantQueryTranslator {
                 }
             })""";
 
-
         @Override
         public void enterEventDefinition(InvariantsParser.EventDefinitionContext ctx) {
             var topic = ctx.topic().IDENTIFIER().toString();
 
-            streamBuilder.append("var streamSource")
+            streamBuilder
+                    .append("var streamSource")
                     .append(eventDefinitionNum)
                     .append(" = KafkaReader.GetEventDataStreamSource(env, \"")
                     .append(topic)
@@ -71,21 +73,27 @@ public class InvariantQueryTranslator {
         @Override
         public void enterEvent(InvariantsParser.EventContext ctx) {
             lastEvent = ctx.eventId().IDENTIFIER().toString();
-            eventId2EventName.put(ctx.eventId().IDENTIFIER().toString(), ctx.eventSchema().IDENTIFIER().toString());
+            eventId2EventName.put(
+                    ctx.eventId().IDENTIFIER().toString(),
+                    ctx.eventSchema().IDENTIFIER().toString());
 
             if (firstEvent) {
-                invariantBuilder.append(templateFirstEvent.replace("IDENTIFIER", ctx.eventSchema().IDENTIFIER().toString()));
+                invariantBuilder.append(
+                        templateFirstEvent.replace(
+                                "IDENTIFIER", ctx.eventSchema().IDENTIFIER().toString()));
                 firstEvent = false;
                 return;
             }
-            invariantBuilder.append(templateSubsequentEvent.replace("IDENTIFIER", ctx.eventSchema().IDENTIFIER().toString()));
+            invariantBuilder.append(
+                    templateSubsequentEvent.replace(
+                            "IDENTIFIER", ctx.eventSchema().IDENTIFIER().toString()));
             super.enterEvent(ctx);
         }
 
-
         @Override
         public void enterWhere_clause(InvariantsParser.Where_clauseContext ctx) {
-            String startIterativeCondition = """
+            String startIterativeCondition =
+                    """
             .where(new IterativeCondition<>() {
                 @Override
                 public boolean filter(Event event, Context<Event> context) throws Exception {
@@ -104,15 +112,21 @@ public class InvariantQueryTranslator {
                 invariantBuilder.append(it.next());
 
                 var op = operators.get(i);
-                var javaOp = switch (op.toString()) {
-                    case "AND" -> " && ";
-                    case "OR" -> " || ";
-                    default -> "Unexpected Operator";
-                };
+                String javaOp;
+                switch (op.toString()) {
+                    case "AND":
+                        javaOp = " && ";
+                        break;
+                    case "OR":
+                        javaOp = " || ";
+                        break;
+                    default:
+                        javaOp = "Unexpected Operator";
+                        break;
+                }
                 invariantBuilder.append(javaOp);
             }
             invariantBuilder.append(it.next()).append(";");
-
 
             String endIterativeCondition = """
                   }
@@ -122,43 +136,73 @@ public class InvariantQueryTranslator {
 
         @Override
         public void enterEquality(InvariantsParser.EqualityContext ctx) {
-            // TODO: have to handle last event in event sequence special (is event in iterative condition
+            // TODO: have to handle last event in event sequence special (is event in iterative
+            // condition
             StringBuilder equalityBuilder = new StringBuilder();
-            String templateLastEvent = """
+            String templateLastEvent =
+                    """
                     event.Content.get("ATTR").toString()
                     """;
-            String templateOthers = """
+            String templateOthers =
+                    """
                      context.getEventsForPattern("EVENT").iterator().next().Content.get("ATTR").toString()
                      """;
 
-            var quantity1Code = createEqualityCode(ctx.quantity(0), templateLastEvent, templateOthers);
-            var quantity2Code = createEqualityCode(ctx.quantity(1), templateLastEvent, templateOthers);
+            var quantity1Code =
+                    createEqualityCode(ctx.quantity(0), templateLastEvent, templateOthers);
+            var quantity2Code =
+                    createEqualityCode(ctx.quantity(1), templateLastEvent, templateOthers);
 
             switch (ctx.EQ_OP().toString()) {
-                case "="  -> equalityBuilder.append(quantity1Code).append(".equals(").append(quantity2Code).append(")");
-                case "!=" -> equalityBuilder.append('!').append(quantity1Code).append(".equals(").append(quantity2Code).append(")");
-                case "<"  -> equalityBuilder.append(quantity1Code).append(" < ").append(quantity2Code);
-                case ">"  -> equalityBuilder.append(quantity1Code).append(" >").append(quantity2Code);
-                case "<=" -> equalityBuilder.append(quantity1Code).append(" <= ").append(quantity2Code);
-                case ">=" -> equalityBuilder.append(quantity1Code).append(" >= ").append(quantity2Code);
-                default ->  equalityBuilder.append("Unexpected equality operator: ").append(ctx.EQ_OP().toString());
+                case "=":
+                    equalityBuilder
+                            .append(quantity1Code)
+                            .append(".equals(")
+                            .append(quantity2Code)
+                            .append(")");
+                    break;
+                case "!=":
+                    equalityBuilder
+                            .append('!')
+                            .append(quantity1Code)
+                            .append(".equals(")
+                            .append(quantity2Code)
+                            .append(")");
+                    break;
+                case "<":
+                    equalityBuilder.append(quantity1Code).append(" < ").append(quantity2Code);
+                    break;
+                case ">":
+                    equalityBuilder.append(quantity1Code).append(" >").append(quantity2Code);
+                    break;
+                case "<=":
+                    equalityBuilder.append(quantity1Code).append(" <= ").append(quantity2Code);
+                    break;
+                case ">=":
+                    equalityBuilder.append(quantity1Code).append(" >= ").append(quantity2Code);
+                    break;
+                default:
+                    equalityBuilder
+                            .append("Unexpected equality operator: ")
+                            .append(ctx.EQ_OP().toString());
+                    break;
             }
 
             equalityNum++;
             equalities.add(equalityBuilder.toString());
         }
 
-        private String createEqualityCode(InvariantsParser.QuantityContext quantity,
-                                          String templateLastEvent, String templateOthers) {
+        private String createEqualityCode(
+                InvariantsParser.QuantityContext quantity,
+                String templateLastEvent,
+                String templateOthers) {
             if (quantity.qualifiedName() != null) {
                 var eventId = quantity.qualifiedName().IDENTIFIER(0).toString();
                 var attribute = quantity.qualifiedName().IDENTIFIER(1).toString();
                 if (eventId.equals(lastEvent)) {
                     return templateLastEvent.replace("ATTR", attribute);
                 } else {
-                    return templateOthers
-                            .replace("EVENT", eventId)
-                            .replace("ATTR", attribute);
+                    return templateOthers.replace("EVENT", eventId).replace("ATTR", attribute);
                 }
             } else {
                 if (quantity.atom().INT() != null) {
@@ -174,24 +218,38 @@ public class InvariantQueryTranslator {
             int duration = Integer.parseInt(ctx.INT().toString());
             String unit = ctx.TIME().toString();
 
-            var within = switch (unit) {
-                case "milli" -> ".within(Time.milliseconds("+ duration + "));";
-                case "sec" -> ".within(Time.seconds("+ duration + "));";
-                case "min" -> ".within(Time.min(" + duration + "));";
-                case "hour" -> ".within(Time.hour(" + duration + "));";
-                default -> "Unexpected time unit";
-            };
+            String within;
+            switch (unit) {
+                case "milli":
+                    within = ".within(Time.milliseconds(" + duration + "));";
+                    break;
+                case "sec":
+                    within = ".within(Time.seconds(" + duration + "));";
+                    break;
+                case "min":
+                    within = ".within(Time.min(" + duration + "));";
+                    break;
+                case "hour":
+                    within = ".within(Time.hour(" + duration + "));";
+                    break;
+                default:
+                    within = "Unexpected time unit";
+                    break;
+            }
             invariantBuilder.append(within);
         }
 
         @Override
         public void exitInvariant(InvariantsParser.InvariantContext ctx) {
-            substitutions.put("package org.myorg.flinkinvariants.invariantlanguage;",
+            substitutions.put(
+                    "package org.myorg.flinkinvariants.invariantlanguage;",
                     "package org.myorg.flinkinvariants.invariantcheckers;");
             substitutions.put("DataStream<Event> inputStream = null;", buildStreamCode());
             substitutions.put("// STREAMS", streamBuilder.toString());
-            substitutions.put("public static Pattern<Event, ?> invariant;", invariantBuilder.toString());
-            substitutions.put("public class InvariantTemplate {", "public class " + invariantName + " {");
+            substitutions.put(
+                    "public static Pattern<Event, ?> invariant;", invariantBuilder.toString());
+            substitutions.put(
+                    "public class InvariantTemplate {", "public class " + invariantName + " {");
             createInvariantFile(outputFile, substitutions);
         }
 
@@ -228,7 +286,8 @@ public class InvariantQueryTranslator {
         ParseTree tree = parser.invariant(); // begin parsing at init rule
 
         ParseTreeWalker walker = new ParseTreeWalker();
-        InvariantLanguage2CEPListener translator = new InvariantLanguage2CEPListener(invariantName, outputFile);
+        InvariantLanguage2CEPListener translator =
+                new InvariantLanguage2CEPListener(invariantName, outputFile);
 
         walker.walk(translator, tree);
     }
@@ -236,7 +295,8 @@ public class InvariantQueryTranslator {
     public static void main(String[] args) throws Exception {
         // create a CharStream that reads from standard input
         var invariant = "EVENT SEQ (E_1 e_1, E_2 e_2, E_3 e_3) WITHIN 5 sec";
-        var invariant2 = """
+        var invariant2 =
+                """
                 EVENT SEQ (E_1 e_1, E_2 e_2, E_3 e_3)
                 WHERE e_1.id = e_2.id AND e_2.id = e_3.id AND e_1.id = e_3.id
                 WITHIN 5 sec""";
@@ -253,34 +313,34 @@ public class InvariantQueryTranslator {
 
         ParseTreeWalker walker = new ParseTreeWalker();
         var output = "src/main/java/org/myorg/flinkinvariants/invariantlanguage/Invariant.java";
-        InvariantLanguage2CEPListener translator = new InvariantLanguage2CEPListener("Invariant", output);
+        InvariantLanguage2CEPListener translator =
+                new InvariantLanguage2CEPListener("Invariant", output);
 
         walker.walk(translator, tree);
-     }
+    }
 
-     private static void createInvariantFile(String outputFile, Map<String, String> substitions)
-     {
-         String inputFile = "src/main/java/org/myorg/flinkinvariants/invariantlanguage/InvariantTemplate.java";
+    private static void createInvariantFile(String outputFile, Map<String, String> substitions) {
+        String inputFile =
+                "src/main/java/org/myorg/flinkinvariants/invariantlanguage/InvariantTemplate.java";
 
-         try {
-             BufferedReader reader = new BufferedReader(new FileReader(inputFile));
-             BufferedWriter writer = new BufferedWriter(new FileWriter(outputFile));
-             String line = reader.readLine();
-             while (line != null) {
-                 for (var key : substitions.keySet()) {
-                     if (line.contains(key)) {
-                         line = substitions.get(key);
-                     }
-                 }
-                 writer.write(line);
-                 writer.newLine();
-                 line = reader.readLine();
-             }
-             reader.close();
-             writer.close();
-         } catch (IOException e) {
-             System.err.println("Error: " + e.getMessage());
-         }
-     }
-
+        try {
+            BufferedReader reader = new BufferedReader(new FileReader(inputFile));
+            BufferedWriter writer = new BufferedWriter(new FileWriter(outputFile));
+            String line = reader.readLine();
+            while (line != null) {
+                for (var key : substitions.keySet()) {
+                    if (line.contains(key)) {
+                        line = substitions.get(key);
+                    }
+                }
+                writer.write(line);
+                writer.newLine();
+                line = reader.readLine();
+            }
+            reader.close();
+            writer.close();
+        } catch (IOException e) {
+            System.err.println("Error: " + e.getMessage());
+        }
+    }
 }

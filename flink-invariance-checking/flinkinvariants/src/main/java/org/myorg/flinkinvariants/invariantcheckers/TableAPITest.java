@@ -1,6 +1,5 @@
 package org.myorg.flinkinvariants.invariantcheckers;
 
-
 import org.apache.flink.api.common.RuntimeExecutionMode;
 import org.apache.flink.api.common.eventtime.WatermarkStrategy;
 import org.apache.flink.streaming.api.datastream.DataStream;
@@ -22,9 +21,13 @@ public class TableAPITest {
 
         StreamTableEnvironment tableEnv = StreamTableEnvironment.create(env);
 
-        var streamSource = FileReader.GetDataStreamSource(env, "/src/oversold_3.json").assignTimestampsAndWatermarks(WatermarkStrategy.<EShopIntegrationEvent>
-                        forBoundedOutOfOrderness(Duration.ofSeconds(30))
-                .withTimestampAssigner((event, timestamp) -> event.getEventTime()));
+        var streamSource =
+                FileReader.GetDataStreamSource(env, "/src/oversold_3.json")
+                        .assignTimestampsAndWatermarks(
+                                WatermarkStrategy.<EShopIntegrationEvent>forBoundedOutOfOrderness(
+                                                Duration.ofSeconds(30))
+                                        .withTimestampAssigner(
+                                                (event, timestamp) -> event.getEventTime()));
 
         Table table =
                 tableEnv.fromDataStream(
@@ -35,10 +38,13 @@ public class TableAPITest {
                                 .build());
         tableEnv.createTemporaryView("events", table);
         Table sorted = tableEnv.sqlQuery("SELECT * FROM events ORDER BY rowtime ASC");
-        DataStream<EShopIntegrationEvent> sortedStream = tableEnv.toDataStream(sorted).map(r ->
-                new EShopIntegrationEvent(r.getFieldAs(0), r.getFieldAs(1), r.getFieldAs(2)))
-                .setParallelism(1);
-
+        DataStream<EShopIntegrationEvent> sortedStream =
+                tableEnv.toDataStream(sorted)
+                        .map(
+                                r ->
+                                        new EShopIntegrationEvent(
+                                                r.getFieldAs(0), r.getFieldAs(1), r.getFieldAs(2)))
+                        .setParallelism(1);
 
         sortedStream.print();
 
