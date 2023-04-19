@@ -4,6 +4,61 @@
 [![build and test](https://github.com/otter-diku/simulation-framework-for-microservices/actions/workflows/build-and-test.yml/badge.svg)](https://github.com/otter-diku/simulation-framework-for-microservices/actions/workflows/build-and-test.yml)
 
 
+## CDC with Debezium
+
+When writing invariants for microservice applications that do not use Kafka for
+communication between microservices but instead RPC (gRPC, thrift etc.) like
+https://github.com/delimitrou/DeathStarBench/tree/master/socialNetwork
+we can utilize change data capture to expose events to the databases of each
+microservice and still check invariants.
+
+After starting Zookeeper and Kafka with
+
+``` shell
+docker compose up
+```
+
+we can start the mongoDB  connector using the mongodb-source.json configuration file:
+
+``` shell
+curl -i -X POST -H "Accept:application/json" -H  "Content-Type:application/json" http://localhost:8083/connectors/ -d @mongodb-source.json
+```
+
+Afterwards kafka should contain the following topic "dbserver1.user.user"
+
+When we now create a new example user in the socialNetwork application called
+john doe debezium creates the following message (I only include the "payload", here
+there is also a lot of schema information as part of the debezium message
+
+``` json
+{
+  "payload": {
+    "before": null,
+    "after": "{\"_id\": {\"$oid\": \"6440277b1be32b1565328035\"},\"user_id\": {\"$numberLong\": \"1221160191339040768\"},\"first_name\": \"john\",\"last_name\": \"doe\",\"username\": \"john.doe\",\"salt\": \"D4TderGD3qY60b24xKoxMJccc2sYeY70\",\"password\": \"708a807a360abe4b478edf165266aa32564d66f74f054b238c3640428690fb6e\"}",
+    "patch": null,
+    "filter": null,
+    "updateDescription": null,
+    "source": {
+      "version": "2.1.4.Final",
+      "connector": "mongodb",
+      "name": "dbserver1",
+      "ts_ms": 1681926011000,
+      "snapshot": "false",
+      "db": "user",
+      "sequence": null,
+      "rs": "rs0",
+      "collection": "user",
+      "ord": 1,
+      "lsid": null,
+      "txnNumber": null
+    },
+    "op": "c",
+    "ts_ms": 1681926011422,
+    "transaction": null
+  }
+}
+```
+
 ## Logging
 We use  https://datalust.co/seq for logging, this requires running seq in docker:
 
