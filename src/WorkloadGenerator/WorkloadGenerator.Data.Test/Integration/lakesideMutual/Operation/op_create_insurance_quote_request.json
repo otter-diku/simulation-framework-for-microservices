@@ -1,0 +1,41 @@
+{
+  "templateId": "create-insurance-quote-request",
+  "type": "http",
+  "httpMethod": "post",
+  "dynamicVariables": [
+    {
+      "name": "deductible-amount",
+      "type": "unsignedInt"
+    }
+  ],  
+  "requestPayload": {
+    "type": "json",
+    "content": {
+      "statusHistory": [],
+      "customerInfo": {
+        "customerId": "rgpp0wkpec",
+        "firstname": "Max",
+        "lastname": "Mustermann",
+        "contactAddress": {
+          "streetAddress": "Oberseestrasse 10",
+          "postalCode": "8640",
+          "city": "Rapperswil"
+        },
+        "billingAddress": {
+          "streetAddress": "Oberseestrasse 10",
+          "postalCode": "8640",
+          "city": "Rapperswil"
+        }
+      },
+      "insuranceOptions": {
+        "startDate": "2023-04-10",
+        "insuranceType": "Life Insurance",
+        "deductible": {
+          "amount": "{{deductible-amount}}",
+          "currency": "CHF"
+        }
+      }
+    }
+  },
+  "url": "http://localhost:8080/insurance-quote-requests"
+}

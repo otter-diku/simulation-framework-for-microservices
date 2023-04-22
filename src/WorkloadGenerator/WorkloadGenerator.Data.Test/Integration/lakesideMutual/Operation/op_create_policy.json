@@ -1,0 +1,46 @@
+{
+  "templateId": "create-policy",
+  "type": "http",
+  "httpMethod": "post",
+  "dynamicVariables": [
+    {
+      "name": "deductible-amount",
+      "type": "unsignedInt"
+    },
+    {
+      "name": "policy-limit",
+      "type": "unsignedInt"
+    },
+    {
+      "name": "insurance-premium",
+      "type": "unsignedInt"
+    }      
+  ],  
+  "requestPayload": {
+    "type": "json",
+    "content": {
+      "customerId": "rgpp0wkpec",
+      "policyPeriod": {
+        "startDate": "2023-04-13T13:10:09.376Z",
+        "endDate": "2023-04-13T13:10:09.376Z"
+      },
+      "policyType": "Car Insurance",
+      "deductible": {
+        "amount": "{{deductible-amount}}",
+        "currency": "CHF"
+      },
+      "policyLimit": {
+        "amount": "{{policy-limit}}",
+        "currency": "CHF"
+      },
+      "insurancePremium": {
+        "amount": "{{insurance-premium}}",
+        "currency": "CHF"
+      },
+      "insuringAgreement": {
+        "agreementItems": []
+      }      
+    }
+  },
+  "url": "http://localhost:8090/policies"
+}

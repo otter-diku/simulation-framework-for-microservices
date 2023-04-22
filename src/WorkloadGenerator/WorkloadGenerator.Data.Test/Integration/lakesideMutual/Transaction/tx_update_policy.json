@@ -1,0 +1,15 @@
+{
+  "templateId": "tx-update-policy",
+  "arguments": [
+    {
+      "name": "url",
+      "type": "string"
+    }
+  ],  
+  "operations": [
+    {
+      "operationReferenceId": "op-update-policy",
+      "id": "op-1"
+    }
+  ]
+}

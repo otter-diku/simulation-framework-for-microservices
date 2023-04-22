@@ -1,0 +1,35 @@
+{
+  "templateId": "workload-lakeside-concurrent-updates",
+  "maxConcurrentTransactions": 5,
+  "generators": [
+      {
+      "id": "policy-url",
+      "type": "constant",
+      "constant": "http://localhost:8090/policies/ibliui7cs2"
+      }
+  ],
+  "transactions": [
+    {
+      "id": "tx-delete-policy",
+      "transactionReferenceId": "tx-delete-policy",
+      "count": 1,
+      "data": [
+        {
+          "name":  "url",
+          "generatorReferenceId": "policy-url"
+        }
+      ]
+    },
+    {
+      "id": "tx-update-policy",
+      "transactionReferenceId": "tx-update-policy",
+      "count": 10,
+      "data": [
+        {
+          "name":  "url",
+          "generatorReferenceId": "policy-url"
+        }
+      ]
+    }
+  ]
+}
