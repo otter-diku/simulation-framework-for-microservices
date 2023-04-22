@@ -51,6 +51,7 @@ public static class Program
                           "Exiting...");
         }
 
+    SelectWorkload:
         var workloadSelected = SelectWorkload(scenarioValidated!.Workloads.Values.ToList());
         if (workloadSelected is null)
         {
@@ -67,8 +68,9 @@ public static class Program
             scenarioValidated.Transactions,
             scenarioValidated.Operations);
 
-        Console.WriteLine("Workload generation finished. Press any key to terminate\n");
-        Console.ReadLine();
+        // TODO: this is misleading -> need more accurate workload finished timing
+        Console.WriteLine("Workload generation finished.\n");
+        goto SelectWorkload;
     }
 
     private static WorkloadGeneratorInputUnvalidated ExtractInputFiles(List<(string FileName, string Content)> valueTuples)

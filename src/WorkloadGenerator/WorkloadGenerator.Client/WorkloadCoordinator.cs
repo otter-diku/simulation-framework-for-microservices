@@ -65,6 +65,42 @@ public class WorkloadCoordinator : IWorkloadCoordinator
         _logger.LogInformation("All transactions have been submitted to the scheduler");
     }
 
+    public async Task ScheduleWorkloadStages(
+        WorkloadInputUnresolved workloadToRun,
+        Dictionary<string, TransactionInputUnresolved> transactions,
+        Dictionary<string, IOperationUnresolved> operations)
+    {
+        var workloadCorrelationId = Guid.NewGuid(); /* TODO: correlation IDs should be hierarchical and passed down */
+        using var _ = _logger.BeginScope(new Dictionary<string, object>()
+        {
+            { "WorkloadTemplateId", workloadToRun.TemplateId },
+            { "WorkloadCorrelationId", workloadCorrelationId }
+        });
+
+        _workloadScheduler.Init(GetMaxRateStages(workloadToRun));
+
+        if (!workloadToRun.Transactions.Sum(tx => tx.Percentage).Equals(100))
+        {
+            Console.WriteLine("Stopped because percentage of transactions does not sum up to 100");
+            return;
+        }
+        var txDistribution = new TransactionDistribution(workloadToRun.Transactions);
+
+        var generators = new Dictionary<String, IGenerator>();
+        foreach (var generator in workloadToRun.Generators)
+        {
+            generators.Add(generator.Id, GeneratorFactory.GetGenerator(generator));
+        }
+
+        // Execute stage for example for 30 seconds keep submitting
+        // to 5 workers then for the next 30 seconds 
+        // iterate through list of stages
+
+        // TODO: a little bit more complicated would need
+        // response from workers to just keep them busy for 30 seconds
+        // but not submit more!
+    }
+
     private static ExecutableTransaction CreateExecutableTransaction(
         Guid workloadCorrelationId,
         WorkloadInputUnresolved workloadToRun,
@@ -94,12 +130,26 @@ public class WorkloadCoordinator : IWorkloadCoordinator
     }
 
 
+
+
+
     private static int GetMaxRate(WorkloadInputUnresolved workloadToRun)
     {
         var maxRate = 10;
         if (workloadToRun.MaxConcurrentTransactions is not null)
         {
             maxRate = (int)workloadToRun.MaxConcurrentTransactions;
+        }
+
+        return maxRate;
+    }
+
+    private static int GetMaxRateStages(WorkloadInputUnresolved workloadToRun)
+    {
+        var maxRate = 10;
+        if (workloadToRun.Stages is not null)
+        {
+            maxRate = workloadToRun.Stages.Max(s => s.Workers);
         }
 
         return maxRate;
