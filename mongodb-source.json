@@ -1,0 +1,11 @@
+{
+    "name": "user-connector",
+    "config": {
+        "connector.class" : "io.debezium.connector.mongodb.MongoDbConnector",
+        "tasks.max" : "1",
+        "topic.prefix" : "dbserver1",
+        "mongodb.hosts" : "host.docker.internal:27023",
+        "database.include.list" : "user",
+        "schema.history.internal.kafka.bootstrap.servers" : "kafka:9092"
+    }
+}
