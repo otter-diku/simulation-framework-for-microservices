@@ -75,6 +75,6 @@ public class TransactionExecutionService : ITransactionExecutionService
         }
 
         _logger.LogWarning("Did not find an execution service for {OperationType}", unresolved.Type);
-        return new Dictionary<string, object>();
+        return providedValues;
     }
 }
