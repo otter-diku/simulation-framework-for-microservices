@@ -2,7 +2,6 @@ using System.Collections;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
-using System.Text.Json.Serialization;
 using System.Text.RegularExpressions;
 using System.Web;
 using Microsoft.Extensions.Logging;
@@ -218,10 +217,16 @@ public class OperationService : IOperationService
             TemplateId = unresolvedInput.TemplateId,
             QueryParameters = unresolvedInput.QueryParameters,
             Type = unresolvedInput.Type,
-            // TODO: ResponsePayload = ResolveResponsePayload(unresolvedInput.ResponsePayload),
+            Response = ResolveResponsePayload(unresolvedInput.Response),
             Url = ResolveUrl(unresolvedInput, resolvedPayload, providedValues)
         };
     }
+
+    private HttpOperationResponseInput ResolveResponsePayload(HttpOperationResponseInput unresolvedInputResponse)
+    {
+        return unresolvedInputResponse;
+    }
+
 
     private IOperationResolved ResolveSleepOperation(SleepOperationInputUnresolved sleepOperation,
         Dictionary<string, object> providedValues)

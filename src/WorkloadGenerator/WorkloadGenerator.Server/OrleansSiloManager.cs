@@ -42,8 +42,8 @@ namespace WorkloadGenerator.Server
                         })
                         .ConfigureServices((sc) =>
                         {
-                            sc.AddHttpClient<TransactionRunnerService>();
-                            sc.AddSingleton<TransactionRunnerService>();
+                            sc.AddHttpClient<TransactionExecutionService>();
+                            sc.AddSingleton<TransactionExecutionService>();
                             sc.AddSingleton<IOperationService, OperationService>();
                         })
                         .AddMemoryStreams("StreamProvider")

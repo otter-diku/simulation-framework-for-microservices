@@ -13,12 +13,12 @@ public class WorkGrain : Grain, IWorkGrain
     private const string StreamNamespace = "TRANSACTIONDATA";
     private const string StreamProviderName = "StreamProvider";
 
-    private readonly TransactionRunnerService _runnerService;
+    private readonly TransactionExecutionService _executionService;
     private readonly ILogger<WorkGrain> _logger;
 
-    public WorkGrain(TransactionRunnerService transactionRunnerService, ILogger<WorkGrain> logger)
+    public WorkGrain(TransactionExecutionService transactionExecutionService, ILogger<WorkGrain> logger)
     {
-        _runnerService = transactionRunnerService;
+        _executionService = transactionExecutionService;
         _logger = logger;
     }
 
@@ -61,7 +61,7 @@ public class WorkGrain : Grain, IWorkGrain
 
         try
         {
-            await _runnerService.Run(executableTransaction.Transaction, executableTransaction.ProvidedValues,
+            await _executionService.Run(executableTransaction.Transaction, executableTransaction.ProvidedValues,
                 executableTransaction.Operations);
             _logger.LogInformation("Finished executing transaction");
         }

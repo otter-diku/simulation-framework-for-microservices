@@ -4,5 +4,8 @@ namespace WorkloadGenerator.Data.Services;
 
 public interface IOperationExecutionService
 {
-    Task<Dictionary<string, object>> Execute(IOperationResolved resolved);
+    bool CanHandle(IOperationUnresolved operation);
+
+    Task<Dictionary<string, object>> Execute(IOperationUnresolved unresolved,
+        Dictionary<string, object> providedValues);
 }

@@ -12,7 +12,7 @@
     "type": "json",
     "content": {
       "itemId": "42",
-      "itemName": "meti",
+      "itemName": "item-name",
       "itemPrice": 55
     }
   },
