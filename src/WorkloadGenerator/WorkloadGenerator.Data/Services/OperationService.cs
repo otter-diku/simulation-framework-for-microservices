@@ -217,10 +217,16 @@ public class OperationService : IOperationService
             TemplateId = unresolvedInput.TemplateId,
             QueryParameters = unresolvedInput.QueryParameters,
             Type = unresolvedInput.Type,
-            // TODO: ResponsePayload = ResolveResponsePayload(unresolvedInput.ResponsePayload),
+            Response = ResolveResponsePayload(unresolvedInput.Response),
             Url = ResolveUrl(unresolvedInput, resolvedPayload, providedValues)
         };
     }
+
+    private HttpOperationResponseInput ResolveResponsePayload(HttpOperationResponseInput unresolvedInputResponse)
+    {
+        return unresolvedInputResponse;
+    }
+
 
     private IOperationResolved ResolveSleepOperation(SleepOperationInputUnresolved sleepOperation,
         Dictionary<string, object> providedValues)

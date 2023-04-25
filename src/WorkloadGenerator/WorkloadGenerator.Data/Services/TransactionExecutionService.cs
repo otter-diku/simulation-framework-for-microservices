@@ -67,8 +67,11 @@ public class TransactionExecutionService : ITransactionExecutionService
         Dictionary<string, object> providedValues)
     {
         var operationExecutionService
-            = _operationExecutionServices.SingleOrDefault(executionService => executionService.CanHandle(unresolved));
+            = _operationExecutionServices.SingleOrDefault(executionService =>
+                executionService.CanHandle(unresolved));
 
+        // var validOperationServices = _operationExecutionServices.Where(x => x is not null).ToList().Count;
+        // Console.WriteLine("Valid Operation services: " + validOperationServices);
         if (operationExecutionService is not null)
         {
             return await operationExecutionService.Execute(unresolved, providedValues);

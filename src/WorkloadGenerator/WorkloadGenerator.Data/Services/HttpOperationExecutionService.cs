@@ -65,7 +65,13 @@ public class HttpOperationExecutionService : IOperationExecutionService
 
         var response = await client.SendAsync(message);
 
-        return await ExtractReturnValues(httpOperationResolved, response);
+        var extractedValues = await ExtractReturnValues(httpOperationResolved, response);
+        // add new values to providedValues
+        foreach (var pair in extractedValues)
+        {
+            providedValues[pair.Key] = pair.Value;
+        }
+        return providedValues;
     }
 
     private async Task<Dictionary<string, object>> ExtractReturnValues(
