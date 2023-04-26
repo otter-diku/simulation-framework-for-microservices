@@ -1,0 +1,16 @@
+ProductPriceChangedIntegrationEvent pc1
+  topic: eshop_event_bus
+  schema: {ProductId, NewPrice}
+
+ProductPriceChangedIntegrationEvent pc2
+  topic: eshop_event_bus
+  schema: {ProductId, NewPrice}
+
+ProductBoughtIntegrationEvent pb
+  topic: eshop_event_bus
+  schema: {ProductId, Units, Price}
+
+
+EVENT SEQ (pc1, [!pc2]*, pb) WITHIN 2 min
+WHERE pc1.id = pb.id AND pc1.id = pc2.id
+INVARIANT pc1.price = pb.price

@@ -4,27 +4,45 @@ invariant: eventDefinition* query;
 
 query
    : 'EVENT SEQ' '(' events ')' '\n'?
+     ('WITHIN' time)? '\n'?
      ('WHERE' where_clause)? '\n'?
-     ('ORDERING' orderings)? '\n'?
-     'WITHIN' time
-   | 'EVENTS' '(' events ')' '\n'?
-     ('WHERE' where_clause)? '\n'?
-     ('ORDERING' orderings)? '\n'?
-     'WINDOW' time;
+     'INVARIANT' where_clause
+     ('WITHIN' time)?
+   ;
 
-eventDefinition: eventName
+eventDefinition: eventName eventId
                  'topic:' topic
                  'schema:' schema
                  ;
 eventName: IDENTIFIER;
+eventId: IDENTIFIER;
 topic: IDENTIFIER;
 schema: '{' IDENTIFIER (',' IDENTIFIER)* '}';
 
+events
+  : eventChoice (',' eventChoice)*
+  ;
 
-events: event (',' event)*;
-event: eventSchema eventId;
-eventSchema: IDENTIFIER;
-eventId: IDENTIFIER;
+eventWithOp: event regexOp?;
+
+eventChoice
+  : eventWithOp
+  | '(' eventWithOp '|' eventWithOp ')'
+  ;
+
+regexOp
+  : '*'
+  | '+'
+  ;
+
+event
+  : negEvent
+  | wildcard
+  | eventId
+  ;
+negEvent: '[!' eventId ']';
+wildcard: '?';
+
 
 where_clause: equality (OP equality)*;
 equality: quantity EQ_OP quantity;
@@ -32,10 +50,6 @@ quantity
     : qualifiedName
     | atom
     ;
-
-
-orderings: ordering (OP ordering)*;
-ordering: '<' IDENTIFIER (',' IDENTIFIER)* '>';
 
 atom
     : BOOL

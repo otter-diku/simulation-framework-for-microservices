@@ -1,0 +1,14 @@
+order-submitted os
+  topic: os-topic
+  schema: {orderid, ...}
+
+payment-succeeded ps
+  topic: ps-topic
+  schema: {orderid}
+
+payment-failed pf
+  topic: pf-topic
+  schema: {orderid}
+
+EVENT SEQ (os, (ps | pf))
+WHERE os.orderid = ps.orderid OR os.orderid = pf.orderid
