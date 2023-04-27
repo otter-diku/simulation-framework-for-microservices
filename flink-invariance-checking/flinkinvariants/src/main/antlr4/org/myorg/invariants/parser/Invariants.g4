@@ -20,25 +20,25 @@ topic: IDENTIFIER;
 schema: '{' IDENTIFIER (',' IDENTIFIER)* '}';
 
 events
-  : eventChoice (',' eventChoice)*
+  : event (',' event)*
   ;
 
-eventWithOp: event regexOp?;
-
-eventChoice
-  : eventWithOp
-  | '(' eventWithOp '|' eventWithOp ')'
+event
+  : eventAtom
+  | orOperator
   ;
+
+orOperator: '(' eventAtom '|' eventAtom ')';
 
 regexOp
   : '*'
   | '+'
   ;
 
-event
-  : negEvent
-  | wildcard
-  | eventId
+eventAtom
+  : negEvent regexOp?
+  | wildcard regexOp?
+  | eventId regexOp?
   ;
 negEvent: '[!' eventId ']';
 wildcard: '?';
