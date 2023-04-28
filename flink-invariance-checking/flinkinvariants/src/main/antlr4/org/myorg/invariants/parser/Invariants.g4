@@ -6,15 +6,19 @@ query
    : 'EVENT SEQ' '(' events ')' '\n'?
      ('WITHIN' time)? '\n'?
      ('WHERE' where_clause)? '\n'?
-     'INVARIANT' where_clause
-     ('WITHIN' time)?
+     'INVARIANT' invariant_clause
    ;
 
-eventDefinition: eventName eventId
+invariant_clause
+  : where_clause ('WITHIN' time)?
+  | 'WITHIN' time
+  ;
+
+eventDefinition: eventType eventId
                  'topic:' topic
-                 'schema:' schema
+                 'schema:' schema '\n'?
                  ;
-eventName: IDENTIFIER;
+eventType: IDENTIFIER;
 eventId: IDENTIFIER;
 topic: IDENTIFIER;
 schema: '{' IDENTIFIER (',' IDENTIFIER)* '}';
@@ -28,7 +32,7 @@ event
   | orOperator
   ;
 
-orOperator: '(' eventAtom '|' eventAtom ')';
+orOperator: '(' event '|' event ')';
 
 regexOp
   : '*'
@@ -40,7 +44,7 @@ eventAtom
   | wildcard regexOp?
   | eventId regexOp?
   ;
-negEvent: '[!' eventId ']';
+negEvent: '[!' eventId (',' eventId)* ']';
 wildcard: '?';
 
 

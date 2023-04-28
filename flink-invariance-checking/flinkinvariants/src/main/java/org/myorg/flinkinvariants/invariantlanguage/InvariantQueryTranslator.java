@@ -14,6 +14,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+
 public class InvariantQueryTranslator {
 
     public static class InvariantLanguage2CEPListener extends InvariantsBaseListener {
@@ -70,25 +71,25 @@ public class InvariantQueryTranslator {
             super.enterEventDefinition(ctx);
         }
 
-        @Override
-        public void enterEvent(InvariantsParser.EventContext ctx) {
-            lastEvent = ctx.eventId().IDENTIFIER().toString();
-            eventId2EventName.put(
-                    ctx.eventId().IDENTIFIER().toString(),
-                    ctx.eventSchema().IDENTIFIER().toString());
-
-            if (firstEvent) {
-                invariantBuilder.append(
-                        templateFirstEvent.replace(
-                                "IDENTIFIER", ctx.eventSchema().IDENTIFIER().toString()));
-                firstEvent = false;
-                return;
-            }
-            invariantBuilder.append(
-                    templateSubsequentEvent.replace(
-                            "IDENTIFIER", ctx.eventSchema().IDENTIFIER().toString()));
-            super.enterEvent(ctx);
-        }
+//        @Override
+//        public void enterEvent(InvariantsParser.EventContext ctx) {
+//            lastEvent = ctx.eventId().IDENTIFIER().toString();
+//            eventId2EventName.put(
+//                    ctx.eventId().IDENTIFIER().toString(),
+//                    ctx.eventSchema().IDENTIFIER().toString());
+//
+//            if (firstEvent) {
+//                invariantBuilder.append(
+//                        templateFirstEvent.replace(
+//                                "IDENTIFIER", ctx.eventSchema().IDENTIFIER().toString()));
+//                firstEvent = false;
+//                return;
+//            }
+//            invariantBuilder.append(
+//                    templateSubsequentEvent.replace(
+//                            "IDENTIFIER", ctx.eventSchema().IDENTIFIER().toString()));
+//            super.enterEvent(ctx);
+//        }
 
         @Override
         public void enterWhere_clause(InvariantsParser.Where_clauseContext ctx) {
@@ -183,7 +184,7 @@ public class InvariantQueryTranslator {
                     break;
                 default:
                     equalityBuilder
-                            .append("Unexpected equality operator: ")
+                            .append("Unexpected operator: ")
                             .append(ctx.EQ_OP().toString());
                     break;
             }
@@ -244,8 +245,8 @@ public class InvariantQueryTranslator {
             substitutions.put(
                     "package org.myorg.flinkinvariants.invariantlanguage;",
                     "package org.myorg.flinkinvariants.invariantcheckers;");
-            substitutions.put("DataStream<Event> inputStream = null;", buildStreamCode());
             substitutions.put("// STREAMS", streamBuilder.toString());
+            substitutions.put("DataStream<Event> inputStream = null;", buildStreamCode());
             substitutions.put(
                     "public static Pattern<Event, ?> invariant;", invariantBuilder.toString());
             substitutions.put(
@@ -292,32 +293,6 @@ public class InvariantQueryTranslator {
         walker.walk(translator, tree);
     }
 
-    public static void main(String[] args) throws Exception {
-        // create a CharStream that reads from standard input
-        var invariant = "EVENT SEQ (E_1 e_1, E_2 e_2, E_3 e_3) WITHIN 5 sec";
-        var invariant2 =
-                """
-                EVENT SEQ (E_1 e_1, E_2 e_2, E_3 e_3)
-                WHERE e_1.id = e_2.id AND e_2.id = e_3.id AND e_1.id = e_3.id
-                WITHIN 5 sec""";
-
-        ANTLRInputStream input = new ANTLRInputStream(invariant2);
-        // create a lexer that feeds off of input CharStream
-        InvariantsLexer lexer = new InvariantsLexer(input);
-
-        // create a buffer of tokens pulled from the lexer
-        CommonTokenStream tokens = new CommonTokenStream(lexer);
-        // create a parser that feeds off the tokens buffer
-        InvariantsParser parser = new InvariantsParser(tokens);
-        ParseTree tree = parser.invariant(); // begin parsing at init rule
-
-        ParseTreeWalker walker = new ParseTreeWalker();
-        var output = "src/main/java/org/myorg/flinkinvariants/invariantlanguage/Invariant.java";
-        InvariantLanguage2CEPListener translator =
-                new InvariantLanguage2CEPListener("Invariant", output);
-
-        walker.walk(translator, tree);
-    }
 
     private static void createInvariantFile(String outputFile, Map<String, String> substitions) {
         String inputFile =

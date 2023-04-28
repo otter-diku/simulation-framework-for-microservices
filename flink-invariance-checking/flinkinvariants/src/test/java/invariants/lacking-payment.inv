@@ -1,6 +1,6 @@
 order-submitted os
   topic: os-topic
-  schema: {orderid, ...}
+  schema: {orderid}
 
 payment-succeeded ps
   topic: ps-topic
@@ -12,3 +12,4 @@ payment-failed pf
 
 EVENT SEQ (os, (ps | pf))
 WHERE os.orderid = ps.orderid OR os.orderid = pf.orderid
+INVARIANT WITHIN 5 min

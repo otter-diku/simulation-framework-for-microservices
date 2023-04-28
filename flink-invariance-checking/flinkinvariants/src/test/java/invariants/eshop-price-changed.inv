@@ -12,5 +12,5 @@ ProductBoughtIntegrationEvent pb
 
 
 EVENT SEQ (pc1, [!pc2]*, pb) WITHIN 2 min
-WHERE pc1.id = pb.id AND pc1.id = pc2.id
-INVARIANT pc1.price = pb.price
+WHERE pc1.ProductId = pb.ProductId AND pc1.ProductId = pc2.ProductId
+INVARIANT pc1.NewPrice = pb.Price
