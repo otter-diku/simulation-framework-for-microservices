@@ -171,4 +171,30 @@ public class InvariantPositiveParseTests {
         assertEquals(0, numParseErrors);
     }
 
+    @Test
+    public void TestProductPriceInvariant() {
+        var translator = new InvariantTranslator();
+        var query =
+                """
+                ProductPriceChangedIntegrationEvent pc1
+                  topic: eshop_event_bus
+                  schema: {ProductId, NewPrice}
+                ProductPriceChangedIntegrationEvent pc2
+                  topic: eshop_event_bus
+                  schema: {ProductId, NewPrice}
+                ProductBoughtIntegrationEvent pb
+                  topic: eshop_event_bus
+                  schema: {ProductId, Units, Price}
+                                
+                EVENT SEQ (pc1, [!pc2]*, pb) WITHIN 2 min
+                WHERE pc1.ProductId = pb.ProductId AND pc1.ProductId = pc2.ProductId
+                INVARIANT pc1.NewPrice = pb.Price""";
+
+        var numParseErrors = translator.translateQuery(
+                query,
+                "TestInvariant",
+                "");
+        assertEquals(0, numParseErrors);
+    }
+
 }

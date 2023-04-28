@@ -42,7 +42,13 @@ public class InvariantTranslator {
         private Pattern createPattern(InvariantsParser.EventAtomContext eventAtom) {
             var isNegEvent = eventAtom.negEvent() != null;
             var hasRegexOp = eventAtom.regexOp() != null;
-            var eventId = eventAtom.eventId().IDENTIFIER().toString();
+
+            String eventId;
+            if (isNegEvent) {
+                eventId = eventAtom.negEvent().eventId().IDENTIFIER().toString();
+            } else {
+                eventId = eventAtom.eventId().IDENTIFIER().toString();
+            }
             var eventType = id2Type.get(eventId);
 
             var patternBuilder = new Pattern.PatternBuilder(eventType, eventId);

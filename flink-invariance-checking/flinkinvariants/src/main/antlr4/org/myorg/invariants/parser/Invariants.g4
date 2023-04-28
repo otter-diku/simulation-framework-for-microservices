@@ -44,7 +44,7 @@ eventAtom
   | wildcard regexOp?
   | eventId regexOp?
   ;
-negEvent: '[!' eventId (',' eventId)* ']';
+negEvent: '[!' eventId ']';
 wildcard: '?';
 
 
