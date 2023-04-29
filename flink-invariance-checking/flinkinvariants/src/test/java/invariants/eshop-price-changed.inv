@@ -11,6 +11,6 @@ ProductBoughtIntegrationEvent pb
   schema: {ProductId, Units, Price}
 
 
-EVENT SEQ (pc1, [!pc2]*, pb) WITHIN 2 min
+EVENT SEQ (pc1, !pc2, pb)
 WHERE pc1.ProductId = pb.ProductId AND pc1.ProductId = pc2.ProductId
-INVARIANT pc1.NewPrice = pb.Price
+ON FULL MATCH pc1.NewPrice = pb.Price

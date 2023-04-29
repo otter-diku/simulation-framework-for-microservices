@@ -3,15 +3,19 @@ grammar Invariants;
 invariant: eventDefinition* query;
 
 query
-   : 'EVENT SEQ' '(' events ')' '\n'?
-     ('WITHIN' time)? '\n'?
+   : 'SEQ' '(' events ')' '\n'?
+     'WITHIN' time '\n'?
      ('WHERE' where_clause)? '\n'?
-     'INVARIANT' invariant_clause
+     'ON FULL MATCH' invariant_clause
+     ('ON PARTIAL MATCH' invariant_clause)?
+   | 'SEQ' '(' events ')' '\n'?
+     'WITHIN' time '\n'?
+     ('WHERE' where_clause)? '\n'?
+     'ON PARTIAL MATCH' invariant_clause
    ;
 
 invariant_clause
-  : where_clause ('WITHIN' time)?
-  | 'WITHIN' time
+  : where_clause
   ;
 
 eventDefinition: eventType eventId
@@ -32,7 +36,7 @@ event
   | orOperator
   ;
 
-orOperator: '(' event '|' event ')';
+orOperator: '(' eventAtom ('|' eventAtom)* ')';
 
 regexOp
   : '*'
@@ -41,12 +45,9 @@ regexOp
 
 eventAtom
   : negEvent regexOp?
-  | wildcard regexOp?
   | eventId regexOp?
   ;
-negEvent: '[!' eventId ']';
-wildcard: '?';
-
+negEvent: '!' eventId;
 
 where_clause: equality (OP equality)*;
 equality: quantity EQ_OP quantity;
