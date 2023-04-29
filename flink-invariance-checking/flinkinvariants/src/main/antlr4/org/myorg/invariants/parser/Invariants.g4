@@ -36,21 +36,36 @@ event
   | orOperator
   ;
 
-orOperator: '(' eventAtom ('|' eventAtom)* ')';
+orOperator: '(' eventId ('|' eventId)* ')' regexOp?;
 
 regexOp
   : '*'
   | '+'
   ;
 
-eventAtom
-  : negEvent regexOp?
-  | eventId regexOp?
-  ;
 negEvent: '!' eventId;
 
-where_clause: equality (OP equality)*;
-equality: quantity EQ_OP quantity;
+eventAtom
+  : negEvent
+  | eventId regexOp?;
+
+
+// (a.id = 42 OR b.id = 42) AND a.price < 42
+// cond -> cond AND cond -> ( cond ) AND cond -> ( cond OR cond) AND cond
+where_clause
+  : cond (OP cond)*
+  ;
+cond
+  : equality
+  | '(' cond ')'
+  ;
+
+
+//where_clause
+//  : equality (OP equality)*;
+equality
+  : quantity EQ_OP quantity;
+
 quantity
     : qualifiedName
     | atom

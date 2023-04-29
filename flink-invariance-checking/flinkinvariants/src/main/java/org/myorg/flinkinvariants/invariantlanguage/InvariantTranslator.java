@@ -2,6 +2,7 @@ package org.myorg.flinkinvariants.invariantlanguage;
 
 import org.antlr.v4.runtime.ANTLRInputStream;
 import org.antlr.v4.runtime.CommonTokenStream;
+import org.antlr.v4.runtime.RuleContext;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.ParseTreeWalker;
 import org.myorg.invariants.parser.InvariantsLexer;
@@ -9,6 +10,7 @@ import org.myorg.invariants.parser.InvariantsParser;
 import org.myorg.invariants.parser.InvariantsBaseListener;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class InvariantTranslator {
 
@@ -17,7 +19,7 @@ public class InvariantTranslator {
         private Set<String> relevantEventTypes = new HashSet<>();
         private Map<String, String> id2Type = new HashMap<>();
 
-        private List<Pattern> patterns = new ArrayList<>();
+        private List<SequenceNode> sequence = new ArrayList<>();
 
         @Override
         public void enterEventDefinition(InvariantsParser.EventDefinitionContext ctx) {
@@ -32,42 +34,52 @@ public class InvariantTranslator {
 
         @Override
         public void enterEvent(InvariantsParser.EventContext ctx) {
-            var isOr = ctx.orOperator() != null;
-            if (!isOr) {
-                var pattern = createPattern(ctx.eventAtom());
-                patterns.add(pattern);
-            }
+            var sequenceNode = createSequenceNode(ctx);
+            sequence.add(sequenceNode);
+
         }
 
-        private Pattern createPattern(InvariantsParser.EventAtomContext eventAtom) {
-            var isNegEvent = eventAtom.negEvent() != null;
-            var hasRegexOp = eventAtom.regexOp() != null;
+        private SequenceNode createSequenceNode(InvariantsParser.EventContext eventContext) {
+            var isOrOperator = eventContext.orOperator() != null;
+            SequenceNode.SequenceNodeBuilder sequenceNodeBuilder;
 
-            String eventId;
-            if (isNegEvent) {
-                eventId = eventAtom.negEvent().eventId().IDENTIFIER().toString();
+            Optional<String> regexOp;
+            if (isOrOperator) {
+                var eventIds = eventContext.orOperator().eventId().stream().map(eventIdContext -> eventIdContext.IDENTIFIER().getText()).collect(Collectors.toList());
+                sequenceNodeBuilder = new SequenceNode.SequenceNodeBuilder(eventIds);
+                sequenceNodeBuilder.setNeg(false);
+
+                regexOp = Optional.ofNullable(eventContext.orOperator().regexOp())
+                        .map(RuleContext::getText);
             } else {
-                eventId = eventAtom.eventId().IDENTIFIER().toString();
-            }
-            var eventType = id2Type.get(eventId);
+                var eventAtomContext = eventContext.eventAtom();
+                var isNegEvent = eventAtomContext.negEvent() != null;
 
-            var patternBuilder = new Pattern.PatternBuilder(eventType, eventId);
-            patternBuilder.setNeg(isNegEvent);
-            if (hasRegexOp) {
-                switch (eventAtom.regexOp().getText()) {
-                    case "+": patternBuilder.setType(PatternType.ONE_OR_MORE);
-                    case "*": patternBuilder.setType(PatternType.ZERO_OR_MORE);
+                List<String> eventIds = new ArrayList<>();
+                if (isNegEvent) {
+                    eventIds.add(eventAtomContext.negEvent().eventId().IDENTIFIER().toString());
+                } else {
+                    eventIds.add(eventAtomContext.eventId().IDENTIFIER().toString());
+                }
+                sequenceNodeBuilder = new SequenceNode.SequenceNodeBuilder(eventIds);
+                sequenceNodeBuilder.setNeg(isNegEvent);
+                regexOp = Optional.ofNullable(eventContext.eventAtom().regexOp())
+                        .map(RuleContext::getText);
+            }
+
+
+            if (regexOp.isPresent()) {
+                switch (regexOp.get()) {
+                    case "+": sequenceNodeBuilder.setType(SequenceNodeQuantifier.ONE_OR_MORE);
+                        break;
+                    case "*": sequenceNodeBuilder.setType(SequenceNodeQuantifier.ZERO_OR_MORE);
+                        break;
                 }
             } else {
-                patternBuilder.setType(PatternType.SINGLE);
-            }
-            if (isNegEvent) {
-                patternBuilder.setContiguity(Contiguity.RELAXED_NOT);
-            } else {
-                patternBuilder.setContiguity(Contiguity.RELAXED);
+                sequenceNodeBuilder.setType(SequenceNodeQuantifier.ONCE);
             }
 
-            return patternBuilder.build();
+            return sequenceNodeBuilder.build();
         }
 
         @Override
@@ -77,7 +89,7 @@ public class InvariantTranslator {
             var filterOperator = generateStreamFilter(relevantEventTypes);
             System.out.println(filterOperator);
 
-            patterns.forEach(System.out::println);
+            sequence.forEach(System.out::println);
         }
 
         private String generateDataStreamCode(Set<String> topics) {

@@ -167,7 +167,7 @@ public class InvariantPositiveParseTests {
                   topic: c-topic
                   schema: {id}
                                
-                SEQ (a, (a | c | b))
+                SEQ (a*, (a | c | b)+)
                 WITHIN 1 sec
                 ON FULL MATCH a.id = 42""";
 
@@ -193,7 +193,7 @@ public class InvariantPositiveParseTests {
                   topic: eshop_event_bus
                   schema: {ProductId, Units, Price}
                                 
-                SEQ (pc1, !pc2, pb) 
+                SEQ (pc1, !pc2, pb)
                 WITHIN 2 min
                 WHERE pc1.ProductId = pb.ProductId AND pc1.ProductId = pc2.ProductId
                 ON FULL MATCH pc1.NewPrice = pb.Price""";
@@ -204,5 +204,33 @@ public class InvariantPositiveParseTests {
                 "");
         assertEquals(0, numParseErrors);
     }
+
+    @Test
+    public void TestWhereClause() {
+        var translator = new InvariantTranslator();
+        var query =
+                """
+                A a
+                  topic: a-topic
+                  schema: {id}
+                B b
+                  topic: b-topic
+                  schema: {id}
+                C c
+                  topic: c-topic
+                  schema: {id}
+                               
+                SEQ (a*, (a | c | b)+)
+                WITHIN 1 sec
+                WHERE (a.id = b.id OR a.id = c.id) AND b.price < c.price
+                ON FULL MATCH a.id = 42""";
+
+        var numParseErrors = translator.translateQuery(
+                query,
+                "TestInvariant",
+                "");
+        assertEquals(0, numParseErrors);
+    }
+
 
 }
