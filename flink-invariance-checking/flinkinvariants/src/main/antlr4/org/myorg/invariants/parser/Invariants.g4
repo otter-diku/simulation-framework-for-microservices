@@ -4,12 +4,12 @@ invariant: eventDefinition* query;
 
 query
    : 'SEQ' '(' events ')' '\n'?
-     'WITHIN' time '\n'?
+     ('WITHIN' time)? '\n'?
      ('WHERE' where_clause)? '\n'?
      'ON FULL MATCH' invariant_clause
      ('ON PARTIAL MATCH' invariant_clause)?
    | 'SEQ' '(' events ')' '\n'?
-     'WITHIN' time '\n'?
+     ('WITHIN' time)? '\n'?
      ('WHERE' where_clause)? '\n'?
      'ON PARTIAL MATCH' invariant_clause
    ;
@@ -53,16 +53,18 @@ eventAtom
 // (a.id = 42 OR b.id = 42) AND a.price < 42
 // cond -> cond AND cond -> ( cond ) AND cond -> ( cond OR cond) AND cond
 where_clause
-  : cond (OP cond)*
+  : cond
   ;
+
 cond
   : equality
-  | '(' cond ')'
+  | cond OP cond
+  | lpar cond rpar
   ;
 
+lpar: '(';
+rpar: ')';
 
-//where_clause
-//  : equality (OP equality)*;
 equality
   : quantity EQ_OP quantity;
 
@@ -81,7 +83,6 @@ qualifiedName
     ;
 
 time: INT TIME;
-
 
 OP: 'AND' | 'OR';
 EQ_OP: '=' | '!=' | '<' | '<=' | '>' | '>=';
