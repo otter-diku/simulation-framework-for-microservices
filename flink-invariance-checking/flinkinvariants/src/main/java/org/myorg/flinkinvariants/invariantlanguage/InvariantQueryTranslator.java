@@ -105,7 +105,7 @@ public class InvariantQueryTranslator {
         @Override
         public void exitWhere_clause(InvariantsParser.Where_clauseContext ctx) {
 
-            var operators = ctx.OP();
+      /*      var operators = ctx.OP();
             invariantBuilder.append("return ");
 
             var it = equalities.iterator();
@@ -132,7 +132,7 @@ public class InvariantQueryTranslator {
             String endIterativeCondition = """
                   }
               })""";
-            invariantBuilder.append(endIterativeCondition);
+            invariantBuilder.append(endIterativeCondition);*/
         }
 
         @Override

@@ -28,6 +28,31 @@ public class InvariantPositiveParseTests {
         assertEquals(0, numParseErrors);
     }
 
+
+    @Test
+    public void todelete() {
+        var translator = new InvariantTranslator();
+        var query =
+                """
+                A a
+                  topic: a-topic
+                  schema: {id}
+                B b
+                  topic: b-topic
+                  schema: {id}
+
+                SEQ (a, b)
+                WITHIN 1 sec
+                WHERE (a=b AND (c=d)) AND (e=f)
+                ON FULL MATCH (a.id = 42)""";
+
+        var numParseErrors = translator.translateQuery(
+                query,
+                "TestInvariant",
+                "");
+        assertEquals(0, numParseErrors);
+    }
+
     @Test
     public void TestEventSeq2() {
         var translator = new InvariantTranslator();

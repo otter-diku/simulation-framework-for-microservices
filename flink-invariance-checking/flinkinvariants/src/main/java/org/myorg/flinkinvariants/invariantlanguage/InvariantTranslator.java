@@ -5,6 +5,7 @@ import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.RuleContext;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.ParseTreeWalker;
+import org.antlr.v4.runtime.tree.xpath.XPath;
 import org.myorg.invariants.parser.InvariantsLexer;
 import org.myorg.invariants.parser.InvariantsParser;
 import org.myorg.invariants.parser.InvariantsBaseListener;
@@ -21,6 +22,8 @@ public class InvariantTranslator {
 
         private List<SequenceNode> sequence = new ArrayList<>();
 
+        private List<InvariantsParser.TermContext> termContexts = new ArrayList<>();
+
         @Override
         public void enterEventDefinition(InvariantsParser.EventDefinitionContext ctx) {
             var topic = ctx.topic().IDENTIFIER().toString();
@@ -35,7 +38,64 @@ public class InvariantTranslator {
         @Override
         public void enterWhere_clause(InvariantsParser.Where_clauseContext ctx) {
             // TODO: validate that conditions contain only valid event IDs
+            var terms = ctx.term();
+            for (var term : terms) {
 
+                // 1. go inside each term and see if it references the negated event
+                // 1a. if yes, make sure that the term does not reference any event ID that is not seen before the negated event
+                // 2. save/serialize/whatever the term to use it later
+                if (validateTerm(term)) {
+                    termContexts.add(term);
+                }
+
+            }
+        }
+
+        private boolean validateTerm(InvariantsParser.TermContext term) {
+            var children = term.children;
+
+            return false;
+        }
+
+        private Set<String> referencesNegatedEvent(InvariantsParser.TermContext term) {
+            for (var child : term.children.stream().filter(c -> c instanceof InvariantsParser.TermContext).collect(Collectors.toList())) {
+
+                var childTerm = (InvariantsParser.TermContext)child;
+
+                if (childTerm.term() != null) {
+                    return childTerm.term().stream().map(this::referencesNegatedEvent).findAny().isPresent();
+                }
+
+                var lhs = childTerm.equality().quantity(0);
+                var rhs = childTerm.equality().quantity(1);
+
+                // TODO:
+                // return a list of negated event IDs being referenced
+                //      - if more than 1 negated event ID is being referenced, signal error somehow
+                // if a single negated event ID is being referenced, check all the other events being referenced in the term
+                //      - if any of the other events appears after the negated event, signal error somehow
+            }
+
+            return false;
+        }
+
+        private Optional<String> getReferencedNegatedEvents(InvariantsParser.QuantityContext quantity) {
+            if (quantity.atom() != null)
+                return Optional.empty();
+
+            // TODO: we can't do this on each call
+            List<String> negatedEventsInSequence = sequence
+                    .stream()
+                    .filter(n -> n.Negated)
+                    .map(n -> n.EventIds.get(0) /* assuming only 1 event ID for negated sequence node*/)
+                    .collect(Collectors.toList());
+
+            var qualifiedNamePrefix = quantity.qualifiedName().getText().split("\\.")[0];
+            if (negatedEventsInSequence.contains(qualifiedNamePrefix)) {
+                return Optional.ofNullable(qualifiedNamePrefix);
+            }
+
+            return Optional.empty();
         }
 
         @Override
