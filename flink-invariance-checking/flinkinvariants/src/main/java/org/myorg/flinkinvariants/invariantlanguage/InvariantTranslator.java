@@ -33,10 +33,16 @@ public class InvariantTranslator {
         }
 
         @Override
+        public void enterWhere_clause(InvariantsParser.Where_clauseContext ctx) {
+            // TODO: validate that conditions contain only valid event IDs
+
+        }
+
+        @Override
         public void enterEvent(InvariantsParser.EventContext ctx) {
+            // TODO: validate that event sequence contains only valid event IDs
             var sequenceNode = createSequenceNode(ctx);
             sequence.add(sequenceNode);
-
         }
 
         private SequenceNode createSequenceNode(InvariantsParser.EventContext eventContext) {

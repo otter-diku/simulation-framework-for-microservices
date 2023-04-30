@@ -53,14 +53,22 @@ eventAtom
 // (a.id = 42 OR b.id = 42) AND a.price < 42
 // cond -> cond AND cond -> ( cond ) AND cond -> ( cond OR cond) AND cond
 where_clause
-  : cond
+  : lpar term rpar (and lpar term rpar)*
   ;
 
-cond
+term
+    : equality
+    | term op term
+    | lpar term rpar
+    ;
+
+
+/*cond
   : equality
   | cond OP cond
-  | lpar cond rpar
-  ;
+//  | lpar cond rpar
+  ;*/
+
 
 lpar: '(';
 rpar: ')';
@@ -84,7 +92,12 @@ qualifiedName
 
 time: INT TIME;
 
-OP: 'AND' | 'OR';
+
+//OP: 'AND' | 'OR';
+and: 'AND';
+or: 'OR';
+op: and | or;
+
 EQ_OP: '=' | '!=' | '<' | '<=' | '>' | '>=';
 INT: [0-9]+;
 TIME
