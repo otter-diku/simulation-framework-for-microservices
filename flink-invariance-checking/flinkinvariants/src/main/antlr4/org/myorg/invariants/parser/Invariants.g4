@@ -59,7 +59,9 @@ where_clause
 
 term
     : equality
-    | term op term
+    | term and term
+    | term or term
+    //| term op term
     | lpar term rpar
     ;
 
@@ -98,7 +100,9 @@ time: INT TIME;
 //OP: 'AND' | 'OR';
 and: 'AND';
 or: 'OR';
-op: and | or;
+op
+  : and
+  | or;
 
 EQ_OP: '=' | '!=' | '<' | '<=' | '>' | '>=';
 INT: [0-9]+;

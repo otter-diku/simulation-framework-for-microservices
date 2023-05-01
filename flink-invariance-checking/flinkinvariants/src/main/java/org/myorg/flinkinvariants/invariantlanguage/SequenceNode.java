@@ -47,6 +47,10 @@ public class SequenceNode {
                 '}';
     }
 
+    public String getName() {
+        return EventIds.toString();
+    }
+
     public static class SequenceNodeBuilder {
         private Boolean isNeg;
         private SequenceNodeQuantifier type;
