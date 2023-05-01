@@ -1,5 +1,7 @@
 package org.myorg.flinkinvariants.invariantlanguage;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import org.apache.avro.data.Json;
 import org.apache.flink.cep.pattern.Pattern;
 import org.apache.flink.cep.pattern.conditions.IterativeCondition;
 import org.apache.flink.cep.pattern.conditions.SimpleCondition;
@@ -10,6 +12,8 @@ import java.util.*;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 
 import static org.apache.flink.cep.pattern.Pattern.begin;
 
@@ -110,9 +114,78 @@ public class PatternGenerator {
     }
 
     private BiFunction<Event, IterativeCondition.Context<Event>, Boolean> transform(InvariantsParser.EqualityContext equality) {
-        InvariantsParser.QuantityContext lhs = equality.quantity(0);
-        var op = equality.EQ_OP().getSymbol();
+        var lhs = equality.quantity(0);
+        var op = equality.EQ_OP().getSymbol().getText();
         var rhs = equality.quantity(1);
+
+        // NOTE: the idea here is that transform() returns a function
+        // which takes 2 arguments (event, eventContext) and returns an Object
+        // The returned Object can be either:
+        //  - a string
+        //  - an int
+        //  - a boolean
+        //  - a single JsonNode
+        //  - multiple JsonNodes
+        // Therefore we need to make sure to correctly apply the comparison operator
+        // between the result of transform(lhs) and transform(rhs)
+
+        var lhsFunction = transform(lhs);
+        var rhsFunction = transform(rhs);
+
+        return (event, eventContext) -> {
+          var lhsReturnVal = lhsFunction.apply(event, eventContext);
+          var rhsReturnVal = rhsFunction.apply(event, eventContext);
+          return compare(lhsReturnVal, op, rhsReturnVal);
+        };
+    }
+
+    private boolean compare(Object lhs, String operator, Object rhs) {
+
+        // TODO: replace all == and equals below with the value of 'operator' arg
+        // TODO:
+        // if only one side is a list of nodes then it is a valid case and we need to add this
+        // example:
+        // SEQ (a, b*)
+        // WHERE (a.id = b.id)
+
+        // TODO:
+        // if both sides are a list of nodes then we should probably throw? Dunno really.
+        // example:
+        // SEQ (a*, b*)
+        // WHERE (a.id = b.id)
+
+        if (lhs instanceof JsonNode && rhs instanceof JsonNode) {
+            return ((JsonNode) lhs).asText().equals(((JsonNode) rhs).asText());
+        }
+
+        if (lhs instanceof JsonNode) {
+            if (rhs instanceof Boolean)
+                return ((JsonNode) lhs).asBoolean() == (Boolean) rhs;
+            if (rhs instanceof Integer)
+                return ((JsonNode) lhs).asInt() == (Integer) rhs;
+            if (rhs instanceof String)
+                return ((JsonNode) lhs).asText().equals(rhs);
+        }
+
+        if (rhs instanceof JsonNode) {
+            if (lhs instanceof Boolean)
+                return ((JsonNode) rhs).asBoolean() == (Boolean) lhs;
+            if (lhs instanceof Integer)
+                return ((JsonNode) rhs).asInt() == (Integer) lhs;
+            if (lhs instanceof String)
+                return ((JsonNode) rhs).asText().equals(lhs);
+        }
+
+        if (lhs instanceof Boolean && rhs instanceof Boolean)
+            return lhs == rhs;
+        if (lhs instanceof Integer && rhs instanceof Integer)
+            return lhs == rhs;
+        if (lhs instanceof String && rhs instanceof String)
+            return lhs.equals(rhs);
+
+        // TODO:
+        // otherwise we are trying to compare incompatible types (me thinks), we should throw
+        return false;
     }
 
     private BiFunction<Event, IterativeCondition.Context<Event>, Object> transform(InvariantsParser.QuantityContext quantity) {
@@ -135,11 +208,43 @@ public class PatternGenerator {
         var relatedNode = eventSequence.getSequence()
                 .stream()
                 .filter(node -> node.EventIds.contains(eventId))
-                .findFirst();
+                .findFirst()
+                .orElseThrow();
+
+        // NOTE: it gets weird here. We can check if the event is negated
+        // or if it's the last event in the sequence.
+        // If so, that means that we need to access 'event', and not the 'context'
+        // Otherwise, we can safely assume that we can find this event in the context.
+
+        var position = eventSequence.getEventPositionById(eventId);
+        var node = eventSequence
+                .getSequence()
+                .get(position);
+
+        var isNegatedOrLastEventInSequence = node.Negated ||
+                position == eventSequence.getSequence().size() - 1;
 
         return (event, eventContext) -> {
-
+            if (isNegatedOrLastEventInSequence) {
+                return traverse(event.Content, quantity.qualifiedName());
+            } else {
+                try {
+                    return StreamSupport.stream(eventContext.getEventsForPattern(relatedNode.getName()).spliterator(), false)
+                            .map(e -> traverse(e.Content, quantity.qualifiedName()))
+                            .collect(Collectors.toList());
+                } catch (Exception e) {
+                    throw new RuntimeException(e);
+                }
+            }
         };
+    }
+
+    private JsonNode traverse(JsonNode node, InvariantsParser.QualifiedNameContext qualifiedName) {
+        JsonNode result = node;
+        for (var identifier : qualifiedName.IDENTIFIER().stream().skip(1).collect(Collectors.toList())) {
+            result = result.get(identifier.getText());
+        }
+        return result;
     }
 
     /*
