@@ -7,17 +7,27 @@ import org.myorg.flinkinvariants.events.Event;
 import org.myorg.invariants.parser.InvariantsParser;
 
 import java.util.*;
+import java.util.function.BiFunction;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static org.apache.flink.cep.pattern.Pattern.begin;
 
 public class PatternGenerator {
 
-    public PatternGenerator() {
+    private final EventSequence eventSequence;
+    private final List<InvariantsParser.TermContext> terms;
+    private final Map<String, String> id2Type;
 
+    public PatternGenerator(EventSequence eventSequence,
+                            List<InvariantsParser.TermContext> terms,
+                            Map<String, String> id2Type) {
+        this.eventSequence = eventSequence;
+        this.terms = terms;
+        this.id2Type = id2Type;
     }
 
-    public Pattern<Event, ?> generatePattern(EventSequence eventSequence, List<InvariantsParser.TermContext> terms, Map<String, String> id2Type) {
+    public Pattern<Event, ?> generatePattern() {
         var firstNode = eventSequence.getSequence().get(0);
         var pattern = Pattern.<Event>begin(firstNode.getName())
                 .where(SimpleCondition.of(e ->
@@ -78,6 +88,91 @@ public class PatternGenerator {
             }
         }
     }
+
+    private BiFunction<Event, IterativeCondition.Context<Event>, Boolean> transform(InvariantsParser.TermContext term) {
+        if (term.equality() != null) {
+            return transform(term.equality());
+        }
+
+        if (term.or() != null) {
+            return (event, eventContext) ->
+                    transform(term.term(0)).apply(event, eventContext) ||
+                    transform(term.term(1)).apply(event, eventContext);
+        }
+
+        if (term.and() != null) {
+            return (event, eventContext) ->
+                    transform(term.term(0)).apply(event, eventContext) &&
+                    transform(term.term(1)).apply(event, eventContext);
+        }
+
+        return (event, eventContext) -> false;
+    }
+
+    private BiFunction<Event, IterativeCondition.Context<Event>, Boolean> transform(InvariantsParser.EqualityContext equality) {
+        InvariantsParser.QuantityContext lhs = equality.quantity(0);
+        var op = equality.EQ_OP().getSymbol();
+        var rhs = equality.quantity(1);
+    }
+
+    private BiFunction<Event, IterativeCondition.Context<Event>, Object> transform(InvariantsParser.QuantityContext quantity) {
+        if (quantity.atom() != null) {
+            if (quantity.atom().BOOL() != null) {
+                return (event, eventContext) -> Boolean.parseBoolean(quantity.getText());
+            }
+            if (quantity.atom().INT() != null) {
+                return (event, eventContext) -> Integer.parseInt(quantity.getText());
+            }
+            if (quantity.atom().STRING() != null) {
+                return (event, eventContext) -> quantity.getText();
+            }
+
+            System.out.println("Something went wrong here...");
+            return (event, eventContext) -> "";
+        }
+
+        var eventId = quantity.qualifiedName().IDENTIFIER(0).getText();
+        var relatedNode = eventSequence.getSequence()
+                .stream()
+                .filter(node -> node.EventIds.contains(eventId))
+                .findFirst();
+
+        return (event, eventContext) -> {
+
+        };
+    }
+
+    /*
+
+    equality
+    : quantity EQ_OP quantity;
+
+    quantity
+        : qualifiedName
+        | atom
+        ;
+
+    atom
+        : BOOL
+        | INT
+        | STRING
+        ;
+
+    qualifiedName
+        : IDENTIFIER ('.' IDENTIFIER)*
+        ;
+
+
+
+    term
+    : equality
+    | term and term
+    | term or term
+    | lpar term rpar
+    ;
+    *
+    * */
+
 
     private Set<String> getReferencedEventIds(InvariantsParser.TermContext term) {
         var subTerms = term.children.stream()
