@@ -16,6 +16,7 @@ query
 
 invariant_clause
   : where_clause
+  | BOOL
   ;
 
 eventDefinition: eventType eventId
@@ -84,6 +85,7 @@ quantity
 atom
     : BOOL
     | INT
+    | STRING
     ;
 
 qualifiedName
@@ -100,6 +102,7 @@ op: and | or;
 
 EQ_OP: '=' | '!=' | '<' | '<=' | '>' | '>=';
 INT: [0-9]+;
+STRING: '\'' IDENTIFIER '\'';
 TIME
     : 'milli'
     | 'sec'

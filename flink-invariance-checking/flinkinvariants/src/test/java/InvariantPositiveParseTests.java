@@ -22,11 +22,12 @@ public class InvariantPositiveParseTests {
                 WITHIN 1 sec
                 ON FULL MATCH (a.id = 42)""";
 
-        var numParseErrors = translator.translateQuery(
+        var translationResult = translator.translateQuery(
                 query,
                 "TestInvariant",
-                "").getNumberOfSyntaxErrors();
-        assertEquals(0, numParseErrors);
+                "");
+        assertEquals(0, translationResult.getNumberOfSyntaxErrors());
+        assertFalse(translationResult.isSemanticAnalysisFailed());
     }
 
     @Test
@@ -41,15 +42,16 @@ public class InvariantPositiveParseTests {
                   topic: b-topic
                   schema: {id}
                                
-                SEQ (a, !b, a)
+                SEQ (a, !b, c)
                 WITHIN 1 sec
                 ON FULL MATCH (a.id = 42)""";
 
-        var numParseErrors = translator.translateQuery(
+        var translationResult = translator.translateQuery(
                 query,
                 "TestInvariant",
-                "").getNumberOfSyntaxErrors();
-        assertEquals(0, numParseErrors);
+                "");
+        assertEquals(0, translationResult.getNumberOfSyntaxErrors());
+        assertFalse(translationResult.isSemanticAnalysisFailed());
     }
 
     @Test
@@ -64,15 +66,17 @@ public class InvariantPositiveParseTests {
                   topic: b-topic
                   schema: {id}
                                
-                SEQ (a, !b, a*)
+                SEQ (a, !b, c*)
                 WITHIN 1 sec
                 ON FULL MATCH (a.id = 42)""";
 
-        var numParseErrors = translator.translateQuery(
+
+        var translationResult = translator.translateQuery(
                 query,
                 "TestInvariant",
-                "").getNumberOfSyntaxErrors();
-        assertEquals(0, numParseErrors);
+                "");
+        assertEquals(0, translationResult.getNumberOfSyntaxErrors());
+        assertFalse(translationResult.isSemanticAnalysisFailed());
     }
 
     @Test
@@ -94,11 +98,12 @@ public class InvariantPositiveParseTests {
                 WITHIN 1 sec
                 ON FULL MATCH (a.id = 42)""";
 
-        var numParseErrors = translator.translateQuery(
+        var translationResult = translator.translateQuery(
                 query,
                 "TestInvariant",
-                "").getNumberOfSyntaxErrors();
-        assertEquals(0, numParseErrors);
+                "");
+        assertEquals(0, translationResult.getNumberOfSyntaxErrors());
+        assertFalse(translationResult.isSemanticAnalysisFailed());
     }
 
     @Test
@@ -120,11 +125,12 @@ public class InvariantPositiveParseTests {
                 WITHIN 1 sec
                 ON FULL MATCH (a.id = 42)""";
 
-        var numParseErrors = translator.translateQuery(
+        var translationResult = translator.translateQuery(
                 query,
                 "TestInvariant",
-                "").getNumberOfSyntaxErrors();
-        assertEquals(0, numParseErrors);
+                "");
+        assertEquals(0, translationResult.getNumberOfSyntaxErrors());
+        assertFalse(translationResult.isSemanticAnalysisFailed());
     }
 
     @Test
@@ -146,11 +152,12 @@ public class InvariantPositiveParseTests {
                 WITHIN 1 sec
                 ON FULL MATCH (a.id = 42)""";
 
-        var numParseErrors = translator.translateQuery(
+        var translationResult = translator.translateQuery(
                 query,
                 "TestInvariant",
-                "").getNumberOfSyntaxErrors();
-        assertEquals(0, numParseErrors);
+                "");
+        assertEquals(0, translationResult.getNumberOfSyntaxErrors());
+        assertFalse(translationResult.isSemanticAnalysisFailed());
     }
 
     @Test
@@ -168,15 +175,16 @@ public class InvariantPositiveParseTests {
                   topic: c-topic
                   schema: {id}
                                
-                SEQ (a*, (a | c | b)+)
+                SEQ (a*, (b | c | d)+)
                 WITHIN 1 sec
                 ON FULL MATCH (a.id = 42)""";
 
-        var numParseErrors = translator.translateQuery(
+        var translationResult = translator.translateQuery(
                 query,
                 "TestInvariant",
-                "").getNumberOfSyntaxErrors();
-        assertEquals(0, numParseErrors);
+                "");
+        assertEquals(0, translationResult.getNumberOfSyntaxErrors());
+        assertFalse(translationResult.isSemanticAnalysisFailed());
     }
 
     @Test
@@ -199,13 +207,62 @@ public class InvariantPositiveParseTests {
                 WHERE (pc1.ProductId = pb.ProductId) AND (pc1.ProductId = pc2.ProductId)
                 ON FULL MATCH (pc1.NewPrice = pb.Price)""";
 
-        var numParseErrors = translator.translateQuery(
+        var translationResult = translator.translateQuery(
                 query,
                 "TestInvariant",
-                "").getNumberOfSyntaxErrors();
-        assertEquals(0, numParseErrors);
+                "");
+        assertEquals(0, translationResult.getNumberOfSyntaxErrors());
+        assertFalse(translationResult.isSemanticAnalysisFailed());
     }
 
+    @Test
+    public void TestEshopBasketDeletedAfterUserDeleted() {
+        var translator = new InvariantTranslator();
+        var query =
+                """
+                UserDeletedEvent ud
+                  topic: eshop_event_bus
+                  schema: {userId}
+                BasketDeletedEvent bd
+                  topic: eshop_event_bus
+                  schema: {userId}
+                                
+                SEQ (ud, bd)
+                WITHIN 2 min
+                WHERE (ud.userId = bd.userId)
+                ON PARTIAL MATCH false
+                """;
+
+        var translationResult = translator.translateQuery(
+                query,
+                "TestInvariant",
+                "");
+        assertEquals(0, translationResult.getNumberOfSyntaxErrors());
+        assertFalse(translationResult.isSemanticAnalysisFailed());
+    }
+
+
+    @Test
+    public void TestLakeSideBusinessLogic() {
+        var translator = new InvariantTranslator();
+        var query =
+                """
+                insurance-quote-request iqr
+                  topic: insurance-quote-request-topic
+                  schema: {customer, insurance-type}
+                  
+                SEQ (iqr)
+                WHERE (iqr.insurance-type = 'car-insurance')
+                ON FULL MATCH (iqr.customer.address.country = 'Switzerland')
+                """;
+
+        var translationResult = translator.translateQuery(
+                query,
+                "TestInvariant",
+                "");
+        assertEquals(0, translationResult.getNumberOfSyntaxErrors());
+        assertFalse(translationResult.isSemanticAnalysisFailed());
+    }
     @Test
     public void TestWhereClause() {
         var translator = new InvariantTranslator();
@@ -221,16 +278,17 @@ public class InvariantPositiveParseTests {
                   topic: c-topic
                   schema: {id}
                                
-                SEQ (a*, (a | c | b)+)
+                SEQ (a*, (b | c | d)+)
                 WITHIN 1 sec
                 WHERE (a.id = b.id OR a.id = c.id) AND (b.price < c.price)
                 ON FULL MATCH (a.id = 42)""";
 
-        var numParseErrors = translator.translateQuery(
+        var translationResult = translator.translateQuery(
                 query,
                 "TestInvariant",
-                "").getNumberOfSyntaxErrors();
-        assertEquals(0, numParseErrors);
+                "");
+        assertEquals(0, translationResult.getNumberOfSyntaxErrors());
+        assertFalse(translationResult.isSemanticAnalysisFailed());
     }
 
     @Test
