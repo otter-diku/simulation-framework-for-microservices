@@ -88,9 +88,9 @@ public class PatternGenerator {
         return new IterativeCondition<Event>() {
             @Override
             public boolean filter(Event event, Context<Event> context) throws Exception {
-
+                return transform(term).apply(event, context);
             }
-        }
+        };
     }
 
     private BiFunction<Event, IterativeCondition.Context<Event>, Boolean> transform(InvariantsParser.TermContext term) {
