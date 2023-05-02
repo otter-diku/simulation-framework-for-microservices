@@ -65,23 +65,23 @@ public class PatternGenerator {
     }
 
     private Pattern<Event, Event> updateWithNegatedNode(Pattern<Event, Event> pattern, SequenceNode node, Map<String, String> id2Type, List<InvariantsParser.TermContext> terms) {
+        pattern = pattern.notFollowedBy(node.getName())
+                .where(SimpleCondition.of(e ->
+                        node.EventIds.stream()
+                                .map(id2Type::get)
+                                .anyMatch(eType -> eType.equals(e.Type))
+                ));
 
         var relevantTerms = terms.stream()
                 .filter(term -> getReferencedEventIds(term)
                         .contains(node.EventIds.get(0)))
                 .collect(Collectors.toList());
-        return pattern.notFollowedBy(node.getName())
-                .where(SimpleCondition.of(e ->
-                        node.EventIds.stream()
-                                .map(id2Type::get)
-                                .anyMatch(eType -> eType.equals(e.Type))
-                ))
-                .where(new IterativeCondition<Event>() {
-                    @Override
-                    public boolean filter(Event event, Context<Event> context) throws Exception {
-                        return false;
-                    }
-                });
+
+        for (var term : relevantTerms) {
+            pattern = pattern.where(createConditionFromTerm(term));
+        }
+
+        return pattern;
     }
 
     private IterativeCondition<Event> createConditionFromTerm(InvariantsParser.TermContext term) {
