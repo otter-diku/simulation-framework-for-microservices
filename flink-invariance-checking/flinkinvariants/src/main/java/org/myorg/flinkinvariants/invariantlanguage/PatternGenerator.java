@@ -1,7 +1,6 @@
 package org.myorg.flinkinvariants.invariantlanguage;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import org.apache.avro.data.Json;
 import org.apache.flink.cep.pattern.Pattern;
 import org.apache.flink.cep.pattern.conditions.IterativeCondition;
 import org.apache.flink.cep.pattern.conditions.SimpleCondition;
@@ -10,31 +9,40 @@ import org.myorg.invariants.parser.InvariantsParser;
 
 import java.util.*;
 import java.util.function.BiFunction;
-import java.util.function.Function;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
-
-import static org.apache.flink.cep.pattern.Pattern.begin;
 
 public class PatternGenerator {
 
-    private final EventSequence eventSequence;
-    private final List<InvariantsParser.TermContext> terms;
-    private final Map<String, String> id2Type;
+    private EventSequence eventSequence;
+    private List<InvariantsParser.TermContext> terms;
+    private Map<String, String> id2Type;
 
-    public PatternGenerator(EventSequence eventSequence,
-                            List<InvariantsParser.TermContext> terms,
-                            Map<String, String> id2Type) {
+    public void setEventSequence(EventSequence eventSequence) {
         this.eventSequence = eventSequence;
+    }
+
+    public void setTerms(List<InvariantsParser.TermContext> terms) {
         this.terms = terms;
+    }
+
+    public void setId2Type(Map<String, String> id2Type) {
         this.id2Type = id2Type;
     }
 
-    public Pattern<Event, ?> generatePattern() {
+    public PatternGenerator() {
+
+    }
+
+    public Pattern<Event, Event> generatePattern() {
+        // TODO: Assumption first node not allowed to be negated
         var firstNode = eventSequence.getSequence().get(0);
+        // TODO: might have to use strings / templates in the end
+        //       this is also what flink authors are doing for SQL match implementation I think
+        //       NOTE: alternatively wrap this in Pattern builder?
         var pattern = Pattern.<Event>begin(firstNode.getName())
                 .where(SimpleCondition.of(e ->
+                        // TODO: this probably has to be self-contained java code?
                         firstNode.EventIds.stream()
                                 .map(id2Type::get)
                                 .anyMatch(eType -> eType.equals(e.Type))
@@ -47,12 +55,44 @@ public class PatternGenerator {
             }
         }
 
+        // at this point all non-negated nodes have a simpCond checking
+        // for the correct event type, and negated nodes have iterative conditions
+
+        // TODO: case: last event is notfollowedBy
+        // a, !b -> WHERE (b.id = a.id) AND (a.price > 42)
+        // notFollowedBy("b").IterativeCond(event, context) {
+        //   return b.id == a.id
+        // }.where(IterativeCond(event, context) {
+        //   a = context.getEvents("a")
+        //   return a.price > 42;
+        // }
+        // ==> this should be fine
+
+        // now construct iterative conditions for all terms that do not have
+        // a negated event
         pattern = updateWithFinalIterativeCondition(pattern, eventSequence, terms);
 
-        // TODO: first node not allowed to be negated
+        return pattern;
+    }
 
-        //
+    private Pattern<Event, Event> updateWithFinalIterativeCondition(Pattern<Event, Event> pattern, EventSequence eventSequence, List<InvariantsParser.TermContext> terms) {
 
+        HashMap<String, Boolean> eventIdToNegated = new HashMap<>();
+        for (var node : eventSequence.getSequence()) {
+            for (var eventId : node.EventIds) {
+                eventIdToNegated.put(eventId, node.Negated);
+            }
+        }
+
+        var nonNegatedTerms = terms.stream().filter(term -> getReferencedEventIds(term)
+                .stream().noneMatch(eventIdToNegated::get))
+                .collect(Collectors.toList());
+
+        for (var term : nonNegatedTerms) {
+            pattern = pattern.where(createConditionFromTerm(term));
+        }
+
+        return pattern;
     }
 
     private Pattern<Event, Event> updateWithNode(Pattern<Event, Event> pattern, SequenceNode node, Map<String, String> id2Type) {
@@ -226,6 +266,25 @@ public class PatternGenerator {
 
         return (event, eventContext) -> {
             if (isNegatedOrLastEventInSequence) {
+                // NOTE: (a, b, c+) is a special case:
+                //       if we have a condition involving all c events
+                //       for example (sum(c) < a.stock) then we can only
+                //       check this in the patternMatch function as the iterative
+                //       condition will only have access to one c event at a time
+                //       additionally the match behaviour is weird meaning for
+                //       the sequence: a b c c c
+                //       we get (and maybe more matches) in the patternMatch function:
+                //       a b c
+                //       a b c c
+                //       a b c c c
+                //       but we only want to check the invariant for
+                //       the match a b c c c.
+                //
+                //       I think if we support a*, and a+ then we also need to support
+                //       aggregate function (sum(a.amount), count(a), etc.),
+                //       if we do not allow aggregate functions
+                //       then * and + are not really useful in any way for writing
+                //       invariants I think
                 return traverse(event.Content, quantity.qualifiedName());
             } else {
                 try {

@@ -233,6 +233,10 @@ public class InvariantTranslator {
             filterBuilder.append(").setParallelism(1);");
             return filterBuilder.toString();
         }
+
+        public List<InvariantsParser.TermContext> getTerms() {
+            return termContexts;
+        }
     }
 
     public TranslationResult translateQuery(String query, String invariantName, String outputFile) {
@@ -251,5 +255,23 @@ public class InvariantTranslator {
 
         walker.walk(translator, tree);
         return new TranslationResult(parser.getNumberOfSyntaxErrors(), translator.semanticAnalysisFailed);
+    }
+
+    public List<InvariantsParser.TermContext> getTermsFromQuery(String query) {
+        ANTLRInputStream input = new ANTLRInputStream(query);
+        // create a lexer that feeds off of input CharStream
+        InvariantsLexer lexer = new InvariantsLexer(input);
+
+        // create a buffer of tokens pulled from the lexer
+        CommonTokenStream tokens = new CommonTokenStream(lexer);
+        // create a parser that feeds off the tokens buffer
+        InvariantsParser parser = new InvariantsParser(tokens);
+        ParseTree tree = parser.invariant(); // begin parsing at init rule
+
+        ParseTreeWalker walker = new ParseTreeWalker();
+        InvariantLanguage2CEPListener translator = new InvariantLanguage2CEPListener();
+
+        walker.walk(translator, tree);
+        return translator.getTerms();
     }
 }

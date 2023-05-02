@@ -1,5 +1,6 @@
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.myorg.flinkinvariants.invariantcheckers.Invariant.*;
 import static org.myorg.flinkinvariants.invariantcheckers.LackingPaymentEventInvariantChecker.CheckLackingPaymentInvariant;
 import static org.myorg.flinkinvariants.invariantcheckers.ProductOversoldInvariantChecker.CheckOversoldInvariant;
 import static org.myorg.flinkinvariants.invariantcheckers.ProductPriceChangedInvariantChecker.CheckProductPriceChangedInvariant;
@@ -112,6 +113,42 @@ public class InvariantsTest {
                                                 && s.contains(userCheckoutEventId3)));
     }
 
+    @Test
+    public void testProductPriceChangedInvariant2_1() throws Exception {
+        final StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
+        var streamSource =
+                FileReader.GetDataStreamSource(env, "/src/test.json")
+                        .assignTimestampsAndWatermarks(
+                                WatermarkStrategy.<EShopIntegrationEvent>forBoundedOutOfOrderness(
+                                                Duration.ofSeconds(20))
+                                        .withTimestampAssigner(
+                                                (event, timestamp) -> event.getEventTime()));
+
+        // values are collected in a static variable
+        ViolationSink.values.clear();
+
+        CheckInvariant(env, streamSource, new ViolationSink(), InvariantPattern);
+
+        var violations = ViolationSink.values;
+    }
+    @Test
+    public void testProductPriceChangedInvariant2_2() throws Exception {
+        final StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
+        var streamSource =
+                FileReader.GetDataStreamSource(env, "/src/test.json")
+                        .assignTimestampsAndWatermarks(
+                                WatermarkStrategy.<EShopIntegrationEvent>forBoundedOutOfOrderness(
+                                                Duration.ofSeconds(20))
+                                        .withTimestampAssigner(
+                                                (event, timestamp) -> event.getEventTime()));
+
+        // values are collected in a static variable
+        ViolationSink.values.clear();
+
+        CheckInvariant(env, streamSource, new ViolationSink(), InvariantPattern2);
+
+        var violations = ViolationSink.values;
+    }
     @Test
     public void testProductPriceChangedInvariant3() throws Exception {
         final StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
