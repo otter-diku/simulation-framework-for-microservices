@@ -16,48 +16,9 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 
 public class PatternGenerationTests {
+
     @Test
     public void TestPatternGeneration() {
-        var translator = new InvariantTranslator();
-        var query =
-                """
-                A a
-                  topic: a-topic
-                  schema: {id}
-                B b
-                  topic: b-topic
-                  schema: {id}
-                               
-                SEQ (a, b)
-                WITHIN 1 sec
-                WHERE (a.id = b.id)
-                ON FULL MATCH false""";
-
-        var translationResult = translator.translateQuery(
-                query,
-                "TestInvariant",
-                "");
-        assertEquals(0, translationResult.getNumberOfSyntaxErrors());
-        assertFalse(translationResult.isSemanticAnalysisFailed());
-
-        var InvariantPattern = Pattern.<Event>begin("a")
-                .where(SimpleCondition.of(e -> e.Type.equals("A")))
-                .followedByAny("b")
-                .where(SimpleCondition.of(e -> e.Type.equals("B")))
-                .oneOrMore().greedy()
-                .where(new IterativeCondition<Event>() {
-                    @Override
-                    public boolean filter(Event event, Context<Event> context) throws Exception {
-                        var a = context.getEventsForPattern("a").iterator().next();
-                        var b = event;
-                        return a.Content.get("id").equals(b.Content.get("id"));
-                    }
-                });
-
-    }
-
-    @Test
-    public void TestPatternGeneration_() {
         var query =
                 """
                 A a
@@ -92,10 +53,7 @@ public class PatternGenerationTests {
                 )
         );
 
-        var patternGenerator = new PatternGenerator();
-        patternGenerator.setEventSequence(seq);
-        patternGenerator.setTerms(terms);
-        patternGenerator.setId2Type(id2Type);
+        var patternGenerator = new PatternGenerator(seq, terms, id2Type);
         var pattern = patternGenerator.generatePattern();
     }
 }

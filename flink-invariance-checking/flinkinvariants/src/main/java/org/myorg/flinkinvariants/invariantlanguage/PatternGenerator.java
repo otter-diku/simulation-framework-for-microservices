@@ -18,45 +18,38 @@ public class PatternGenerator {
     private List<InvariantsParser.TermContext> terms;
     private Map<String, String> id2Type;
 
-    public void setEventSequence(EventSequence eventSequence) {
+    private final StringBuilder patternCodeBuilder = new StringBuilder();
+
+    public PatternGenerator(EventSequence eventSequence,
+                            List<InvariantsParser.TermContext> terms,
+                            Map<String, String> id2Type) {
         this.eventSequence = eventSequence;
-    }
-
-    public void setTerms(List<InvariantsParser.TermContext> terms) {
         this.terms = terms;
-    }
-
-    public void setId2Type(Map<String, String> id2Type) {
         this.id2Type = id2Type;
     }
 
-    public PatternGenerator() {
-
-    }
-
     public Pattern<Event, Event> generatePattern() {
-        // TODO: Assumption first node not allowed to be negated
         var firstNode = eventSequence.getSequence().get(0);
-        // TODO: might have to use strings / templates in the end
-        //       this is also what flink authors are doing for SQL match implementation I think
-        //       NOTE: alternatively wrap this in Pattern builder?
-        var pattern = Pattern.<Event>begin(firstNode.getName())
-                .where(SimpleCondition.of(e ->
-                        // TODO: this probably has to be self-contained java code?
-                        firstNode.EventIds.stream()
-                                .map(id2Type::get)
-                                .anyMatch(eType -> eType.equals(e.Type))
-                ));
+        patternCodeBuilder.append("Pattern.<Event>begin("+ firstNode.getName()+ ")");
+
+        addSimpConditionForNode(firstNode, id2Type);
+
+
         for (var node : eventSequence.getSequence().stream().skip(1).collect(Collectors.toList())) {
             if (node.Negated) {
-                pattern = updateWithNegatedNode(pattern, node, id2Type, terms);
+                // pattern = updateWithNegatedNode(pattern, node, id2Type, terms);
             } else {
-                pattern = updateWithNode(pattern, node, id2Type);
+                addSimpConditionForNode(node, id2Type);
             }
         }
 
-        // at this point all non-negated nodes have a simpCond checking
-        // for the correct event type, and negated nodes have iterative conditions
+//        for (var node : eventSequence.getSequence().stream().skip(1).collect(Collectors.toList())) {
+//            if (node.Negated) {
+//                pattern = updateWithNegatedNode(pattern, node, id2Type, terms);
+//            } else {
+//                pattern = updateWithNode(pattern, node, id2Type);
+//            }
+//        }
 
         // TODO: case: last event is notfollowedBy
         // a, !b -> WHERE (b.id = a.id) AND (a.price > 42)
@@ -70,9 +63,20 @@ public class PatternGenerator {
 
         // now construct iterative conditions for all terms that do not have
         // a negated event
-        pattern = updateWithFinalIterativeCondition(pattern, eventSequence, terms);
+        //pattern = updateWithFinalIterativeCondition(pattern, eventSequence, terms);
 
-        return pattern;
+        return null;
+    }
+
+    private void addSimpConditionForNode(SequenceNode node, Map<String, String> id2Type) {
+        var simpleCond = node.EventIds.stream()
+                .map(eId -> "|| e.Type.equals(\"" + id2Type.get(eId) + "\")").reduce("", String::concat);
+        patternCodeBuilder.append(
+                """
+                .where(SimpleCondition.of(e ->
+                       false ${simpleCond}
+                ));""".replace("${simpleCond}", simpleCond)
+        );
     }
 
     private Pattern<Event, Event> updateWithFinalIterativeCondition(Pattern<Event, Event> pattern, EventSequence eventSequence, List<InvariantsParser.TermContext> terms) {
