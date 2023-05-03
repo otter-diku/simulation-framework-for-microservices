@@ -10,8 +10,7 @@ import java.util.regex.Pattern;
 
 public class PatternGenerator {
 
-    final String equalityRegex = "['0-9a-zA-Z\\._]+\\s*(=|!=|>|<|>=|<=)\\s*['0-9a-zA-Z\\._]+";
-
+    final String equalityRegex = "(['0-9a-zA-Z\\._]+)\\s*(=|!=|>|<|>=|<=)\\s*(['0-9a-zA-Z\\._]+)";
     private EventSequence eventSequence;
     private List<InvariantsParser.TermContext> terms;
     private Map<String, String> id2Type;
@@ -73,20 +72,126 @@ public class PatternGenerator {
         return null;
     }
 
-    private void addWhereClauseFromTerm(InvariantsParser.TermContext term) {
+    private void addWhereClauseFromTerm(InvariantsParser.TermContext term, SequenceNode node, List<SequenceNode> sequenceNodes) throws Exception {
 
-        final String string = "(A.x = B.y && 5 > C.z && (f.x = y.z && (x.z <= f.f)) || 'x' = D.f || 'f' != D.h)\n";
+        String string = "(A.x = B.y && 5 > C.z && (f.x = y.z && (x.z <= f.f)) || 'x' = D.f || 'f' != D.h)\n";
 
+        string = string.replace("AND", "&&")
+                .replace("OR", "||");
 
         final Pattern pattern = Pattern.compile(equalityRegex, Pattern.MULTILINE);
         final Matcher matcher = pattern.matcher(string);
 
         while (matcher.find()) {
-            System.out.println("Full match: " + matcher.group(0));
+            var lhs = matcher.group(1);
+            var op = matcher.group(2);
+            var rhs = matcher.group(3);
 
-            for (int i = 1; i <= matcher.groupCount(); i++) {
-                System.out.println("Group " + i + ": " + matcher.group(i));
+            boolean isMostRecentNodeLhs;
+            boolean isMostRecentNodeRhs;
+            String typeLhs = null;
+            String typeRhs = null;
+            if (isQualifiedName(lhs)) {
+                var eventId = getEventId(lhs);
+                var memberTypes = schemata.get(eventId);
+                isMostRecentNodeLhs = node.EventIds.contains(eventId);
+                // TODO: assumes flat event schema
+                var member = getMember(lhs);
+                var tuple = memberTypes.stream().filter(t -> t.f0.equals(member))
+                        .findFirst();
+                typeLhs = tuple.get().f1;
+            } else {
+
             }
+            if (isQualifiedName(rhs)) {
+                var eventId = getEventId(rhs);
+                var memberTypes = schemata.get(eventId);
+                isMostRecentNodeRhs = node.EventIds.contains(eventId);
+                // TODO: assumes flat event schema
+                var member = getMember(rhs);
+                var tuple = memberTypes.stream().filter(t -> t.f0.equals(member))
+                        .findFirst();
+                typeRhs = tuple.get().f1;
+            }
+
+            if (!typeRhs.equals(typeLhs)) {
+                throw new Exception("Lhs type does not equal Rhs type.");
+            }
+
+            // bool, num, string, : = !=
+            // num : <= < > >=
+            if ((typeRhs.equals("bool") || typeRhs.equals("string"))
+                    && List.of("<=", "<", ">", ">=").contains(op))
+            {
+                throw new Exception("Using numeric operator on incompatible type.");
+            }
+
+            // if event is not the most recent node
+            // then use context.getEvents() (maybe multiple events)
+            // a b b c   (a, b, c) WHERE a.id = b.id
+
+            // a b1 b2 c with b1.id != a and b2.id == a
+            // (a,b,c) WHERE a.id = b.id
+
+            // (a, b, !c, d) WHERE c.id = b.id AND a.id = b.id
+            // stream: a b1 b2 e d
+            // matches:
+            //  - a b1 e
+            //  - a b2 e
+
+            // (a, b+, !c, d) WHERE c.id = b.id AND a.id = b.id
+            // stream: a b1 b2 e d
+            // matches:
+            //  - a b1 e
+            //  - a b1 b2 e -> then have b1 and b2 for comparing
+            // itertiveCond(
+            //  List<Event> bs = context.getEvents(b)
+            //  List<Event> as = context.getEvents(a)
+            //
+
+
+            // (a, b+, !c, d) filter only by type
+            // stream: a b1 b2 c1 c2 d
+            //  matches: a b1 b2 d
+
+            // a b1 b2 c1 b3 c2 d (c1, c2 wont break pattern)
+            // matches (followedByAny on types + regex):
+            // !c --> followedByAny().SimpCond( e -> e.type = c)
+            // - a b1 b2 c1 d
+            // - a b1 b2 c2 d
+            // -
+
+            // filter(e -> type )
+            // c d a b a d b c c
+            
+
+            // a b1 b2 c   (a,b,c)
+            // a b1 c
+            // a b2 c
+
+
+            //
+
+
+
+            // A.x -> context.getEvents('A')
+            // =
+            // B.y
+
+            // (a, !b, c)
+            // WHERE (b.id = a.id) AND (a.id = c.id)
+
+            // "[a,b]" -> or case
+            // begin("a").notfollowedBy("b")
+            // .where(IterativeCond(
+            //
+
+            // (a, (b | c), !d, e) WHERE (d.id = b.id OR d.x = c.x)
+            // var bOrCs = context.getEvents()
+
+
+            // (a, (b1 | b2), !d, e) WHERE (d.id = b.id OR d.x = c.x)
+
         }
 
         // (A.a.c = B.b.c || C.d.a = D.x.y && (X.z.x > Z.c.a))
@@ -101,6 +206,32 @@ public class PatternGenerator {
 
 
 
+    }
+
+    private String getMember(String qualifiedName) {
+        return qualifiedName.split("\\.")[1];
+    }
+
+    private Boolean isBooleanAtom(String atom) {
+        return (atom.equals("true")
+                || (atom.equals("false")));
+    }
+    private Boolean isNumberAtom(String atom) {
+        return (atom.charAt(0) >= '0' && atom.charAt(0) <= '9')
+                || (atom.charAt(0) == '.');
+    }
+    private Boolean isStringAtom(String atom) {
+        return atom.startsWith("'") && atom.endsWith("'");
+    }
+    private Boolean isQualifiedName(String string) {
+        var isAtom = isBooleanAtom(string)
+                || isNumberAtom(string)
+                || isStringAtom(string);
+        return !isAtom;
+    }
+
+    private String getEventId(String qualifiedName) {
+        return qualifiedName.split("\\.")[0];
     }
 
     private void addNotFollowedBy(SequenceNode node) {
