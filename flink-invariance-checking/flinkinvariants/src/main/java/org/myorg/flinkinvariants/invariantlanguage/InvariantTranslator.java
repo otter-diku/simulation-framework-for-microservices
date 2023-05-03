@@ -5,6 +5,7 @@ import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.RuleContext;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.ParseTreeWalker;
+import org.apache.flink.api.java.tuple.Tuple2;
 import org.myorg.invariants.parser.InvariantsBaseListener;
 import org.myorg.invariants.parser.InvariantsLexer;
 import org.myorg.invariants.parser.InvariantsParser;
@@ -20,6 +21,9 @@ public class InvariantTranslator {
         private final Set<String> topics = new HashSet<>();
         private final Set<String> relevantEventTypes = new HashSet<>();
         private final Map<String, String> id2Type = new HashMap<>();
+
+        private final Map<String, List<Tuple2<String, String>>> schemata = new HashMap<>();
+
         private final EventSequence sequence = new EventSequence();
         private final List<InvariantsParser.TermContext> termContexts = new ArrayList<>();
 
@@ -31,9 +35,15 @@ public class InvariantTranslator {
             var type = ctx.eventType().IDENTIFIER().toString();
             var id = ctx.eventId().IDENTIFIER().toString();
 
+            var schema = ctx.schema().schemaMember()
+                    .stream()
+                    .map(sm -> new Tuple2<>(sm.IDENTIFIER().getText(), sm.memberType().getText()))
+                    .collect(Collectors.toList());
+
             topics.add(topic);
             relevantEventTypes.add(type);
             id2Type.put(id, type);
+            schemata.put(ctx.eventId().getText(), schema);
         }
 
         @Override

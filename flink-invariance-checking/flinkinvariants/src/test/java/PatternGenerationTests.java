@@ -1,3 +1,4 @@
+import org.apache.flink.api.java.tuple.Tuple2;
 import org.apache.flink.cep.pattern.Pattern;
 import org.apache.flink.cep.pattern.conditions.IterativeCondition;
 import org.apache.flink.cep.pattern.conditions.SimpleCondition;
@@ -23,12 +24,15 @@ public class PatternGenerationTests {
                 """
                 A a
                   topic: a-topic
-                  schema: {id}
+                  schema: {id:number}
                 B b
                   topic: b-topic
-                  schema: {id}
+                  schema: {id:number}
+                C c
+                  topic: c-topic
+                  schema: {id:number}
                                
-                SEQ (a, b)
+                SEQ (a, !b, c)
                 WITHIN 1 sec
                 WHERE (a.id = b.id) AND (a.price > 42)
                 ON FULL MATCH false""";
@@ -38,6 +42,8 @@ public class PatternGenerationTests {
         Map<String, String> id2Type = new HashMap<>();
         id2Type.put("a", "A");
         id2Type.put("b", "B");
+        id2Type.put("c", "C");
+
 
         EventSequence seq = new EventSequence();
         seq.addNode(new SequenceNode(
@@ -47,13 +53,26 @@ public class PatternGenerationTests {
                 )
         );
         seq.addNode(new SequenceNode(
-                        false,
+                        true,
                         SequenceNodeQuantifier.ONCE,
                         Stream.of("b").collect(Collectors.toList())
                 )
         );
+        seq.addNode(new SequenceNode(
+                        false,
+                        SequenceNodeQuantifier.ONCE,
+                        Stream.of("c").collect(Collectors.toList())
+                )
+        );
 
-        var patternGenerator = new PatternGenerator(seq, terms, id2Type);
+
+        var schemata = new HashMap<String, List<Tuple2<String, String>>>();
+
+        schemata.put("a", List.of(new Tuple2<>("id", "number")));
+        schemata.put("b", List.of(new Tuple2<>("id", "number")));
+        schemata.put("c", List.of(new Tuple2<>("id", "number")));
+
+        var patternGenerator = new PatternGenerator(seq, terms, id2Type, schemata);
         var pattern = patternGenerator.generatePattern();
     }
 }

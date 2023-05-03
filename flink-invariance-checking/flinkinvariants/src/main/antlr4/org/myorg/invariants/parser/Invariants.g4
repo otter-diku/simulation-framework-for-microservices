@@ -26,7 +26,11 @@ eventDefinition: eventType eventId
 eventType: IDENTIFIER;
 eventId: IDENTIFIER;
 topic: IDENTIFIER;
-schema: '{' IDENTIFIER (',' IDENTIFIER)* '}';
+schema: '{' schemaMember (',' schemaMember)* '}';
+
+schemaMember: IDENTIFIER ':' memberType;
+
+memberType: 'number' | 'string' | 'bool';
 
 events
   : event (',' event)*
@@ -96,13 +100,9 @@ qualifiedName
 
 time: INT TIME;
 
-
 //OP: 'AND' | 'OR';
 and: 'AND';
 or: 'OR';
-op
-  : and
-  | or;
 
 EQ_OP: '=' | '!=' | '<' | '<=' | '>' | '>=';
 INT: [0-9]+;
