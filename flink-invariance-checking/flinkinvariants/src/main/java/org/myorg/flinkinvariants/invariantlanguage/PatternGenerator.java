@@ -119,9 +119,10 @@ public class PatternGenerator {
             case "sec": yield "seconds";
             case "min": yield "minutes";
             case "hour": yield "hours";
+            default: yield "";
         };
 
-        patternCodeBuilder.append(String.format(".within(Time.%s(%s))", unit, duration));
+        patternCodeBuilder.append(String.format(".within(Time.%s(%s));", unit, duration));
     }
 
     private void addNode(SequenceNode node) {
