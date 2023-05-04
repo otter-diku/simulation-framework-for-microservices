@@ -1,6 +1,5 @@
 package org.myorg.flinkinvariants.invariantlanguage;
 
-import org.apache.flink.api.java.tuple.Tuple2;
 import org.myorg.invariants.parser.InvariantsParser;
 
 import java.util.*;
@@ -10,50 +9,80 @@ import java.util.regex.Pattern;
 
 public class PatternGenerator {
 
-    final String equalityRegex = "(['0-9a-zA-Z\\._]+)\\s*(=|!=|>|<|>=|<=)\\s*(['0-9a-zA-Z\\._]+)";
-    private EventSequence eventSequence;
-    private List<InvariantsParser.TermContext> terms;
-    private Map<String, String> id2Type;
-    private HashMap<String, List<Tuple2<String, String>>> schemata;
+    private enum ReturnType {
+        BOOL, NUMBER, STRING
+    }
 
+    private enum OperandType {
+        ATOM, QUALIFIED_NAME
+    }
+
+    private enum OperatorType {
+        EQ, NEQ, GT, GTE, LT, LTE;
+
+        static OperatorType from(String operator) {
+            return switch (operator) {
+                case "=": yield EQ;
+                case "!=": yield NEQ;
+                case ">": yield GT;
+                case ">=": yield GTE;
+                case "<": yield LT;
+                case "<=": yield LTE;
+                default:
+                    throw new RuntimeException();
+            };
+        }
+    }
+
+    private class Operand {
+        private ReturnType returnType;
+        private OperandType operandType;
+        private String value;
+        private Optional<Boolean> alreadyExistsInContext;
+
+        private Operand(ReturnType returnType, OperandType operandType, String value) {
+            this.returnType = returnType;
+            this.operandType = operandType;
+            this.value = value;
+        }
+
+        private Operand(OperandType operandType, ReturnType returnType, String value, boolean alreadyExistsInContext) {
+            this.returnType = returnType;
+            this.operandType = operandType;
+            this.value = value;
+            this.alreadyExistsInContext = Optional.of(alreadyExistsInContext);
+        }
+    }
+
+    final String quantityRegex = "['0-9a-zA-Z\\._]+";
+    final String operatorRegex = "=|!=|>|<|>=|<=";
+    final String equalityRegex = String.format("(%s)\\s*(%s)\\s*(%s)", quantityRegex, operatorRegex, quantityRegex);
+
+    private final EventSequence eventSequence;
+    private final List<InvariantsParser.TermContext> terms;
+    private final Map<String, String> id2Type;
+    private final Map<String, Map<String, String>> schemata;
     private final StringBuilder patternCodeBuilder = new StringBuilder();
+    private final Pattern pattern;
 
     public PatternGenerator(EventSequence eventSequence,
                             List<InvariantsParser.TermContext> terms,
-                            Map<String, String> id2Type, HashMap<String, List<Tuple2<String, String>>> schemata) {
+                            Map<String, String> id2Type,
+                            Map<String, Map<String, String>> schemata) {
         this.eventSequence = eventSequence;
         this.terms = terms;
         this.id2Type = id2Type;
         this.schemata = schemata;
+        this.pattern = Pattern.compile(equalityRegex, Pattern.MULTILINE);
     }
 
     public String generatePattern() {
-        var firstNode = eventSequence.getSequence().get(0);
-        patternCodeBuilder.append("Pattern.<Event>begin("+ firstNode.getName()+ ")");
 
-        addSimpleConditionForNode(firstNode, id2Type);
+        eventSequence
+                .getSequence()
+                .forEach(this::addNode);
 
-
-        for (var node : eventSequence.getSequence().stream().skip(1).collect(Collectors.toList())) {
-            if (node.Negated) {
-                addNotFollowedBy(node);
-
-                terms.stream()
-                        .filter(term -> getReferencedEventIds(term).contains(node.EventIds.get(0)))
-                        .forEach(this::addWhereClauseFromTerm);
-            } else {
-                addFollowedByAny(node);
-                addSimpleConditionForNode(node, id2Type);
-            }
-        }
-
-//        for (var node : eventSequence.getSequence().stream().skip(1).collect(Collectors.toList())) {
-//            if (node.Negated) {
-//                pattern = updateWithNegatedNode(pattern, node, id2Type, terms);
-//            } else {
-//                pattern = updateWithNode(pattern, node, id2Type);
-//            }
-//        }
+        return patternCodeBuilder.toString();
 
         // TODO: case: last event is notfollowedBy
         // a, !b -> WHERE (b.id = a.id) AND (a.price > 42)
@@ -68,148 +97,293 @@ public class PatternGenerator {
         // now construct iterative conditions for all terms that do not have
         // a negated event
         //pattern = updateWithFinalIterativeCondition(pattern, eventSequence, terms);
-
-        return null;
     }
 
-    private void addWhereClauseFromTerm(InvariantsParser.TermContext term, SequenceNode node, List<SequenceNode> sequenceNodes) throws Exception {
-
-        String string = "(A.x = B.y && 5 > C.z && (f.x = y.z && (x.z <= f.f)) || 'x' = D.f || 'f' != D.h)\n";
-
-        string = string.replace("AND", "&&")
-                .replace("OR", "||");
-
-        final Pattern pattern = Pattern.compile(equalityRegex, Pattern.MULTILINE);
-        final Matcher matcher = pattern.matcher(string);
-
-        while (matcher.find()) {
-            var lhs = matcher.group(1);
-            var op = matcher.group(2);
-            var rhs = matcher.group(3);
-
-            boolean isMostRecentNodeLhs;
-            boolean isMostRecentNodeRhs;
-            String typeLhs = null;
-            String typeRhs = null;
-            if (isQualifiedName(lhs)) {
-                var eventId = getEventId(lhs);
-                var memberTypes = schemata.get(eventId);
-                isMostRecentNodeLhs = node.EventIds.contains(eventId);
-                // TODO: assumes flat event schema
-                var member = getMember(lhs);
-                var tuple = memberTypes.stream().filter(t -> t.f0.equals(member))
-                        .findFirst();
-                typeLhs = tuple.get().f1;
-            } else {
-
-            }
-            if (isQualifiedName(rhs)) {
-                var eventId = getEventId(rhs);
-                var memberTypes = schemata.get(eventId);
-                isMostRecentNodeRhs = node.EventIds.contains(eventId);
-                // TODO: assumes flat event schema
-                var member = getMember(rhs);
-                var tuple = memberTypes.stream().filter(t -> t.f0.equals(member))
-                        .findFirst();
-                typeRhs = tuple.get().f1;
-            }
-
-            if (!typeRhs.equals(typeLhs)) {
-                throw new Exception("Lhs type does not equal Rhs type.");
-            }
-
-            // bool, num, string, : = !=
-            // num : <= < > >=
-            if ((typeRhs.equals("bool") || typeRhs.equals("string"))
-                    && List.of("<=", "<", ">", ">=").contains(op))
-            {
-                throw new Exception("Using numeric operator on incompatible type.");
-            }
-
-            // if event is not the most recent node
-            // then use context.getEvents() (maybe multiple events)
-            // a b b c   (a, b, c) WHERE a.id = b.id
-
-            // a b1 b2 c with b1.id != a and b2.id == a
-            // (a,b,c) WHERE a.id = b.id
-
-            // (a, b, !c, d) WHERE c.id = b.id AND a.id = b.id
-            // stream: a b1 b2 e d
-            // matches:
-            //  - a b1 e
-            //  - a b2 e
-
-            // (a, b+, !c, d) WHERE c.id = b.id AND a.id = b.id
-            // stream: a b1 b2 e d
-            // matches:
-            //  - a b1 e
-            //  - a b1 b2 e -> then have b1 and b2 for comparing
-            // itertiveCond(
-            //  List<Event> bs = context.getEvents(b)
-            //  List<Event> as = context.getEvents(a)
-            //
-
-
-            // (a, b+, !c, d) filter only by type
-            // stream: a b1 b2 c1 c2 d
-            //  matches: a b1 b2 d
-
-            // a b1 b2 c1 b3 c2 d (c1, c2 wont break pattern)
-            // matches (followedByAny on types + regex):
-            // !c --> followedByAny().SimpCond( e -> e.type = c)
-            // - a b1 b2 c1 d
-            // - a b1 b2 c2 d
-            // -
-
-            // filter(e -> type )
-            // c d a b a d b c c
-            
-
-            // a b1 b2 c   (a,b,c)
-            // a b1 c
-            // a b2 c
-
-
-            //
-
-
-
-            // A.x -> context.getEvents('A')
-            // =
-            // B.y
-
-            // (a, !b, c)
-            // WHERE (b.id = a.id) AND (a.id = c.id)
-
-            // "[a,b]" -> or case
-            // begin("a").notfollowedBy("b")
-            // .where(IterativeCond(
-            //
-
-            // (a, (b | c), !d, e) WHERE (d.id = b.id OR d.x = c.x)
-            // var bOrCs = context.getEvents()
-
-
-            // (a, (b1 | b2), !d, e) WHERE (d.id = b.id OR d.x = c.x)
-
+    private void addNode(SequenceNode node) {
+        if (node.position == 0) {
+            addBegin(node);
+        }
+        else if (node.negated) {
+            addNotFollowedBy(node);
+        }
+        else {
+            addFollowedByAny(node);
         }
 
-        // (A.a.c = B.b.c || C.d.a = D.x.y && (X.z.x > Z.c.a))
+        addSimpleConditionForNode(node, id2Type);
 
-        // the most important regex ever
-        // /['0-9a-zA-Z\._]+\s(=|!=|>|<|>=|<=)\s['0-9a-zA-Z\._]+/gm
+        if (requiresImmediateWhereClause(node)) {
+            terms.stream()
+                    .filter(term -> getReferencedEventIds(term).contains(node.eventIds.get(0)))
+                    .forEach(term -> addWhereClauseFromTerm(node, term));
+        }
 
-        // a.x = 'f=c'
-        // 1. blindly replace ORs and ANDs
-        // 2. blindly replace symbols (=, >=..) if necessary >=, =
-        // '=' -> '==' '!=' | '<' | '<=' | '>' | '>=';
+        // TODO: We could possibly have `else if` here, if we disallow negated and "wildcarded" events to be the last events in the sequence
+        if (node.position == eventSequence.getSequence().size() - 1) {
+            List<SequenceNode> nodesToExclude = eventSequence.getSequence()
+                    .stream()
+                    .filter(this::requiresImmediateWhereClause)
+                    .collect(Collectors.toList());
 
-
-
+            terms.stream()
+                    .filter(term -> !doesReferenceNodeToExclude(term, nodesToExclude))
+                    .forEach(term -> addWhereClauseFromTerm(node, term));
+        }
     }
 
-    private String getMember(String qualifiedName) {
-        return qualifiedName.split("\\.")[1];
+    private boolean doesReferenceNodeToExclude(InvariantsParser.TermContext term, List<SequenceNode> nodesToExclude) {
+        var eventIdsReferencedInTerm = getReferencedEventIds(term);
+
+        return nodesToExclude
+                .stream()
+                .map(e -> e.eventIds)
+                .flatMap(List::stream)
+                .anyMatch(eventIdsReferencedInTerm::contains);
+    }
+
+    private boolean requiresImmediateWhereClause(SequenceNode node) {
+        return node.negated || node.type != SequenceNodeQuantifier.ONCE;
+    }
+
+    private void addBegin(SequenceNode node) {
+        patternCodeBuilder.append(String.format("Pattern.<Event>begin(\"" + node.getName() + "\")"));
+    }
+
+    private void addNotFollowedBy(SequenceNode node) {
+        patternCodeBuilder.append(String.format(".notFollowedBy(\"%s\")\n", node.getName()));
+    }
+
+    private void addFollowedByAny(SequenceNode node) {
+        patternCodeBuilder.append(String.format(".followedByAny(\"%s\")\n", node.getName()));
+    }
+
+    private void addSimpleConditionForNode(SequenceNode node, Map<String, String> id2Type) {
+        var simpleCondition = node.eventIds.stream()
+                .map(eId -> String.format("e.Type.equals(\"%s\")\n", id2Type.get(eId)))
+                .collect(Collectors.joining("||"));
+
+        patternCodeBuilder.append(String.format(".where(SimpleCondition.of(e -> %s))\n", simpleCondition));
+    }
+
+    private Operand convertToOperand(SequenceNode currentNode, String operand) {
+        if (isQualifiedName(operand)) {
+            return convertQualifiedNameToOperand(currentNode, operand);
+        }
+
+        return convertAtomToOperand(operand);
+    }
+
+    private Operand convertQualifiedNameToOperand(SequenceNode currentNode, String operand) {
+        // TODO: assumes flat event schema
+        var eventId = getEventId(operand);
+        var memberId = getMember(operand);
+        var returnType = schemata
+                .get(eventId)
+                .get(memberId);
+        var operandType = ReturnType.valueOf(returnType.toUpperCase());
+        var alreadyExistsInContext = !currentNode.eventIds.contains(eventId);
+
+        return new Operand(OperandType.QUALIFIED_NAME, operandType, operand, alreadyExistsInContext);
+    }
+
+    private Operand convertAtomToOperand(String operand) {
+        ReturnType type;
+        if (isBooleanAtom(operand)) {
+            type = ReturnType.BOOL;
+        } else if (isNumberAtom(operand)) {
+            type = ReturnType.NUMBER;
+        } else if (isStringAtom(operand)) {
+            type = ReturnType.STRING;
+        } else {
+            System.out.println("ERROR: Unknown atom type " + operand);
+            return null;
+        }
+        return new Operand(type, OperandType.ATOM, operand);
+    }
+
+    private void addWhereClauseFromTerm(SequenceNode node, InvariantsParser.TermContext term) {
+        var termText = term.getText();
+
+        termText = termText
+                .replace("AND", "&&")
+                .replace("OR", "||");
+
+        final Matcher matcher = pattern.matcher(termText);
+
+        while (matcher.find()) {
+            var lhs = convertToOperand(node, matcher.group(1));
+            var op = OperatorType.from(matcher.group(2));
+            var rhs = convertToOperand(node, matcher.group(3));
+
+            validateOperation(lhs, op, rhs);
+
+            patternCodeBuilder.append(generateCodeFromOperation(lhs, op, rhs));
+        }
+    }
+
+    private String generateCodeFromOperation(Operand lhs, OperatorType operatorType, Operand rhs) {
+        var sb = new StringBuilder();
+
+        /*
+         * Operand can be:
+         *   - an atom
+         *   - a single event already in the context, e.g. SEQ(a, !b, c) -> we are looking for a
+         *   - a single OR'ed event already in the context, e.g. SEQ(a, (d | e), !b, c) -> we are looking for d or e
+         *   // TODO: maybe we could disallow (a, (e1|e2)) where e1 and e2 have the same type.
+         *   - a wildcard event NOT in the context; in this case Flink CEP will not give us the preceding matches of the wildcard in the context.
+         *       e.g. (a, b, c+, d) -> we are looking for c at the stage of 'c+'
+         * NOT SUPPORTED RIGHT NOW:
+         *   - a wildcard event already in the context e.g. SEQ(a, e+, f, !b, c) -> we are looking for e at the stage of '!b'
+         */
+
+        var lhsCode = generateCodeFromOperand(lhs, "lhs");
+        var rhsCode = generateCodeFromOperand(rhs, "rhs");
+        var comparisonCode = generateCodeFromOperator(operatorType, lhs.returnType, "lhs","rhs");
+
+        sb.append(
+            String.format(
+            """
+            .where(
+                new IterativeCondition<>() {
+                    @Override
+                    public boolean filter(Event event, Context<Event> context) throws Exception {
+                    %s
+                    %s
+                    %s
+                    }
+                })
+            """, lhsCode, rhsCode, comparisonCode
+            )
+        );
+
+        return sb.toString();
+    }
+
+    private String generateCodeFromOperator(OperatorType operatorType, ReturnType returnType, String lhs, String rhs) {
+        var sb = new StringBuilder();
+
+        var lhsValue = String.format("%s.get()", lhs);
+        var rhsValues = String.format("%s.get()", rhs);
+
+        var comparisonCode = switch (operatorType) {
+            case EQ: yield returnType == ReturnType.STRING
+                    ? String.format("%s.equals(%s)", lhsValue, rhsValues)
+                    : String.format("%s == %s", lhsValue, rhsValues);
+            case NEQ: yield returnType == ReturnType.STRING
+                        ? String.format("!%s.equals(%s)", lhsValue, rhsValues)
+                        : String.format("%s != %s", lhsValue, rhsValues);
+            case GT: yield String.format("%s > %s", lhsValue, rhsValues);
+            case GTE: yield String.format("%s >= %s", lhsValue, rhsValues);
+            case LT: yield String.format("%s < %s", lhsValue, rhsValues);
+            case LTE: yield String.format("%s <= %s", lhsValue, rhsValues);
+        };
+
+        sb.append(
+            String.format(
+            """
+                if (%s.isPresent() && %s.isPresent()) {
+                    return %s;
+                } else {
+                    return false;
+                }
+            """, lhs, rhs, comparisonCode)
+        );
+
+        return sb.toString();
+    }
+
+    private String generateCodeFromOperand(Operand operand, String variableName) {
+        return switch (operand.operandType) {
+            case ATOM:
+                yield generateCodeFromAtom(operand, variableName);
+            case QUALIFIED_NAME:
+                yield generateCodeFromQualifiedName(operand, variableName);
+        };
+    }
+
+    private static String generateCodeFromAtom(Operand operand, String variableName) {
+        return switch (operand.returnType) {
+            case STRING:
+                yield String.format("var %s = Optional.ofNullable(\"%s\");", variableName, operand.value);
+            case BOOL, NUMBER:
+                yield String.format("var %s = Optional.of(%s);", variableName, Double.valueOf(operand.value));
+        };
+    }
+
+    private String generateCodeFromQualifiedName(Operand operand, String variableName) {
+        var sb = new StringBuilder();
+
+        var eventId = getEventId(operand.value);
+        var nodePosition = eventSequence.getEventPositionById(eventId);
+        var node = eventSequence.getSequence().get(nodePosition);
+
+        sb.append(
+            String.format(
+            """
+            Optional<%s> %s;
+            try {
+            """, toJavaType(operand.returnType), variableName)
+        );
+
+        if (operand.alreadyExistsInContext.get()) {
+            sb.append(
+                String.format(
+                    """
+                        var temp = context.getEventsForPattern("%s")
+                                .iterator()
+                                .next();
+                    """, node.getName())
+            );
+        } else {
+            sb.append("var temp = event;");
+        }
+
+        sb.append(
+            String.format(
+                """
+                    %s = Optional.of(temp.Content.get("%s")%s);
+                } catch (Exception e) {
+                    %s = Optional.ofNullable(null);
+                }
+                
+                """, variableName, getMember(operand.value), toJsonDataType(operand.returnType), variableName)
+        );
+
+        return sb.toString();
+    }
+
+    private static String toJavaType(ReturnType returnType) {
+        return switch (returnType) {
+            case BOOL: yield "Boolean";
+            case NUMBER: yield "Double";
+            case STRING: yield "String";
+        };
+    }
+
+    private static String toJsonDataType(ReturnType returnType) {
+        return switch (returnType) {
+            case BOOL:
+                yield ".asBoolean()";
+            case NUMBER:
+                yield ".asDouble()";
+            case STRING:
+                yield ".asText()";
+        };
+    }
+
+    private void validateOperation(Operand lhs, OperatorType op, Operand rhs) {
+        if (!lhs.returnType.equals(rhs.returnType)) {
+            throw new RuntimeException("ERROR: Lhs type does not equal Rhs type.");
+        }
+
+        if (lhs.operandType == OperandType.ATOM && lhs.operandType == rhs.operandType) {
+            throw new RuntimeException("ERROR: Comparison of atoms not allowed");
+        }
+
+        if ((lhs.returnType == ReturnType.BOOL || lhs.returnType == ReturnType.STRING)
+                && List.of(OperatorType.LT, OperatorType.LTE, OperatorType.GT, OperatorType.GTE).contains(op)) {
+            throw new RuntimeException("ERROR: Using numeric operator on incompatible type.");
+        }
     }
 
     private Boolean isBooleanAtom(String atom) {
@@ -234,284 +408,9 @@ public class PatternGenerator {
         return qualifiedName.split("\\.")[0];
     }
 
-    private void addNotFollowedBy(SequenceNode node) {
-        patternCodeBuilder.append(String.format(".notFollowedBy(\"%s\")\n", node.getName()));
+    private String getMember(String qualifiedName) {
+        return qualifiedName.split("\\.")[1];
     }
-
-    private void addFollowedByAny(SequenceNode node) {
-        patternCodeBuilder.append(String.format(".followedByAny(\"%s\")\n", node.getName()));
-    }
-
-    private void addSimpleConditionForNode(SequenceNode node, Map<String, String> id2Type) {
-        var simpleCondition = node.EventIds.stream()
-                        .map(eId -> String.format("e.Type.equals(\"%s\")\n", id2Type.get(eId)))
-                        .collect(Collectors.joining("||"));
-
-        patternCodeBuilder.append(String.format(".where(SimpleCondition.of(e -> %s))\n", simpleCondition));
-    }
-
-//    private Pattern<Event, Event> updateWithFinalIterativeCondition(Pattern<Event, Event> pattern, EventSequence eventSequence, List<InvariantsParser.TermContext> terms) {
-//
-//        HashMap<String, Boolean> eventIdToNegated = new HashMap<>();
-//        for (var node : eventSequence.getSequence()) {
-//            for (var eventId : node.EventIds) {
-//                eventIdToNegated.put(eventId, node.Negated);
-//            }
-//        }
-//
-//        var nonNegatedTerms = terms.stream().filter(term -> getReferencedEventIds(term)
-//                .stream().noneMatch(eventIdToNegated::get))
-//                .collect(Collectors.toList());
-//
-//        for (var term : nonNegatedTerms) {
-//            pattern = pattern.where(createConditionFromTerm(term));
-//        }
-//
-//        return pattern;
-//    }
-//
-//    private Pattern<Event, Event> updateWithNode(Pattern<Event, Event> pattern, SequenceNode node, Map<String, String> id2Type) {
-//        return pattern.followedByAny(node.getName())
-//                .where(SimpleCondition.of(e ->
-//                        node.EventIds.stream()
-//                                .map(id2Type::get)
-//                                .anyMatch(eType -> eType.equals(e.Type))
-//                ));
-//    }
-//
-//    private Pattern<Event, Event> updateWithNegatedNode(Pattern<Event, Event> pattern, SequenceNode node, Map<String, String> id2Type, List<InvariantsParser.TermContext> terms) {
-//        pattern = pattern.notFollowedBy(node.getName())
-//                .where(SimpleCondition.of(e ->
-//                        node.EventIds.stream()
-//                                .map(id2Type::get)
-//                                .anyMatch(eType -> eType.equals(e.Type))
-//                ));
-//
-//        var relevantTerms = terms.stream()
-//                .filter(term -> getReferencedEventIds(term)
-//                        .contains(node.EventIds.get(0)))
-//                .collect(Collectors.toList());
-//
-//        for (var term : relevantTerms) {
-//            pattern = pattern.where(createConditionFromTerm(term));
-//        }
-//
-//        return pattern;
-//    }
-//
-//    private IterativeCondition<Event> createConditionFromTerm(InvariantsParser.TermContext term) {
-//        return new IterativeCondition<Event>() {
-//            @Override
-//            public boolean filter(Event event, Context<Event> context) throws Exception {
-//                return transform(term).apply(event, context);
-//            }
-//        };
-//    }
-//
-//    private BiFunction<Event, IterativeCondition.Context<Event>, Boolean> transform(InvariantsParser.TermContext term) {
-//        if (term.equality() != null) {
-//            return transform(term.equality());
-//        }
-//
-//        if (term.or() != null) {
-//            return (event, eventContext) ->
-//                    transform(term.term(0)).apply(event, eventContext) ||
-//                    transform(term.term(1)).apply(event, eventContext);
-//        }
-//
-//        if (term.and() != null) {
-//            return (event, eventContext) ->
-//                    transform(term.term(0)).apply(event, eventContext) &&
-//                    transform(term.term(1)).apply(event, eventContext);
-//        }
-//
-//        return (event, eventContext) -> false;
-//    }
-//
-//    private BiFunction<Event, IterativeCondition.Context<Event>, Boolean> transform(InvariantsParser.EqualityContext equality) {
-//        var lhs = equality.quantity(0);
-//        var op = equality.EQ_OP().getSymbol().getText();
-//        var rhs = equality.quantity(1);
-//
-//        // NOTE: the idea here is that transform() returns a function
-//        // which takes 2 arguments (event, eventContext) and returns an Object
-//        // The returned Object can be either:
-//        //  - a string
-//        //  - an int
-//        //  - a boolean
-//        //  - a single JsonNode
-//        //  - multiple JsonNodes
-//        // Therefore we need to make sure to correctly apply the comparison operator
-//        // between the result of transform(lhs) and transform(rhs)
-//
-//        var lhsFunction = transform(lhs);
-//        var rhsFunction = transform(rhs);
-//
-//        return (event, eventContext) -> {
-//          var lhsReturnVal = lhsFunction.apply(event, eventContext);
-//          var rhsReturnVal = rhsFunction.apply(event, eventContext);
-//          return compare(lhsReturnVal, op, rhsReturnVal);
-//        };
-//    }
-//
-//    private boolean compare(Object lhs, String operator, Object rhs) {
-//
-//        // TODO: replace all == and equals below with the value of 'operator' arg
-//        // TODO:
-//        // if only one side is a list of nodes then it is a valid case and we need to add this
-//        // example:
-//        // SEQ (a, b*)
-//        // WHERE (a.id = b.id)
-//
-//        // TODO:
-//        // if both sides are a list of nodes then we should probably throw? Dunno really.
-//        // example:
-//        // SEQ (a*, b*)
-//        // WHERE (a.id = b.id)
-//
-//        if (lhs instanceof JsonNode && rhs instanceof JsonNode) {
-//            return ((JsonNode) lhs).asText().equals(((JsonNode) rhs).asText());
-//        }
-//
-//        if (lhs instanceof JsonNode) {
-//            if (rhs instanceof Boolean)
-//                return ((JsonNode) lhs).asBoolean() == (Boolean) rhs;
-//            if (rhs instanceof Integer)
-//                return ((JsonNode) lhs).asInt() == (Integer) rhs;
-//            if (rhs instanceof String)
-//                return ((JsonNode) lhs).asText().equals(rhs);
-//        }
-//
-//        if (rhs instanceof JsonNode) {
-//            if (lhs instanceof Boolean)
-//                return ((JsonNode) rhs).asBoolean() == (Boolean) lhs;
-//            if (lhs instanceof Integer)
-//                return ((JsonNode) rhs).asInt() == (Integer) lhs;
-//            if (lhs instanceof String)
-//                return ((JsonNode) rhs).asText().equals(lhs);
-//        }
-//
-//        if (lhs instanceof Boolean && rhs instanceof Boolean)
-//            return lhs == rhs;
-//        if (lhs instanceof Integer && rhs instanceof Integer)
-//            return lhs == rhs;
-//        if (lhs instanceof String && rhs instanceof String)
-//            return lhs.equals(rhs);
-//
-//        // TODO:
-//        // otherwise we are trying to compare incompatible types (me thinks), we should throw
-//        return false;
-//    }
-//
-//    private BiFunction<Event, IterativeCondition.Context<Event>, Object> transform(InvariantsParser.QuantityContext quantity) {
-//        if (quantity.atom() != null) {
-//            if (quantity.atom().BOOL() != null) {
-//                return (event, eventContext) -> Boolean.parseBoolean(quantity.getText());
-//            }
-//            if (quantity.atom().INT() != null) {
-//                return (event, eventContext) -> Integer.parseInt(quantity.getText());
-//            }
-//            if (quantity.atom().STRING() != null) {
-//                return (event, eventContext) -> quantity.getText();
-//            }
-//
-//            System.out.println("Something went wrong here...");
-//            return (event, eventContext) -> "";
-//        }
-//
-//        var eventId = quantity.qualifiedName().IDENTIFIER(0).getText();
-//        var relatedNode = eventSequence.getSequence()
-//                .stream()
-//                .filter(node -> node.EventIds.contains(eventId))
-//                .findFirst()
-//                .orElseThrow();
-//
-//        // NOTE: it gets weird here. We can check if the event is negated
-//        // or if it's the last event in the sequence.
-//        // If so, that means that we need to access 'event', and not the 'context'
-//        // Otherwise, we can safely assume that we can find this event in the context.
-//
-//        var position = eventSequence.getEventPositionById(eventId);
-//        var node = eventSequence
-//                .getSequence()
-//                .get(position);
-//
-//        var isNegatedOrLastEventInSequence = node.Negated ||
-//                position == eventSequence.getSequence().size() - 1;
-//
-//        return (event, eventContext) -> {
-//            if (isNegatedOrLastEventInSequence) {
-//                // NOTE: (a, b, c+) is a special case:
-//                //       if we have a condition involving all c events
-//                //       for example (sum(c) < a.stock) then we can only
-//                //       check this in the patternMatch function as the iterative
-//                //       condition will only have access to one c event at a time
-//                //       additionally the match behaviour is weird meaning for
-//                //       the sequence: a b c c c
-//                //       we get (and maybe more matches) in the patternMatch function:
-//                //       a b c
-//                //       a b c c
-//                //       a b c c c
-//                //       but we only want to check the invariant for
-//                //       the match a b c c c.
-//                //
-//                //       I think if we support a*, and a+ then we also need to support
-//                //       aggregate function (sum(a.amount), count(a), etc.),
-//                //       if we do not allow aggregate functions
-//                //       then * and + are not really useful in any way for writing
-//                //       invariants I think
-//                return traverse(event.Content, quantity.qualifiedName());
-//            } else {
-//                try {
-//                    return StreamSupport.stream(eventContext.getEventsForPattern(relatedNode.getName()).spliterator(), false)
-//                            .map(e -> traverse(e.Content, quantity.qualifiedName()))
-//                            .collect(Collectors.toList());
-//                } catch (Exception e) {
-//                    throw new RuntimeException(e);
-//                }
-//            }
-//        };
-//    }
-//
-//    private JsonNode traverse(JsonNode node, InvariantsParser.QualifiedNameContext qualifiedName) {
-//        JsonNode result = node;
-//        for (var identifier : qualifiedName.IDENTIFIER().stream().skip(1).collect(Collectors.toList())) {
-//            result = result.get(identifier.getText());
-//        }
-//        return result;
-//    }
-
-    /*
-
-    equality
-    : quantity EQ_OP quantity;
-
-    quantity
-        : qualifiedName
-        | atom
-        ;
-
-    atom
-        : BOOL
-        | INT
-        | STRING
-        ;
-
-    qualifiedName
-        : IDENTIFIER ('.' IDENTIFIER)*
-        ;
-
-
-
-    term
-    : equality
-    | term and term
-    | term or term
-    | lpar term rpar
-    ;
-    *
-    * */
-
 
     private Set<String> getReferencedEventIds(InvariantsParser.TermContext term) {
         var subTerms = term.children.stream()

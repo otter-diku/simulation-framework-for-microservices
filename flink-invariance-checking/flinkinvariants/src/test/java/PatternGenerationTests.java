@@ -1,41 +1,157 @@
-import org.apache.flink.api.java.tuple.Tuple2;
 import org.apache.flink.cep.pattern.Pattern;
 import org.apache.flink.cep.pattern.conditions.IterativeCondition;
 import org.apache.flink.cep.pattern.conditions.SimpleCondition;
 import org.junit.Test;
 import org.myorg.flinkinvariants.events.Event;
 import org.myorg.flinkinvariants.invariantlanguage.*;
-import org.myorg.invariants.parser.InvariantsParser;
 
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
 
 public class PatternGenerationTests {
+
+
+    /*
+    * INPUT:
+        A a
+          topic: a-topic
+          schema: {id:string, price:number, hasFlag:bool}
+        B b
+          topic: b-topic
+          schema: {id:string}
+        C c
+          topic: c-topic
+          schema: {id:string, hasFlag:bool}
+
+        SEQ (a, !b, c)
+        WITHIN 1 sec
+        WHERE (a.id = b.id) AND (a.price > 42) AND (a.hasFlag != c.hasFlag)
+        ON FULL MATCH false
+    * */
+
+
+    @Test
+    public void thisWasActuallyGeneratedByOurCuttingEdgeAlgorithm() {
+        Pattern.<Event>begin("[a]").where(SimpleCondition.of(e -> e.Type.equals("A")
+                ))
+                .notFollowedBy("[b]")
+                .where(SimpleCondition.of(e -> e.Type.equals("B")
+                ))
+                .where(
+                        new IterativeCondition<>() {
+                            @Override
+                            public boolean filter(Event event, Context<Event> context) throws Exception {
+                                Optional<String> lhs;
+                                try {
+                                    var temp = context.getEventsForPattern("[a]")
+                                            .iterator()
+                                            .next();
+                                    lhs = Optional.of(temp.Content.get("id").asText());
+                                } catch (Exception e) {
+                                    lhs = Optional.ofNullable(null);
+                                }
+
+
+                                Optional<String> rhs;
+                                try {
+                                    var temp = event;
+                                    rhs = Optional.of(temp.Content.get("id").asText());
+                                } catch (Exception e) {
+                                    rhs = Optional.ofNullable(null);
+                                }
+
+
+                                if (lhs.isPresent() && rhs.isPresent()) {
+                                    return lhs.get().equals(rhs.get());
+                                } else {
+                                    return false;
+                                }
+
+                            }
+                        })
+                .followedByAny("[c]")
+                .where(SimpleCondition.of(e -> e.Type.equals("C")
+                ))
+                .where(
+                        new IterativeCondition<>() {
+                            @Override
+                            public boolean filter(Event event, Context<Event> context) throws Exception {
+                                Optional<Double> lhs;
+                                try {
+                                    var temp = context.getEventsForPattern("[a]")
+                                            .iterator()
+                                            .next();
+                                    lhs = Optional.of(temp.Content.get("price").asDouble());
+                                } catch (Exception e) {
+                                    lhs = Optional.ofNullable(null);
+                                }
+
+
+                                var rhs = Optional.of(42.0);
+                                if (lhs.isPresent() && rhs.isPresent()) {
+                                    return lhs.get() > rhs.get();
+                                } else {
+                                    return false;
+                                }
+
+                            }
+                        })
+                .where(
+                        new IterativeCondition<>() {
+                            @Override
+                            public boolean filter(Event event, Context<Event> context) throws Exception {
+                                Optional<Boolean> lhs;
+                                try {
+                                    var temp = context.getEventsForPattern("[a]")
+                                            .iterator()
+                                            .next();
+                                    lhs = Optional.of(temp.Content.get("hasFlag").asBoolean());
+                                } catch (Exception e) {
+                                    lhs = Optional.ofNullable(null);
+                                }
+
+
+                                Optional<Boolean> rhs;
+                                try {
+                                    var temp = event;
+                                    rhs = Optional.of(temp.Content.get("hasFlag").asBoolean());
+                                } catch (Exception e) {
+                                    rhs = Optional.ofNullable(null);
+                                }
+
+
+                                if (lhs.isPresent() && rhs.isPresent()) {
+                                    return lhs.get() != rhs.get();
+                                } else {
+                                    return false;
+                                }
+
+                            }
+                        });
+    }
 
     @Test
     public void TestPatternGeneration() {
         var query =
                 """
-                A a
-                  topic: a-topic
-                  schema: {id:number}
-                B b
-                  topic: b-topic
-                  schema: {id:number}
-                C c
-                  topic: c-topic
-                  schema: {id:number}
-                               
-                SEQ (a, !b, c)
-                WITHIN 1 sec
-                WHERE (a.id = b.id) AND (a.price > 42)
-                ON FULL MATCH false""";
+                        A a
+                          topic: a-topic
+                          schema: {id:string, price:number, hasFlag:bool}
+                        B b
+                          topic: b-topic
+                          schema: {id:string}
+                        C c
+                          topic: c-topic
+                          schema: {id:string, hasFlag:bool}
+                                       
+                        SEQ (a, !b, c)
+                        WITHIN 1 sec
+                        WHERE (a.id = b.id) AND (a.price > 42) AND (a.hasFlag != c.hasFlag)
+                        ON FULL MATCH false""";
         var translator = new InvariantTranslator();
         var terms = translator.getTermsFromQuery(query);
 
@@ -47,32 +163,36 @@ public class PatternGenerationTests {
 
         EventSequence seq = new EventSequence();
         seq.addNode(new SequenceNode(
-                false,
-                SequenceNodeQuantifier.ONCE,
-                Stream.of("a").collect(Collectors.toList())
+                        false,
+                        SequenceNodeQuantifier.ONCE,
+                        Stream.of("a").collect(Collectors.toList()),
+                        0
                 )
         );
         seq.addNode(new SequenceNode(
                         true,
                         SequenceNodeQuantifier.ONCE,
-                        Stream.of("b").collect(Collectors.toList())
+                        Stream.of("b").collect(Collectors.toList()),
+                        1
                 )
         );
         seq.addNode(new SequenceNode(
                         false,
                         SequenceNodeQuantifier.ONCE,
-                        Stream.of("c").collect(Collectors.toList())
+                        Stream.of("c").collect(Collectors.toList()),
+                        2
                 )
         );
 
+        var schemata = new HashMap<String, Map<String, String>>();
 
-        var schemata = new HashMap<String, List<Tuple2<String, String>>>();
-
-        schemata.put("a", List.of(new Tuple2<>("id", "number")));
-        schemata.put("b", List.of(new Tuple2<>("id", "number")));
-        schemata.put("c", List.of(new Tuple2<>("id", "number")));
+        schemata.put("a", Map.of("id", "string", "price", "number", "hasFlag", "bool"));
+        schemata.put("b", Map.of("id", "string"));
+        schemata.put("c", Map.of("id", "string", "hasFlag", "bool"));
 
         var patternGenerator = new PatternGenerator(seq, terms, id2Type, schemata);
         var pattern = patternGenerator.generatePattern();
+
+
     }
 }
