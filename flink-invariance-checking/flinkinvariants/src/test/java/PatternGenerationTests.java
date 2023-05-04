@@ -135,7 +135,7 @@ public class PatternGenerationTests {
     }
 
     @Test
-    public void TestPatternGeneration() {
+    public void TestPatternGeneration_0() {
         var query =
                 """
                         A a
@@ -153,46 +153,77 @@ public class PatternGenerationTests {
                         WHERE (a.id = b.id) AND (a.price > 42) AND (a.hasFlag != c.hasFlag)
                         ON FULL MATCH false""";
         var translator = new InvariantTranslator();
-        var terms = translator.getTermsFromQuery(query);
+        var translationResult = translator.translateQuery(query, null, null);
 
-        Map<String, String> id2Type = new HashMap<>();
-        id2Type.put("a", "A");
-        id2Type.put("b", "B");
-        id2Type.put("c", "C");
+        var patternGenerator = new PatternGenerator(
+                translationResult.sequence,
+                translationResult.whereClauseTerms,
+                translationResult.id2Type,
+                translationResult.schemata,
+                translationResult.within,
+                translationResult.onFullMatch,
+                translationResult.onPartialMatch);
 
-
-        EventSequence seq = new EventSequence();
-        seq.addNode(new SequenceNode(
-                        false,
-                        SequenceNodeQuantifier.ONCE,
-                        Stream.of("a").collect(Collectors.toList()),
-                        0
-                )
-        );
-        seq.addNode(new SequenceNode(
-                        true,
-                        SequenceNodeQuantifier.ONCE,
-                        Stream.of("b").collect(Collectors.toList()),
-                        1
-                )
-        );
-        seq.addNode(new SequenceNode(
-                        false,
-                        SequenceNodeQuantifier.ONCE,
-                        Stream.of("c").collect(Collectors.toList()),
-                        2
-                )
-        );
-
-        var schemata = new HashMap<String, Map<String, String>>();
-
-        schemata.put("a", Map.of("id", "string", "price", "number", "hasFlag", "bool"));
-        schemata.put("b", Map.of("id", "string"));
-        schemata.put("c", Map.of("id", "string", "hasFlag", "bool"));
-
-        var patternGenerator = new PatternGenerator(seq, terms, id2Type, schemata);
         var pattern = patternGenerator.generatePattern();
-
-
     }
+
+//    @Test
+//    public void TestPatternGeneration() {
+//        var query =
+//                """
+//                        A a
+//                          topic: a-topic
+//                          schema: {id:string, price:number, hasFlag:bool}
+//                        B b
+//                          topic: b-topic
+//                          schema: {id:string}
+//                        C c
+//                          topic: c-topic
+//                          schema: {id:string, hasFlag:bool}
+//
+//                        SEQ (a, !b, c)
+//                        WITHIN 1 sec
+//                        WHERE (a.id = b.id) AND (a.price > 42) AND (a.hasFlag != c.hasFlag)
+//                        ON FULL MATCH false""";
+//        var translator = new InvariantTranslator();
+//        var terms = translator.getTermsFromQuery(query);
+//
+//        Map<String, String> id2Type = new HashMap<>();
+//        id2Type.put("a", "A");
+//        id2Type.put("b", "B");
+//        id2Type.put("c", "C");
+//
+//
+//        EventSequence seq = new EventSequence();
+//        seq.addNode(new SequenceNode(
+//                        false,
+//                        SequenceNodeQuantifier.ONCE,
+//                        Stream.of("a").collect(Collectors.toList()),
+//                        0
+//                )
+//        );
+//        seq.addNode(new SequenceNode(
+//                        true,
+//                        SequenceNodeQuantifier.ONCE,
+//                        Stream.of("b").collect(Collectors.toList()),
+//                        1
+//                )
+//        );
+//        seq.addNode(new SequenceNode(
+//                        false,
+//                        SequenceNodeQuantifier.ONCE,
+//                        Stream.of("c").collect(Collectors.toList()),
+//                        2
+//                )
+//        );
+//
+//        var schemata = new HashMap<String, Map<String, String>>();
+//
+//        schemata.put("a", Map.of("id", "string", "price", "number", "hasFlag", "bool"));
+//        schemata.put("b", Map.of("id", "string"));
+//        schemata.put("c", Map.of("id", "string", "hasFlag", "bool"));
+//
+//        var patternGenerator = new PatternGenerator(seq, terms, id2Type, schemata, translationResult.within, translationResult.onFullMatch, translationResult.onPartialMatch);
+//        var pattern = patternGenerator.generatePattern();
+//    }
 }

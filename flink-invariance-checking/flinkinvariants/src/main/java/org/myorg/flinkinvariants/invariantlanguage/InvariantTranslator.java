@@ -5,6 +5,7 @@ import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.RuleContext;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.ParseTreeWalker;
+import org.apache.flink.api.java.tuple.Tuple2;
 import org.myorg.invariants.parser.InvariantsBaseListener;
 import org.myorg.invariants.parser.InvariantsLexer;
 import org.myorg.invariants.parser.InvariantsParser;
@@ -24,7 +25,10 @@ public class InvariantTranslator {
         private final Map<String, Map<String, String>> schemata = new HashMap<>();
 
         private final EventSequence sequence = new EventSequence();
-        private final List<InvariantsParser.TermContext> termContexts = new ArrayList<>();
+        private final List<InvariantsParser.TermContext> whereClauseTerms = new ArrayList<>();
+        private Optional<InvariantsParser.Invariant_clauseContext> onFullMatch = null;
+        private Optional<Tuple2<Integer, String>> within = null;
+        private List<Tuple2<InvariantsParser.PrefixContext, InvariantsParser.Invariant_clauseContext>> onPartialMatch = new ArrayList<>();
 
         private boolean semanticAnalysisFailed = false;
 
@@ -54,12 +58,27 @@ public class InvariantTranslator {
                 // 1a. if yes, make sure that the term does not reference any event ID that is not seen before the negated event
                 // 2. save/serialize/whatever the term to use it later
                 if (validateTerm(term)) {
-                    termContexts.add(term);
+                    whereClauseTerms.add(term);
                 }
                 else {
                     semanticAnalysisFailed = true;
                 }
             }
+        }
+
+        @Override
+        public void enterOn_full_match(InvariantsParser.On_full_matchContext ctx) {
+            onFullMatch = Optional.ofNullable(ctx.invariant_clause());
+        }
+
+        @Override
+        public void enterOn_prefix_match(InvariantsParser.On_prefix_matchContext ctx) {
+            onPartialMatch.add(new Tuple2<>(ctx.prefix(), ctx.invariant_clause()));
+        }
+
+        @Override
+        public void enterTime(InvariantsParser.TimeContext ctx) {
+            within = Optional.of(new Tuple2<>(Integer.parseInt(ctx.INT().getText()), ctx.TIME().getText()));
         }
 
         private boolean validateTerm(InvariantsParser.TermContext term) {
@@ -218,6 +237,8 @@ public class InvariantTranslator {
             sequence.getSequence().forEach(System.out::println);
         }
 
+
+        // TODO: this should not be done here
         private String generateDataStreamCode(Set<String> topics) {
             var datastreamBuilder = new StringBuilder();
             var topicNum = 0;
@@ -233,6 +254,7 @@ public class InvariantTranslator {
             return  datastreamBuilder.toString();
         }
 
+        // TODO: this should not be done here
         private String generateStreamFilter(Set<String> relevantEventTypes) {
             var filterBuilder = new StringBuilder();
             filterBuilder.append(
@@ -250,7 +272,7 @@ public class InvariantTranslator {
         }
 
         public List<InvariantsParser.TermContext> getTerms() {
-            return termContexts;
+            return whereClauseTerms;
         }
     }
 
@@ -269,7 +291,18 @@ public class InvariantTranslator {
         InvariantLanguage2CEPListener translator = new InvariantLanguage2CEPListener();
 
         walker.walk(translator, tree);
-        return new TranslationResult(parser.getNumberOfSyntaxErrors(), translator.semanticAnalysisFailed);
+        return new TranslationResult(
+                parser.getNumberOfSyntaxErrors(),
+                translator.semanticAnalysisFailed,
+                translator.topics,
+                translator.relevantEventTypes,
+                translator.id2Type,
+                translator.schemata,
+                translator.sequence,
+                translator.whereClauseTerms,
+                translator.within,
+                translator.onFullMatch,
+                translator.onPartialMatch);
     }
 
     public List<InvariantsParser.TermContext> getTermsFromQuery(String query) {

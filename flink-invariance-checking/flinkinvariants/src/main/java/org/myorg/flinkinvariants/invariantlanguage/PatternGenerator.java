@@ -1,5 +1,6 @@
 package org.myorg.flinkinvariants.invariantlanguage;
 
+import org.apache.flink.api.java.tuple.Tuple2;
 import org.myorg.invariants.parser.InvariantsParser;
 
 import java.util.*;
@@ -62,18 +63,27 @@ public class PatternGenerator {
     private final List<InvariantsParser.TermContext> terms;
     private final Map<String, String> id2Type;
     private final Map<String, Map<String, String>> schemata;
+    private Optional<Tuple2<Integer, String>> within;
+    private Optional<InvariantsParser.Invariant_clauseContext> onFullMatch;
+    private List<Tuple2<InvariantsParser.PrefixContext, InvariantsParser.Invariant_clauseContext>> onPartialMatch;
     private final StringBuilder patternCodeBuilder = new StringBuilder();
     private final Pattern pattern;
 
     public PatternGenerator(EventSequence eventSequence,
                             List<InvariantsParser.TermContext> terms,
                             Map<String, String> id2Type,
-                            Map<String, Map<String, String>> schemata) {
+                            Map<String, Map<String, String>> schemata,
+                            Optional<Tuple2<Integer, String>> within,
+                            Optional<InvariantsParser.Invariant_clauseContext> onFullMatch,
+                            List<Tuple2<InvariantsParser.PrefixContext, InvariantsParser.Invariant_clauseContext>> onPartialMatch) {
+        this.pattern = Pattern.compile(equalityRegex, Pattern.MULTILINE);
         this.eventSequence = eventSequence;
         this.terms = terms;
         this.id2Type = id2Type;
         this.schemata = schemata;
-        this.pattern = Pattern.compile(equalityRegex, Pattern.MULTILINE);
+        this.within = within;
+        this.onFullMatch = onFullMatch;
+        this.onPartialMatch = onPartialMatch;
     }
 
     public String generatePattern() {
@@ -81,6 +91,9 @@ public class PatternGenerator {
         eventSequence
                 .getSequence()
                 .forEach(this::addNode);
+
+        within.ifPresent(this::addWithin);
+        // onFullMatch.ifPresent(this::addOnFullMatch);
 
         return patternCodeBuilder.toString();
 
@@ -97,6 +110,18 @@ public class PatternGenerator {
         // now construct iterative conditions for all terms that do not have
         // a negated event
         //pattern = updateWithFinalIterativeCondition(pattern, eventSequence, terms);
+    }
+
+    private void addWithin(Tuple2<Integer, String> tuple) {
+        var duration = tuple.f0;
+        var unit = switch (tuple.f1) {
+            case "milli": yield "milliseconds";
+            case "sec": yield "seconds";
+            case "min": yield "minutes";
+            case "hour": yield "hours";
+        };
+
+        patternCodeBuilder.append(String.format(".within(Time.%s(%s))", unit, duration));
     }
 
     private void addNode(SequenceNode node) {

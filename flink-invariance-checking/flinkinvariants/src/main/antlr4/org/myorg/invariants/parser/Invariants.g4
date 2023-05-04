@@ -6,13 +6,22 @@ query
    : 'SEQ' '(' events ')' '\n'?
      ('WITHIN' time)? '\n'?
      ('WHERE' where_clause)? '\n'?
-     'ON FULL MATCH' invariant_clause
-     ('ON PARTIAL MATCH' invariant_clause)?
+     on_full_match '\n'?
+     (on_prefix_match)* '\n'?
    | 'SEQ' '(' events ')' '\n'?
      ('WITHIN' time)? '\n'?
      ('WHERE' where_clause)? '\n'?
-     'ON PARTIAL MATCH' invariant_clause
+     (on_prefix_match)+ '\n'?
    ;
+
+on_full_match: 'ON FULL MATCH' invariant_clause;
+on_prefix_match: 'ON PREFIX' prefix 'MATCH' invariant_clause;
+
+prefix
+    : any
+    | '(' events ')';
+
+any: 'ANY';
 
 invariant_clause
   : where_clause
