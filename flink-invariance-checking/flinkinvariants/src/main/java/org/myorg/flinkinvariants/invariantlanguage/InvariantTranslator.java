@@ -5,7 +5,6 @@ import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.RuleContext;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.ParseTreeWalker;
-import org.apache.flink.api.java.tuple.Tuple2;
 import org.myorg.invariants.parser.InvariantsBaseListener;
 import org.myorg.invariants.parser.InvariantsLexer;
 import org.myorg.invariants.parser.InvariantsParser;
@@ -22,7 +21,7 @@ public class InvariantTranslator {
         private final Set<String> relevantEventTypes = new HashSet<>();
         private final Map<String, String> id2Type = new HashMap<>();
 
-        private final Map<String, List<Tuple2<String, String>>> schemata = new HashMap<>();
+        private final Map<String, Map<String, String>> schemata = new HashMap<>();
 
         private final EventSequence sequence = new EventSequence();
         private final List<InvariantsParser.TermContext> termContexts = new ArrayList<>();
@@ -37,8 +36,7 @@ public class InvariantTranslator {
 
             var schema = ctx.schema().schemaMember()
                     .stream()
-                    .map(sm -> new Tuple2<>(sm.IDENTIFIER().getText(), sm.memberType().getText()))
-                    .collect(Collectors.toList());
+                    .collect(Collectors.toMap(sm -> sm.IDENTIFIER().getText(), sm -> sm.memberType().getText()));
 
             topics.add(topic);
             relevantEventTypes.add(type);
@@ -70,8 +68,8 @@ public class InvariantTranslator {
             var negatedEventsInSequence = sequence
                     .getSequence()
                     .stream()
-                    .filter(n -> n.Negated)
-                    .map(n -> n.EventIds.get(0) /* assuming only 1 event ID for negated sequence node*/)
+                    .filter(n -> n.negated)
+                    .map(n -> n.eventIds.get(0) /* assuming only 1 event ID for negated sequence node*/)
                     .collect(Collectors.toList());
 
             var grouping = referencedEventIds.stream()
@@ -154,21 +152,26 @@ public class InvariantTranslator {
         @Override
         public void enterEvent(InvariantsParser.EventContext ctx) {
             // TODO: validate that event sequence contains only valid event IDs
-            var sequenceNode = createSequenceNode(ctx);
+            var sequenceNode = createSequenceNode(ctx, sequence.getSequence().size());
             if (!sequence.addNode(sequenceNode)) {
                 semanticAnalysisFailed = true;
             }
         }
 
-        private SequenceNode createSequenceNode(InvariantsParser.EventContext eventContext) {
+        private SequenceNode createSequenceNode(InvariantsParser.EventContext eventContext, int currentSequenceSize) {
             var isOrOperator = eventContext.orOperator() != null;
             SequenceNode.SequenceNodeBuilder sequenceNodeBuilder;
 
             Optional<String> regexOp;
             if (isOrOperator) {
-                var eventIds = eventContext.orOperator().eventId().stream().map(eventIdContext -> eventIdContext.IDENTIFIER().getText()).collect(Collectors.toList());
+                var eventIds = eventContext.orOperator()
+                        .eventId()
+                        .stream()
+                        .map(eventIdContext -> eventIdContext.IDENTIFIER().getText())
+                        .collect(Collectors.toList());
                 sequenceNodeBuilder = new SequenceNode.SequenceNodeBuilder(eventIds);
                 sequenceNodeBuilder.setNeg(false);
+                sequenceNodeBuilder.setPosition(currentSequenceSize);
 
                 regexOp = Optional.ofNullable(eventContext.orOperator().regexOp())
                         .map(RuleContext::getText);
@@ -184,6 +187,8 @@ public class InvariantTranslator {
                 }
                 sequenceNodeBuilder = new SequenceNode.SequenceNodeBuilder(eventIds);
                 sequenceNodeBuilder.setNeg(isNegEvent);
+                sequenceNodeBuilder.setPosition(currentSequenceSize);
+
                 regexOp = Optional.ofNullable(eventContext.eventAtom().regexOp())
                         .map(RuleContext::getText);
             }

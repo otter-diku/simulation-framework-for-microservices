@@ -7,11 +7,13 @@ import java.util.List;
  * into a flink CEP pattern.
  */
 public class SequenceNode {
-    public Boolean Negated;
+    public Boolean negated;
 
-    public SequenceNodeQuantifier Type;
+    public SequenceNodeQuantifier type;
 
-    public List<String> EventIds;
+    public List<String> eventIds;
+
+    public int position;
 
     // c a b d a
     // c, (a | b)+ ONE_OR_MORE(greedy)
@@ -32,29 +34,32 @@ public class SequenceNode {
     // pattern("OR1").where(simpcond(type = a || type = b))
 
 
-    public SequenceNode(Boolean negated, SequenceNodeQuantifier type, List<String> eventIds) {
-        Negated = negated;
-        Type = type;
-        EventIds = eventIds;
+    public SequenceNode(Boolean negated, SequenceNodeQuantifier type, List<String> eventIds, int position) {
+        this.negated = negated;
+        this.type = type;
+        this.eventIds = eventIds;
+        this.position = position;
     }
 
     @Override
     public String toString() {
         return "Pattern{" +
-                "Negated=" + Negated +
-                ", Type=" + Type +
-                ", EventIds='" + EventIds + '\'' +
+                "Position=" + position +
+                "Negated=" + negated +
+                ", Type=" + type +
+                ", EventIds='" + eventIds + '\'' +
                 '}';
     }
 
     public String getName() {
-        return EventIds.toString();
+        return eventIds.toString();
     }
 
     public static class SequenceNodeBuilder {
         private Boolean isNeg;
         private SequenceNodeQuantifier type;
         private final List<String> eventIds;
+        private int position;
 
 
         public SequenceNodeBuilder(List<String> eventIds) {
@@ -68,9 +73,12 @@ public class SequenceNode {
         public void setType(SequenceNodeQuantifier type) {
             this.type = type;
         }
+        public void setPosition(int position) {
+            this.position = position;
+        }
 
         public SequenceNode build() {
-            return new SequenceNode(isNeg, type, eventIds);
+            return new SequenceNode(isNeg, type, eventIds, position);
         }
 
     }

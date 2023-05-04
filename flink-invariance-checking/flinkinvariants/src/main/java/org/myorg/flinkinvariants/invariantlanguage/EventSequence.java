@@ -24,7 +24,7 @@ public class EventSequence {
         // TODO: This constraint seems to make sense at the moment, given the restrictive syntax for `SEQ (...)`
         // TODO: Double check this is correct though.
 
-        var duplicateIds = node.EventIds
+        var duplicateIds = node.eventIds
                 .stream()
                 .filter(eId -> eventIds.containsKey(eId))
                 .collect(Collectors.toUnmodifiableList());
@@ -33,7 +33,7 @@ public class EventSequence {
             return false;
         }
 
-        eventIds.putAll(node.EventIds
+        eventIds.putAll(node.eventIds
                 .stream()
                 .collect(Collectors.toMap(e -> e, e -> sequence.size())));
 
