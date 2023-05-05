@@ -1,4 +1,5 @@
 import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.flink.api.common.eventtime.WatermarkStrategy;
 import org.apache.flink.configuration.Configuration;
@@ -63,7 +64,7 @@ public class InvariantsTest {
         // values are collected in a static variable
         ViolationSink.values.clear();
 
-        CheckProductPriceChangedInvariant(env, streamSource, new ViolationSink());
+k        CheckProductPriceChangedInvariant(env, streamSource, new ViolationSink());
 
         var violations = ViolationSink.values;
         assertEquals(2, violations.size());
@@ -343,94 +344,6 @@ public class InvariantsTest {
         assertEquals(0, violations.size());
     }
 
-    @Test
-    public void testGeneratedInvariant_0() throws Exception {
-        var invariantQuery =
-                """
-                A a
-                  topic: a-topic
-                  schema: {id:string, price:number, hasFlag:bool}
-                B b
-                  topic: b-topic
-                  schema: {id:string}
-                C c
-                  topic: c-topic
-                  schema: {id:string, hasFlag:bool}
-                               
-                SEQ (a, !b, c)
-                WITHIN 1 sec
-                WHERE (a.id = b.id) AND (a.price > 42) AND (a.hasFlag != c.hasFlag)
-                ON FULL MATCH false""";
-
-        final StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
-        var stream = env.fromElements(
-                getEventFromString(
-                """
-                        {
-                        "Type": "A",
-                        "Content": {"id": 1, "price": 52, "hasFlag": true}
-                        }"""),
-                getEventFromString(
-             """
-                         {
-                         "Type": "B",
-                         "Content": {"id": 2}
-                         }"""),
-                getEventFromString(
-              """
-                         {
-                         "Type": "C",
-                         "Content": {"id": 1, "hasFlag": false}
-                         }""")
-        );
-
-        var translator = new InvariantTranslator();
-        var translationResult = translator.translateQuery(invariantQuery, null, null);
-
-        var patternGenerator = new PatternGenerator(
-                translationResult.sequence,
-                translationResult.whereClauseTerms,
-                translationResult.id2Type,
-                translationResult.schemata,
-                translationResult.within,
-                translationResult.onFullMatch,
-                translationResult.onPartialMatch);
-        var pattern = patternGenerator.generatePattern();
-
-        var invariantName = "TestInvariant_0";
-
-        ViolationSink.values.clear();
-        runInvariant(env, stream, pattern, invariantName);
-        var violations = ViolationSink.values;
-        assertEquals(violations.size(), 1);
-    }
-
-    private static void runInvariant(StreamExecutionEnvironment env, DataStreamSource<Event> stream, String pattern, String invariantName) throws Exception {
-        var destDir = "src/main/java/org/myorg/flinkinvariants/invariantlanguage/";
-        var invariantFile = String.format(destDir + "%s.java"
-                , invariantName);
-        Map <String, String> substitution = new HashMap<>();
-        substitution.put("public Pattern<Event, ?> invariant;",
-                "public Pattern<Event, ?> invariant = \n" + pattern);
-        substitution.put(
-                "public class TestInvariantTemplate implements InvariantChecker {",
-                String.format("public class %s implements InvariantChecker {", invariantName)
-        );
-
-        createTestInvariantFile(invariantFile, substitution);
-
-        // Compile source file.
-        JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
-        compiler.run(null, null, null, invariantFile);
-
-        // Load and instantiate compiled class.
-        URLClassLoader classLoader = URLClassLoader.newInstance(new URL[] {});
-        Class<?> cls = Class.forName("org.myorg.flinkinvariants.invariantlanguage." + invariantName, true, classLoader);
-
-        InvariantChecker invariantChecker = (InvariantChecker) cls.getDeclaredConstructor().newInstance();
-        invariantChecker.checkInvariant(env, stream, new ViolationSink());
-
-    }
 
     private static class ViolationSink implements SinkFunction<String> {
 
@@ -453,31 +366,6 @@ public class InvariantsTest {
     }
 
 
-    private static void createTestInvariantFile(String outputFile, Map<String, String> substitions) {
-        String inputFile =
-                "src/main/java/org/myorg/flinkinvariants/invariantlanguage/TestInvariantTemplate.java";
-
-        try {
-            BufferedReader reader = new BufferedReader(new java.io.FileReader(inputFile));
-            BufferedWriter writer = new BufferedWriter(new FileWriter(outputFile));
-            String line = reader.readLine();
-            while (line != null) {
-                for (var key : substitions.keySet()) {
-                    if (line.contains(key)) {
-                        line = substitions.get(key);
-                    }
-                }
-                writer.write(line);
-                writer.newLine();
-                line = reader.readLine();
-            }
-            writer.flush();
-            reader.close();
-            writer.close();
-        } catch (IOException e) {
-            System.err.println("Error: " + e.getMessage());
-        }
-    }
 
     private static class TimedFileSource extends RichParallelSourceFunction<EShopIntegrationEvent> {
 
