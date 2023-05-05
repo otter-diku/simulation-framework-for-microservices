@@ -4,9 +4,9 @@ import org.apache.flink.api.java.tuple.Tuple2;
 import org.myorg.invariants.parser.InvariantsParser;
 
 import java.util.*;
-import java.util.stream.Collectors;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 public class PatternGenerator {
 
@@ -67,6 +67,8 @@ public class PatternGenerator {
     private Optional<InvariantsParser.Invariant_clauseContext> onFullMatch;
     private List<Tuple2<InvariantsParser.PrefixContext, InvariantsParser.Invariant_clauseContext>> onPartialMatch;
     private final StringBuilder patternCodeBuilder = new StringBuilder();
+    private final StringBuilder fullMatchCodeBuilder = new StringBuilder();
+    private final StringBuilder prefixMatchCodeBuilder = new StringBuilder();
     private final Pattern pattern;
 
     public PatternGenerator(EventSequence eventSequence,
@@ -86,6 +88,47 @@ public class PatternGenerator {
         this.onPartialMatch = onPartialMatch;
     }
 
+    public String generatePatternProcessFunction() {
+        fullMatchCodeBuilder.append(String.format(
+        """                
+            new PatternProcessFunction<Event, String>() {
+                @Override
+                public void processMatch(
+                        Map<String, List<Event>> map,
+                        Context context,
+                        Collector<String> collector)
+                        throws Exception {
+        """));
+
+        generateProcessFunctionBody();
+
+        fullMatchCodeBuilder.append(
+        """
+                }
+            }
+        )
+        """
+        );
+
+        return fullMatchCodeBuilder.toString();
+    }
+
+    private void generateProcessFunctionBody() {
+        if (onFullMatch.isEmpty()) {
+            fullMatchCodeBuilder.append("return;");
+            return;
+        }
+
+        var invariantClause = onFullMatch.get();
+        if (invariantClause.BOOL() != null) {
+            fullMatchCodeBuilder.append(String.format("if(!%s) { collector.collect(map.toString()); } ",
+                    invariantClause.BOOL().getText()));
+        }
+
+        invariantClause.where_clause().term();
+
+    }
+
     public String generatePattern() {
 
         eventSequence
@@ -95,6 +138,7 @@ public class PatternGenerator {
         within.ifPresent(this::addWithin);
         // onFullMatch.ifPresent(this::addOnFullMatch);
 
+        patternCodeBuilder.append(";");
         return patternCodeBuilder.toString();
 
         // TODO: case: last event is notfollowedBy
@@ -136,6 +180,8 @@ public class PatternGenerator {
             addFollowedByAny(node);
         }
 
+        addQuantifiers(node);
+
         addSimpleConditionForNode(node, id2Type);
 
         if (requiresImmediateWhereClause(node)) {
@@ -154,6 +200,14 @@ public class PatternGenerator {
             terms.stream()
                     .filter(term -> !doesReferenceNodeToExclude(term, nodesToExclude))
                     .forEach(term -> addWhereClauseFromTerm(node, term));
+        }
+    }
+
+    private void addQuantifiers(SequenceNode node) {
+        if (node.type == SequenceNodeQuantifier.ONE_OR_MORE) {
+            patternCodeBuilder.append(".oneOrMore().greedy()");
+        } else if (node.type == SequenceNodeQuantifier.ZERO_OR_MORE) {
+            patternCodeBuilder.append(".oneOrMore().greedy().optional()");
         }
     }
 
@@ -233,6 +287,8 @@ public class PatternGenerator {
         termText = termText
                 .replace("AND", "&&")
                 .replace("OR", "||");
+
+        // (x.id = y.id)
 
         final Matcher matcher = pattern.matcher(termText);
 
@@ -348,6 +404,7 @@ public class PatternGenerator {
             """
             Optional<%s> %s;
             try {
+            
             """, toJavaType(operand.returnType), variableName)
         );
 
@@ -361,7 +418,7 @@ public class PatternGenerator {
                     """, node.getName())
             );
         } else {
-            sb.append("var temp = event;");
+            sb.append("var temp = event;\n");
         }
 
         sb.append(
@@ -477,5 +534,4 @@ public class PatternGenerator {
 
         return Optional.ofNullable(qualifiedNamePrefix);
     }
-
 }
