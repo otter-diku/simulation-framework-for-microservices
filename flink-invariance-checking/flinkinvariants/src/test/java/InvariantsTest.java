@@ -64,7 +64,7 @@ public class InvariantsTest {
         // values are collected in a static variable
         ViolationSink.values.clear();
 
-k        CheckProductPriceChangedInvariant(env, streamSource, new ViolationSink());
+        CheckProductPriceChangedInvariant(env, streamSource, new ViolationSink());
 
         var violations = ViolationSink.values;
         assertEquals(2, violations.size());
