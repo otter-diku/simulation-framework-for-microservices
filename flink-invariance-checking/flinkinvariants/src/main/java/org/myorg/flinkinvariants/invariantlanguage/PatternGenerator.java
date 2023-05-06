@@ -178,8 +178,10 @@ public class PatternGenerator {
         else if (node.negated) {
             addNotFollowedBy(node);
         }
-        else {
+        else if (node.type == SequenceNodeQuantifier.ONCE){
             addFollowedByAny(node);
+        } else {
+            addFollowedBy(node);
         }
 
         addQuantifiers(node);
@@ -245,6 +247,10 @@ public class PatternGenerator {
 
     private void addFollowedByAny(SequenceNode node) {
         patternCodeBuilder.append(String.format(".followedByAny(\"%s\")\n", node.getName()));
+    }
+
+    private void addFollowedBy(SequenceNode node) {
+        patternCodeBuilder.append(String.format(".followedBy(\"%s\")\n", node.getName()));
     }
 
     private void addSimpleConditionForNode(SequenceNode node, Map<String, String> id2Type) {
