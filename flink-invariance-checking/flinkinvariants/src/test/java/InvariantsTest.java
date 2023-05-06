@@ -2,6 +2,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.flink.api.common.eventtime.WatermarkStrategy;
 import org.apache.flink.cep.CEP;
 import org.apache.flink.cep.functions.PatternProcessFunction;
+import org.apache.flink.cep.functions.TimedOutPartialMatchHandler;
 import org.apache.flink.cep.pattern.Pattern;
 import org.apache.flink.cep.pattern.conditions.SimpleCondition;
 import org.apache.flink.configuration.Configuration;
@@ -9,8 +10,10 @@ import org.apache.flink.runtime.testutils.MiniClusterResourceConfiguration;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.streaming.api.functions.sink.SinkFunction;
 import org.apache.flink.streaming.api.functions.source.RichParallelSourceFunction;
+import org.apache.flink.streaming.api.windowing.time.Time;
 import org.apache.flink.test.util.MiniClusterWithClientResource;
 import org.apache.flink.util.Collector;
+import org.apache.flink.util.OutputTag;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.myorg.flinkinvariants.datastreamsourceproviders.FileReader;
@@ -89,6 +92,56 @@ public class InvariantsTest {
 
         patternStream.print();
         env.execute("a");
+    }
+
+    @Test
+    public void testFlinkBehavior_3() throws Exception {
+        final StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
+        var streamSource = env.fromElements("a", "b", "c", "x", "y", "a", "b",  "c","x", "y", "a", "b", "c", "x", "y", "a", "b", "c", "x", "y", "a", "b",  "c","x", "y", "a", "b", "c", "x", "y", "a", "b",  "c","x", "y");
+        var pattern = Pattern.<String>begin("a")
+                .where(SimpleCondition.of(e -> e.equals("a")))
+                .followedBy("b")
+                .where(SimpleCondition.of(e -> e.equals("b")))
+                .notFollowedBy("c")
+                .where(SimpleCondition.of(e -> e.equals("c")))
+                .within(Time.milliseconds(1));
+
+
+        // SEQ (a, b, !c)
+        // SEQ {a, b, ...... TIME OUT}
+        // SEQ {a, ... TIME OUT}
+        // {a, b, TIME OUT}
+        // {a, TIME OUT}
+
+        var patternStream = CEP.pattern(streamSource, pattern).inProcessingTime().process(
+                new MyPatternProcessFunction());
+
+        patternStream.print();
+        var ds = patternStream.getSideOutput(outputTag);
+        ds.print();
+
+        env.execute("a");
+    }
+
+    static final OutputTag<String> outputTag = new OutputTag<>("test") {};
+
+
+    public static class MyPatternProcessFunction
+            extends PatternProcessFunction<String, String>
+            implements TimedOutPartialMatchHandler<String> {
+
+        @Override
+        public void processMatch(Map map, Context context, Collector collector) {
+            collector.collect(map.toString());
+        }
+
+        @Override
+        public void processTimedOutMatch(
+                Map<String, List<String>> map, Context context) {
+            context.output(
+                    outputTag,
+                    "timed out match:" + map.toString());
+        }
     }
 
 

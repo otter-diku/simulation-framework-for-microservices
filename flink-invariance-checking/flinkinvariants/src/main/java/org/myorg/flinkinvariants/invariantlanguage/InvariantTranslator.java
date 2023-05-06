@@ -229,6 +229,11 @@ public class InvariantTranslator {
 
         @Override
         public void exitInvariant(InvariantsParser.InvariantContext ctx) {
+            if (!validateFinishedSequence()) {
+                semanticAnalysisFailed = true;
+                return;
+            }
+
             var streams = generateDataStreamCode(topics);
             System.out.println(streams);
             var filterOperator = generateStreamFilter(relevantEventTypes);
@@ -237,6 +242,20 @@ public class InvariantTranslator {
             sequence.getSequence().forEach(System.out::println);
         }
 
+
+
+        // TODO: We do not allow 'wildcard' events at the end of the sequence
+        // because Flink CEP is pretty weird about it
+        private boolean validateFinishedSequence() {
+            SequenceNode lastSequenceNode = getLastSequenceNode();
+            return lastSequenceNode.type == SequenceNodeQuantifier.ONCE;
+        }
+
+        private SequenceNode getLastSequenceNode() {
+            var sequenceLength = sequence.getSequence().size();
+            var lastSequenceNode = sequence.getSequence().get(sequenceLength - 1);
+            return lastSequenceNode;
+        }
 
         // TODO: this should not be done here
         private String generateDataStreamCode(Set<String> topics) {
@@ -274,6 +293,17 @@ public class InvariantTranslator {
         public List<InvariantsParser.TermContext> getTerms() {
             return whereClauseTerms;
         }
+
+        private boolean validateFinishedInvariant() {
+            var lastNode = getLastSequenceNode();
+
+            // If last node is negated we require the WITHIN to be specified
+            if (lastNode.negated) {
+                return within.isPresent();
+            }
+
+            return true;
+        }
     }
 
     public TranslationResult translateQuery(String query, String invariantName, String outputFile) {
@@ -291,9 +321,10 @@ public class InvariantTranslator {
         InvariantLanguage2CEPListener translator = new InvariantLanguage2CEPListener();
 
         walker.walk(translator, tree);
+
         return new TranslationResult(
                 parser.getNumberOfSyntaxErrors(),
-                translator.semanticAnalysisFailed,
+                translator.semanticAnalysisFailed && translator.validateFinishedInvariant(),
                 translator.topics,
                 translator.relevantEventTypes,
                 translator.id2Type,
@@ -304,6 +335,8 @@ public class InvariantTranslator {
                 translator.onFullMatch,
                 translator.onPartialMatch);
     }
+
+
 
     public List<InvariantsParser.TermContext> getTermsFromQuery(String query) {
         ANTLRInputStream input = new ANTLRInputStream(query);
