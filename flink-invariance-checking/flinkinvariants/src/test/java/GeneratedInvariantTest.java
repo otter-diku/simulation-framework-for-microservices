@@ -31,6 +31,7 @@ public class GeneratedInvariantTest {
                             .setNumberSlotsPerTaskManager(2)
                             .setNumberTaskManagers(1)
                             .build());
+
     @Test
     public void testGeneratedInvariant_0() throws Exception {
         var invariantQuery =
@@ -58,7 +59,7 @@ public class GeneratedInvariantTest {
                 {"id": 1, "hasFlag": false}""")
         );
 
-        executeTestInvariant(invariantQuery, events);
+        executeTestInvariant(invariantQuery, events, "testGeneratedInvariant_0");
         assertEquals(1, ViolationSink.values.size());
     }
 
@@ -89,11 +90,44 @@ public class GeneratedInvariantTest {
                 {"id": 1, "hasFlag": false}""")
         );
 
-        executeTestInvariant(invariantQuery, events);
+
+
+        executeTestInvariant(invariantQuery, events, "testGeneratedInvariant_1");
         assertEquals(0, ViolationSink.values.size());
     }
 
-    private void executeTestInvariant(String invariantQuery, List<Event> events) throws Exception {
+    @Test
+    public void testGeneratedInvariant_2() throws Exception {
+        var invariantQuery =
+                """
+                A a
+                  topic: a-topic
+                  schema: {id:string, x:string, price:number, hasFlag:bool}
+                B b
+                  topic: b-topic
+                  schema: {id:string, x:string}
+                C c
+                  topic: c-topic
+                  schema: {id:string, hasFlag:bool}
+                               
+                SEQ (a, !b, c)
+                WITHIN 1 sec
+                WHERE (a.id = b.id OR a.x = b.x AND (a.x != b.x OR (a.x = b.x))) AND (a.price > 42) AND (a.hasFlag != c.hasFlag)
+                ON FULL MATCH false""";
+        var events = List.of(
+                new Event("A", """
+                {"id": 1, "x": "2", "price": 52, "hasFlag": true}"""),
+                new Event("B", """
+                {"id": 2, "x": "2"}"""),
+                new Event("C", """
+                {"id": 1, "hasFlag": false}""")
+        );
+
+        executeTestInvariant(invariantQuery, events, "testGeneratedInvariant_2");
+        assertEquals(1, ViolationSink.values.size());
+    }
+
+    private void executeTestInvariant(String invariantQuery, List<Event> events, String fileName) throws Exception {
         final StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
         var stream = env.fromElements(events.toArray(new Event[0]));
         var translator = new InvariantTranslator();
@@ -109,8 +143,7 @@ public class GeneratedInvariantTest {
                 translationResult.onPartialMatch);
         var pattern = patternGenerator.generatePattern();
 
-        var invariantName = "TestInvariant_1";
-        runInvariant(env, stream, pattern, invariantName);
+        runInvariant(env, stream, pattern, fileName);
     }
 
     private void runInvariant(StreamExecutionEnvironment env, DataStreamSource<Event> stream, String pattern, String invariantName) throws Exception {
