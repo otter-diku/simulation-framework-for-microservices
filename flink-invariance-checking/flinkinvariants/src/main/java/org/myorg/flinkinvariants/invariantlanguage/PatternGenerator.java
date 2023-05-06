@@ -39,19 +39,11 @@ public class PatternGenerator {
         private ReturnType returnType;
         private OperandType operandType;
         private String value;
-        private Optional<Boolean> alreadyExistsInContext;
 
         private Operand(ReturnType returnType, OperandType operandType, String value) {
             this.returnType = returnType;
             this.operandType = operandType;
             this.value = value;
-        }
-
-        private Operand(OperandType operandType, ReturnType returnType, String value, boolean alreadyExistsInContext) {
-            this.returnType = returnType;
-            this.operandType = operandType;
-            this.value = value;
-            this.alreadyExistsInContext = Optional.of(alreadyExistsInContext);
         }
     }
 
@@ -131,14 +123,21 @@ public class PatternGenerator {
 
     public String generatePattern() {
 
-        eventSequence
+        var toDefineLater = eventSequence
                 .getSequence()
-                .forEach(this::addNode);
+                .stream()
+                .map(this::addNode)
+                .filter(l -> l.size() > 0)
+                .flatMap(List::stream)
+                .collect(Collectors.toList());
 
         within.ifPresent(this::addWithin);
         // onFullMatch.ifPresent(this::addOnFullMatch);
 
-        patternCodeBuilder.append(";");
+        patternCodeBuilder.append(";\n");
+
+        toDefineLater.forEach(s -> patternCodeBuilder.append(s).append("\n"));
+
         return patternCodeBuilder.toString();
 
         // TODO: case: last event is notfollowedBy
@@ -169,7 +168,10 @@ public class PatternGenerator {
         patternCodeBuilder.append(String.format(".within(Time.%s(%s));", unit, duration));
     }
 
-    private void addNode(SequenceNode node) {
+    private ArrayList<String> addNode(SequenceNode node) {
+
+        var toDefineLater = new ArrayList<String>();
+
         if (node.position == 0) {
             addBegin(node);
         }
@@ -185,9 +187,12 @@ public class PatternGenerator {
         addSimpleConditionForNode(node, id2Type);
 
         if (requiresImmediateWhereClause(node)) {
-            terms.stream()
+            var functions = terms.stream()
                     .filter(term -> getReferencedEventIds(term).contains(node.eventIds.get(0)))
-                    .forEach(term -> addWhereClauseFromTerm(node, term));
+                    .map(term -> addWhereClauseFromTerm(node, term))
+                    .flatMap(List::stream)
+                    .collect(Collectors.toList());
+            toDefineLater.addAll(functions);
         }
 
         // TODO: We could possibly have `else if` here, if we disallow negated and "wildcarded" events to be the last events in the sequence
@@ -197,10 +202,15 @@ public class PatternGenerator {
                     .filter(this::requiresImmediateWhereClause)
                     .collect(Collectors.toList());
 
-            terms.stream()
+            var functions = terms.stream()
                     .filter(term -> !doesReferenceNodeToExclude(term, nodesToExclude))
-                    .forEach(term -> addWhereClauseFromTerm(node, term));
+                    .map(term -> addWhereClauseFromTerm(node, term))
+                    .flatMap(List::stream)
+                    .collect(Collectors.toList());
+            toDefineLater.addAll(functions);
         }
+
+        return toDefineLater;
     }
 
     private void addQuantifiers(SequenceNode node) {
@@ -245,25 +255,24 @@ public class PatternGenerator {
         patternCodeBuilder.append(String.format(".where(SimpleCondition.of(e -> %s))\n", simpleCondition));
     }
 
-    private Operand convertToOperand(SequenceNode currentNode, String operand) {
+    private Operand convertToOperand(String operand) {
         if (isQualifiedName(operand)) {
-            return convertQualifiedNameToOperand(currentNode, operand);
+            return convertQualifiedNameToOperand(operand);
         }
 
         return convertAtomToOperand(operand);
     }
 
-    private Operand convertQualifiedNameToOperand(SequenceNode currentNode, String operand) {
+    private Operand convertQualifiedNameToOperand(String operand) {
         // TODO: assumes flat event schema
         var eventId = getEventId(operand);
         var memberId = getMember(operand);
-        var returnType = schemata
+        var returnTypeString = schemata
                 .get(eventId)
                 .get(memberId);
-        var operandType = ReturnType.valueOf(returnType.toUpperCase());
-        var alreadyExistsInContext = !currentNode.eventIds.contains(eventId);
+        var returnType = ReturnType.valueOf(returnTypeString.toUpperCase());
 
-        return new Operand(OperandType.QUALIFIED_NAME, operandType, operand, alreadyExistsInContext);
+        return new Operand(returnType, OperandType.QUALIFIED_NAME, operand);
     }
 
     private Operand convertAtomToOperand(String operand) {
@@ -281,31 +290,102 @@ public class PatternGenerator {
         return new Operand(type, OperandType.ATOM, operand);
     }
 
-    private void addWhereClauseFromTerm(SequenceNode node, InvariantsParser.TermContext term) {
+
+    private String addInvariantClauseFromTerm(InvariantsParser.TermContext term) {
         var termText = term.getText();
 
         termText = termText
                 .replace("AND", "&&")
                 .replace("OR", "||");
 
-        // (x.id = y.id)
-
         final Matcher matcher = pattern.matcher(termText);
 
+        var sb = new StringBuilder();
         while (matcher.find()) {
-            var lhs = convertToOperand(node, matcher.group(1));
+            var lhs = convertToOperand(matcher.group(1));
             var op = OperatorType.from(matcher.group(2));
-            var rhs = convertToOperand(node, matcher.group(3));
+            var rhs = convertToOperand(matcher.group(3));
 
             validateOperation(lhs, op, rhs);
 
-            patternCodeBuilder.append(generateCodeFromOperation(lhs, op, rhs));
+            sb.append(generateCodeFromOperationForInvariant(lhs, op, rhs));
         }
+
+        return sb.toString();
     }
 
-    private String generateCodeFromOperation(Operand lhs, OperatorType operatorType, Operand rhs) {
+    private List<String> addWhereClauseFromTerm(SequenceNode currentNode, InvariantsParser.TermContext term) {
+        var termText = term.getText();
+
+        termText = termText
+                .replace("AND", "&&")
+                .replace("OR", "||");
+
+        var resultText = termText;
+
+        final Matcher matcher = pattern.matcher(termText);
+
+        var functions = new ArrayList<String>();
+
+        while (matcher.find()) {
+            // (a=b) ==> group0
+            var lhs = convertToOperand(matcher.group(1));
+            var op = OperatorType.from(matcher.group(2));
+            var rhs = convertToOperand(matcher.group(3));
+
+            validateOperation(lhs, op, rhs);
+
+            var tuple = generateCodeFromOperationForWhereClause(lhs, op, rhs, currentNode);
+            functions.add(tuple.f1);
+
+            resultText = resultText.replace(matcher.group(0), tuple.f0 + "(event, context)");
+        }
+
+        // (A = B OR C = D AND (E > F)) AND (X = Y)
+        // (fun123(e, ctx) || fun234(e, ctx) && (fun345(e, ctx))
+        patternCodeBuilder.append(
+                String.format(
+                        """    
+                    .where(
+                        new IterativeCondition<>() {
+                            @Override
+                            public boolean filter(Event event, IterativeCondition.Context<Event> context) throws Exception {
+                            return %s;
+                    }
+                })
+                """, resultText));
+
+        return functions;
+    }
+
+    private String generateCodeFromOperationForInvariant(Operand lhs, OperatorType operatorType, Operand rhs) {
         var sb = new StringBuilder();
 
+        var lhsCode = generateCodeFromOperandForInvariant(lhs, "lhs");
+        var rhsCode = generateCodeFromOperandForInvariant(rhs, "rhs");
+        var comparisonCode = generateCodeFromOperator(operatorType, lhs.returnType, "lhs","rhs");
+
+        var functionName = "func" + java.util.UUID.randomUUID().toString().substring(0, 8);
+
+        sb.append(
+                String.format(
+                        """
+                        boolean %s(Event event, IterativeCondition.Context<Event> context) {
+                                %s
+                                %s
+                                %s
+                        };
+                        """, lhsCode, rhsCode, comparisonCode
+                )
+        );
+
+        return sb.toString();
+    }
+
+    private Tuple2<String, String> generateCodeFromOperationForWhereClause(Operand lhs,
+                                                           OperatorType operatorType,
+                                                           Operand rhs,
+                                                           SequenceNode currentNode) {
         /*
          * Operand can be:
          *   - an atom
@@ -318,27 +398,22 @@ public class PatternGenerator {
          *   - a wildcard event already in the context e.g. SEQ(a, e+, f, !b, c) -> we are looking for e at the stage of '!b'
          */
 
-        var lhsCode = generateCodeFromOperand(lhs, "lhs");
-        var rhsCode = generateCodeFromOperand(rhs, "rhs");
+        var lhsCode = generateCodeFromOperandForWhereClause(lhs, "lhs", currentNode);
+        var rhsCode = generateCodeFromOperandForWhereClause(rhs, "rhs", currentNode);
         var comparisonCode = generateCodeFromOperator(operatorType, lhs.returnType, "lhs","rhs");
 
-        sb.append(
-            String.format(
-            """
-            .where(
-                new IterativeCondition<>() {
-                    @Override
-                    public boolean filter(Event event, Context<Event> context) throws Exception {
-                    %s
-                    %s
-                    %s
-                    }
-                })
-            """, lhsCode, rhsCode, comparisonCode
-            )
+        var functionName = "__" + java.util.UUID.randomUUID().toString().substring(0, 8);
+        var functionBody = String.format(
+                """
+                boolean %s(Event event, IterativeCondition.Context<Event> context) {
+                        %s
+                        %s
+                        %s
+                };
+                """, functionName, lhsCode, rhsCode, comparisonCode
         );
 
-        return sb.toString();
+        return new Tuple2<>(functionName, functionBody);
     }
 
     private String generateCodeFromOperator(OperatorType operatorType, ReturnType returnType, String lhs, String rhs) {
@@ -374,13 +449,66 @@ public class PatternGenerator {
         return sb.toString();
     }
 
-    private String generateCodeFromOperand(Operand operand, String variableName) {
+    private String generateCodeFromOperandForWhereClause(Operand operand, String variableName, SequenceNode node) {
         return switch (operand.operandType) {
             case ATOM:
                 yield generateCodeFromAtom(operand, variableName);
             case QUALIFIED_NAME:
-                yield generateCodeFromQualifiedName(operand, variableName);
+                yield generateCodeFromQualifiedNameForWhereClause(operand, variableName, node);
         };
+    }
+
+    private String generateCodeFromOperandForInvariant(Operand operand, String variableName) {
+        return switch (operand.operandType) {
+            case ATOM:
+                yield generateCodeFromAtom(operand, variableName);
+            case QUALIFIED_NAME:
+                yield generateCodeFromQualifiedNameForInvariant(operand, variableName);
+        };
+    }
+
+    private String generateCodeFromQualifiedNameForInvariant(Operand operand, String variableName) {
+        return "";
+//        var sb = new StringBuilder();
+//
+//        var eventId = getEventId(operand.value);
+//        var nodePosition = eventSequence.getEventPositionById(eventId);
+//        var node = eventSequence.getSequence().get(nodePosition);
+//
+//        sb.append(
+//                String.format(
+//                        """
+//                        Optional<%s> %s;
+//                        try {
+//
+//                        """, toJavaType(operand.returnType), variableName)
+//        );
+//
+//        if (operand.alreadyExistsInContext.get()) {
+//            sb.append(
+//                    String.format(
+//                            """
+//                                var temp = context.getEventsForPattern("%s")
+//                                        .iterator()
+//                                        .next();
+//                            """, node.getName())
+//            );
+//        } else {
+//            sb.append("var temp = event;\n");
+//        }
+//
+//        sb.append(
+//                String.format(
+//                        """
+//                            %s = Optional.of(temp.Content.get("%s")%s);
+//                        } catch (Exception e) {
+//                            %s = Optional.ofNullable(null);
+//                        }
+//
+//                        """, variableName, getMember(operand.value), toJsonDataType(operand.returnType), variableName)
+//        );
+//
+//        return sb.toString();
     }
 
     private static String generateCodeFromAtom(Operand operand, String variableName) {
@@ -392,7 +520,11 @@ public class PatternGenerator {
         };
     }
 
-    private String generateCodeFromQualifiedName(Operand operand, String variableName) {
+    private String generateCodeFromQualifiedNameForWhereClause(
+            Operand operand,
+            String variableName,
+            SequenceNode currentNode) {
+
         var sb = new StringBuilder();
 
         var eventId = getEventId(operand.value);
@@ -408,7 +540,9 @@ public class PatternGenerator {
             """, toJavaType(operand.returnType), variableName)
         );
 
-        if (operand.alreadyExistsInContext.get()) {
+        var alreadyExistsInContext = !currentNode.eventIds.contains(eventId);
+
+        if (alreadyExistsInContext) {
             sb.append(
                 String.format(
                     """
