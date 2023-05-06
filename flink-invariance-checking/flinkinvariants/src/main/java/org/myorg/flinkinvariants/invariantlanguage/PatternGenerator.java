@@ -404,7 +404,7 @@ public class PatternGenerator {
               }
             }
             return true;
-            """, lhs, rhs, comparisonCode);
+            """, String.format("%s.get()", lhs), String.format("%s.get()", rhs), comparisonCode);
         sb.append(
                 String.format(
                         """
