@@ -90,8 +90,6 @@ public class GeneratedInvariantTest {
                 {"id": 1, "hasFlag": false}""")
         );
 
-
-
         executeTestInvariant(invariantQuery, events, "testGeneratedInvariant_1");
         assertEquals(0, ViolationSink.values.size());
     }
@@ -127,6 +125,84 @@ public class GeneratedInvariantTest {
         assertEquals(1, ViolationSink.values.size());
     }
 
+    @Test
+    public void testGeneratedInvariant_3() throws Exception {
+        var invariantQuery =
+                """
+                A a
+                  topic: a-topic
+                  schema: {id:string, x:string, price:number, hasFlag:bool}
+                B b
+                  topic: b-topic
+                  schema: {id:string, x:string}
+                C c
+                  topic: c-topic
+                  schema: {id:string, hasFlag:bool}
+                D d
+                  topic: d-topic
+                  schema: {id:string}
+                               
+                SEQ (a, (b|c)+, d)
+                WITHIN 1 sec
+                WHERE (a.id = b.id) AND (c.id = a.id)
+                ON FULL MATCH false""";
+        var events = List.of(
+                new Event("A", """
+                {"id": 1, "x": "2", "price": 52, "hasFlag": true}"""),
+                new Event("B", """
+                {"id": 1, "x": "2"}"""),
+                new Event("C", """
+                {"id": 1, "x": "2"}"""),
+                new Event("B", """
+                {"id": 1, "x": "2"}"""),
+                new Event("C", """
+                {"id": 1, "hasFlag": false}"""),
+                new Event("D", """
+                {"id": 1}"""));
+
+        executeTestInvariant(invariantQuery, events, "testGeneratedInvariant_3");
+    }
+
+
+    @Test
+    public void testGeneratedInvariant_4() throws Exception {
+        var invariantQuery =
+                """
+                A a
+                  topic: a-topic
+                  schema: {id:string, x:string, price:number, hasFlag:bool}
+                B b
+                  topic: b-topic
+                  schema: {id:string, x:string}
+                C c
+                  topic: c-topic
+                  schema: {id:string, hasFlag:bool}
+                D d
+                  topic: d-topic
+                  schema: {id:string}
+                               
+                SEQ (a, (b|c)+, d)
+                WITHIN 1 sec
+                WHERE (a.id = b.id) AND (c.id = a.id)
+                ON FULL MATCH (a.id != d.id) AND (b.id = a.id)""";
+        var events = List.of(
+                new Event("A", """
+                {"id": 1, "x": "2", "price": 52, "hasFlag": true}"""),
+                new Event("B", """
+                {"id": 1, "x": "2"}"""),
+                new Event("C", """
+                {"id": 1, "x": "2"}"""),
+                new Event("B", """
+                {"id": 1, "x": "2"}"""),
+                new Event("C", """
+                {"id": 1, "hasFlag": false}"""),
+                new Event("D", """
+                {"id": 1}"""));
+
+        executeTestInvariant(invariantQuery, events, "testGeneratedInvariant_4");
+    }
+
+
     private void executeTestInvariant(String invariantQuery, List<Event> events, String fileName) throws Exception {
         final StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
         var stream = env.fromElements(events.toArray(new Event[0]));
@@ -142,9 +218,14 @@ public class GeneratedInvariantTest {
                 translationResult.onFullMatch,
                 translationResult.onPartialMatch);
         var pattern = patternGenerator.generatePattern();
+        var processMatchCode = patternGenerator.generateInvariants();
 
         runInvariant(env, stream, pattern, fileName);
     }
+
+
+
+
 
     private void runInvariant(StreamExecutionEnvironment env, DataStreamSource<Event> stream, String pattern, String invariantName) throws Exception {
         var destDir = "src/main/java/org/myorg/flinkinvariants/invariantlanguage/";

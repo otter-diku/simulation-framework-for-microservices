@@ -1,6 +1,7 @@
 package org.myorg.flinkinvariants.invariantlanguage;
 
 import org.apache.flink.api.java.tuple.Tuple2;
+import org.checkerframework.framework.qual.DefaultQualifier;
 import org.myorg.invariants.parser.InvariantsParser;
 
 import java.util.*;
@@ -80,30 +81,6 @@ public class PatternGenerator {
         this.onPartialMatch = onPartialMatch;
     }
 
-    public String generatePatternProcessFunction() {
-        fullMatchCodeBuilder.append(String.format(
-        """                
-            new PatternProcessFunction<Event, String>() {
-                @Override
-                public void processMatch(
-                        Map<String, List<Event>> map,
-                        Context context,
-                        Collector<String> collector)
-                        throws Exception {
-        """));
-
-        generateProcessFunctionBody();
-
-        fullMatchCodeBuilder.append(
-        """
-                }
-            }
-        )
-        """
-        );
-
-        return fullMatchCodeBuilder.toString();
-    }
 
     private void generateProcessFunctionBody() {
         if (onFullMatch.isEmpty()) {
@@ -155,6 +132,62 @@ public class PatternGenerator {
         //pattern = updateWithFinalIterativeCondition(pattern, eventSequence, terms);
     }
 
+    public String generateInvariants() {
+        var sb = new StringBuilder();
+
+        String processTimeOutBody = getProccessTimeOutBody();
+        var processFunctionBody = getProcessFunctionBody();
+
+
+        sb.append(String.format("""
+        private static final OutputTag<String> outputTag = new OutputTag<>("timeoutMatch") {};
+        
+        public static class MyPatternProcessFunction
+                extends PatternProcessFunction<Event, String>
+                implements TimedOutPartialMatchHandler<Event> {
+            %s
+            %s
+        }
+        """, processFunctionBody.f0,
+             processTimeOutBody));
+
+        processFunctionBody.f1.forEach(functionBody -> sb.append(functionBody).append("\n"));
+        return sb.toString();
+    }
+
+    private String getProccessTimeOutBody() {
+        return "";
+    }
+
+    private Tuple2<String, List<String>> getProcessFunctionBody() {
+        var temp =
+                  """
+                  @Override
+                  public void processMatch(Map<String, List<Event>> map, Context context, Collector<String> collector) {
+                    %s
+                  }
+                """;
+        if (onFullMatch.isEmpty()) {
+            return new Tuple2<>(String.format(temp, "return;"), List.of());
+        }
+
+        var invariantClause = onFullMatch.get();
+        if (invariantClause.BOOL() != null) {
+            if (invariantClause.BOOL().getText().equals("false")) {
+                return new Tuple2<>(String.format(temp, "collector.collect(map.toString());"), List.of());
+            }
+            return new Tuple2<>(String.format(temp, "return;"), List.of());
+        }
+
+        var translatedTerms = invariantClause.where_clause().term().stream().map(t -> translateTermFromInvariant(t)).collect(Collectors.toList());
+        var fullInvariantExpression = translatedTerms.stream().map(tuple -> "(" + tuple.f0 + ")").collect(Collectors.joining(" && "));
+
+        var toDefineLater = translatedTerms.stream().map(tuple -> tuple.f1).flatMap(List::stream).collect(Collectors.toList());
+        var processMatch = String.format(temp, String.format("if(!(%s)) { collector.collect(map.toString()); }",
+                fullInvariantExpression));
+        return new Tuple2<>(processMatch, toDefineLater);
+    }
+
     private void addWithin(Tuple2<Integer, String> tuple) {
         var duration = tuple.f0;
         var unit = switch (tuple.f1) {
@@ -191,7 +224,7 @@ public class PatternGenerator {
         if (requiresImmediateWhereClause(node)) {
             var functions = terms.stream()
                     .filter(term -> getReferencedEventIds(term).contains(node.eventIds.get(0)))
-                    .map(term -> addWhereClauseFromTerm(node, term))
+                    .map(term -> translateTermFromWhereClause(node, term))
                     .flatMap(List::stream)
                     .collect(Collectors.toList());
             toDefineLater.addAll(functions);
@@ -206,7 +239,7 @@ public class PatternGenerator {
 
             var functions = terms.stream()
                     .filter(term -> !doesReferenceNodeToExclude(term, nodesToExclude))
-                    .map(term -> addWhereClauseFromTerm(node, term))
+                    .map(term -> translateTermFromWhereClause(node, term))
                     .flatMap(List::stream)
                     .collect(Collectors.toList());
             toDefineLater.addAll(functions);
@@ -296,31 +329,138 @@ public class PatternGenerator {
         return new Operand(type, OperandType.ATOM, operand);
     }
 
-
-    private String addInvariantClauseFromTerm(InvariantsParser.TermContext term) {
+    private Tuple2<String, List<String>> translateTermFromInvariant(InvariantsParser.TermContext term) {
         var termText = term.getText();
 
         termText = termText
                 .replace("AND", "&&")
                 .replace("OR", "||");
 
+        var resultText = termText;
         final Matcher matcher = pattern.matcher(termText);
 
-        var sb = new StringBuilder();
+        var functions = new ArrayList<String>();
+
         while (matcher.find()) {
+            // (a=b) ==> group0
             var lhs = convertToOperand(matcher.group(1));
             var op = OperatorType.from(matcher.group(2));
             var rhs = convertToOperand(matcher.group(3));
 
             validateOperation(lhs, op, rhs);
 
-            sb.append(generateCodeFromOperationForInvariant(lhs, op, rhs));
+            var tuple = generateCodeFromOperationForInvariant(lhs, op, rhs);
+            functions.add(tuple.f1);
+
+            resultText = resultText.replace(matcher.group(0), tuple.f0 + "(map)");
         }
+        return new Tuple2<>(resultText, functions);
+    }
+
+    private Tuple2<String, String> generateCodeFromOperationForInvariant(Operand lhs, OperatorType op, Operand rhs) {
+        var lhsCode = generateCodeFromOperandForInvariant(lhs, "lhs");
+        var rhsCode = generateCodeFromOperandForInvariant(rhs, "rhs");
+        var comparisonCode = generateCodeFromOperatorForInvariant(op, lhs.returnType, "lhs","rhs");
+
+        var functionName = "__" + java.util.UUID.randomUUID().toString().substring(0, 8);
+        var functionBody = String.format(
+                """
+                static boolean %s(Map<String, List<Event>> map) {
+                        %s
+                        %s
+                        %s
+                };
+                """, functionName, lhsCode, rhsCode, comparisonCode
+        );
+
+        return new Tuple2<>(functionName, functionBody);
+    }
+
+    private String generateCodeFromOperatorForInvariant(OperatorType op, ReturnType returnType, String lhs, String rhs) {
+        var sb = new StringBuilder();
+        var lhsValue = "elemL";
+        var rhsValue = "elemR";
+
+        var comparisonCode = switch (op) {
+            case EQ: yield returnType == ReturnType.STRING
+                    ? String.format("%s.equals(%s)", lhsValue, rhsValue)
+                    : String.format("%s == %s", lhsValue, rhsValue);
+            case NEQ: yield returnType == ReturnType.STRING
+                    ? String.format("!%s.equals(%s)", lhsValue, rhsValue)
+                    : String.format("%s != %s", lhsValue, rhsValue);
+            case GT: yield String.format("%s > %s", lhsValue, rhsValue);
+            case GTE: yield String.format("%s >= %s", lhsValue, rhsValue);
+            case LT: yield String.format("%s < %s", lhsValue, rhsValue);
+            case LTE: yield String.format("%s <= %s", lhsValue, rhsValue);
+        };
+
+        var compareLists = String.format(
+            """
+            for (var elemL : %s) {
+              for (var elemR : %s) {
+                  if(!(%s)) {
+                    return false;
+                  }
+              }
+            }
+            return true;
+            """, lhs, rhs, comparisonCode);
+        sb.append(
+                String.format(
+                        """
+                            if (%s.isPresent() && %s.isPresent()) {
+                                %s
+                            } else {
+                                return false;
+                            }
+                        """, lhs, rhs, compareLists)
+        );
+        return sb.toString();
+    }
+
+    private String generateCodeFromOperandForInvariant(Operand operand, String variableName) {
+        return switch (operand.operandType) {
+            case ATOM:
+                yield generateCodeFromAtom(operand, variableName);
+            case QUALIFIED_NAME:
+                yield generateCodeFromQualifiedNameForInvariant(operand, variableName);
+        };
+    }
+
+    private String generateCodeFromQualifiedNameForInvariant(Operand operand, String variableName) {
+        var sb = new StringBuilder();
+        var eventId = getEventId(operand.value);
+        var nodePosition = eventSequence.getEventPositionById(eventId);
+        var node = eventSequence.getSequence().get(nodePosition);
+
+        sb.append(
+                String.format(
+                        """
+                        Optional<List<%s>> %s;
+                        try {
+                        
+                        """, toJavaType(operand.returnType), variableName)
+        );
+
+        sb.append(
+                String.format(
+                        """
+                            var temp = map.get("%s").stream()
+                                 .filter(e -> e.Type.equals("%s"))
+                                 .map(e -> e.Content.get("%s")%s)
+                                 .collect(Collectors.toList());
+                            %s = Optional.ofNullable(temp);
+                        } catch (Exception e) {
+                            %s = Optional.ofNullable(null);
+                        }
+                        
+                        """, node.getName(), id2Type.get(eventId), getMember(operand.value), toJsonDataType(operand.returnType), variableName, variableName)
+        );
 
         return sb.toString();
     }
 
-    private List<String> addWhereClauseFromTerm(SequenceNode currentNode, InvariantsParser.TermContext term) {
+    private List<String> translateTermFromWhereClause(SequenceNode currentNode, InvariantsParser.TermContext term) {
         var termText = term.getText();
 
         termText = termText
@@ -362,30 +502,6 @@ public class PatternGenerator {
                 """, resultText));
 
         return functions;
-    }
-
-    private String generateCodeFromOperationForInvariant(Operand lhs, OperatorType operatorType, Operand rhs) {
-        var sb = new StringBuilder();
-
-        var lhsCode = generateCodeFromOperandForInvariant(lhs, "lhs");
-        var rhsCode = generateCodeFromOperandForInvariant(rhs, "rhs");
-        var comparisonCode = generateCodeFromOperator(operatorType, lhs.returnType, "lhs","rhs");
-
-        var functionName = "func" + java.util.UUID.randomUUID().toString().substring(0, 8);
-
-        sb.append(
-                String.format(
-                        """
-                        boolean %s(Event event, IterativeCondition.Context<Event> context) {
-                                %s
-                                %s
-                                %s
-                        };
-                        """, lhsCode, rhsCode, comparisonCode
-                )
-        );
-
-        return sb.toString();
     }
 
     private Tuple2<String, String> generateCodeFromOperationForWhereClause(Operand lhs,
@@ -464,58 +580,7 @@ public class PatternGenerator {
         };
     }
 
-    private String generateCodeFromOperandForInvariant(Operand operand, String variableName) {
-        return switch (operand.operandType) {
-            case ATOM:
-                yield generateCodeFromAtom(operand, variableName);
-            case QUALIFIED_NAME:
-                yield generateCodeFromQualifiedNameForInvariant(operand, variableName);
-        };
-    }
 
-    private String generateCodeFromQualifiedNameForInvariant(Operand operand, String variableName) {
-        return "";
-//        var sb = new StringBuilder();
-//
-//        var eventId = getEventId(operand.value);
-//        var nodePosition = eventSequence.getEventPositionById(eventId);
-//        var node = eventSequence.getSequence().get(nodePosition);
-//
-//        sb.append(
-//                String.format(
-//                        """
-//                        Optional<%s> %s;
-//                        try {
-//
-//                        """, toJavaType(operand.returnType), variableName)
-//        );
-//
-//        if (operand.alreadyExistsInContext.get()) {
-//            sb.append(
-//                    String.format(
-//                            """
-//                                var temp = context.getEventsForPattern("%s")
-//                                        .iterator()
-//                                        .next();
-//                            """, node.getName())
-//            );
-//        } else {
-//            sb.append("var temp = event;\n");
-//        }
-//
-//        sb.append(
-//                String.format(
-//                        """
-//                            %s = Optional.of(temp.Content.get("%s")%s);
-//                        } catch (Exception e) {
-//                            %s = Optional.ofNullable(null);
-//                        }
-//
-//                        """, variableName, getMember(operand.value), toJsonDataType(operand.returnType), variableName)
-//        );
-//
-//        return sb.toString();
-    }
 
     private static String generateCodeFromAtom(Operand operand, String variableName) {
         return switch (operand.returnType) {

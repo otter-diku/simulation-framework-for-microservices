@@ -45,7 +45,7 @@ public class SequenceNode {
     public String toString() {
         return "Pattern{" +
                 "Position=" + position +
-                "Negated=" + negated +
+                ", Negated=" + negated +
                 ", Type=" + type +
                 ", EventIds='" + eventIds + '\'' +
                 '}';

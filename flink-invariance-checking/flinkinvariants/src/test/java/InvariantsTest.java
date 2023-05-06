@@ -133,6 +133,7 @@ public class InvariantsTest {
         @Override
         public void processMatch(Map map, Context context, Collector collector) {
             collector.collect(map.toString());
+
         }
 
         @Override

@@ -84,7 +84,7 @@ public class LackingPaymentEventInvariantChecker {
             implements TimedOutPartialMatchHandler<EShopIntegrationEvent> {
 
         @Override
-        public void processMatch(Map map, Context context, Collector collector) {
+        public void processMatch(Map<String, List<EShopIntegrationEvent>> map, Context context, Collector<String> collector) {
             collector.collect(map.toString());
         }
 
