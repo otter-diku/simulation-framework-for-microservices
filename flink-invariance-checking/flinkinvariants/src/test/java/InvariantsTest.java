@@ -1,23 +1,34 @@
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.flink.api.common.eventtime.WatermarkStrategy;
-import org.apache.flink.cep.CEP;
-import org.apache.flink.cep.functions.PatternProcessFunction;
-import org.apache.flink.cep.pattern.Pattern;
-import org.apache.flink.cep.pattern.conditions.SimpleCondition;
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.runtime.testutils.MiniClusterResourceConfiguration;
+import org.apache.flink.streaming.api.datastream.DataStream;
+import org.apache.flink.streaming.api.datastream.DataStreamSource;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
+import org.apache.flink.streaming.api.functions.sink.PrintSinkFunction;
 import org.apache.flink.streaming.api.functions.sink.SinkFunction;
 import org.apache.flink.streaming.api.functions.source.RichParallelSourceFunction;
 import org.apache.flink.test.util.MiniClusterWithClientResource;
-import org.apache.flink.util.Collector;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.myorg.flinkinvariants.datastreamsourceproviders.FileReader;
 import org.myorg.flinkinvariants.events.EShopIntegrationEvent;
 import org.myorg.flinkinvariants.events.Event;
+import org.myorg.flinkinvariants.invariantlanguage.InvariantChecker;
+import org.myorg.flinkinvariants.invariantlanguage.InvariantTranslator;
+import org.myorg.flinkinvariants.invariantlanguage.PatternGenerator;
 
+import javax.tools.JavaCompiler;
+import javax.tools.JavaFileObject;
+import javax.tools.SimpleJavaFileObject;
+import javax.tools.ToolProvider;
 import java.io.*;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.URL;
+import java.net.URLClassLoader;
 import java.time.Duration;
 import java.util.*;
 
@@ -37,60 +48,6 @@ public class InvariantsTest {
                             .setNumberSlotsPerTaskManager(2)
                             .setNumberTaskManagers(1)
                             .build());
-
-    @Test
-    public void testFlinkBehavior_1() throws Exception {
-        final StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
-        var streamSource = env.fromElements("a", "b1", "b2", "b3", "c");
-        var pattern = Pattern.<String>begin("a")
-                .where(SimpleCondition.of(e -> e.equals("a")))
-                .followedByAny("b").oneOrMore()
-                .where(SimpleCondition.of(e -> e.startsWith("b")))
-                .followedBy("c")
-                .where(SimpleCondition.of(e -> e.equals("c")))
-                .oneOrMore().greedy();
-
-        var patternStream = CEP.pattern(streamSource, pattern).inProcessingTime().process(
-                new PatternProcessFunction<String, Object>() {
-                    @Override
-                    public void processMatch(Map<String, List<String>> map, Context context, Collector<Object> collector)
-                            throws Exception {
-                        collector.collect(map.toString());
-                    }
-                });
-
-        patternStream.print();
-        env.execute("name");
-    }
-
-
-    @Test
-    public void testFlinkBehavior_2() throws Exception {
-        final StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
-        var streamSource = env.fromElements("a", "b1", "b2", "b3", "c1", "c2", "c3");
-        var pattern = Pattern.<String>begin("a")
-                .where(SimpleCondition.of(e -> e.equals("a")))
-                .followedBy("b")
-                .where(SimpleCondition.of(e -> e.startsWith("b")))
-                .oneOrMore().greedy()
-                .followedBy("c")
-                .where(SimpleCondition.of(e -> e.startsWith("c")))
-                .oneOrMore().greedy();
-
-
-        var patternStream = CEP.pattern(streamSource, pattern).inProcessingTime().process(
-                new PatternProcessFunction<String, Object>() {
-                    @Override
-                    public void processMatch(Map<String, List<String>> map, Context context, Collector<Object> collector)
-                            throws Exception {
-                        collector.collect(map.toString());
-                    }
-                });
-
-        patternStream.print();
-        env.execute("a");
-    }
-
 
     @Test
     public void testProductPriceChangedInvariant1() throws Exception {
