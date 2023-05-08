@@ -47,7 +47,7 @@ public class PatternGenerator {
         }
     }
 
-    final String quantityRegex = "['0-9a-zA-Z\\._]+";
+    final String quantityRegex = "['0-9a-zA-Z\\._\\-]+";
     final String operatorRegex = "=|!=|>|<|>=|<=";
     final String equalityRegex = String.format("(%s)\\s*(%s)\\s*(%s)", quantityRegex, operatorRegex, quantityRegex);
 
@@ -58,8 +58,8 @@ public class PatternGenerator {
 
     private final Map<String, String> id2Type;
     private final Map<String, Map<String, String>> schemata;
-    private Optional<Tuple2<Integer, String>> within;
-    private Optional<InvariantsParser.Invariant_clauseContext> onFullMatch;
+    private final Optional<Tuple2<Integer, String>> within;
+    private final Optional<InvariantsParser.Invariant_clauseContext> onFullMatch;
     private List<Tuple2<InvariantsParser.PrefixContext, InvariantsParser.Invariant_clauseContext>> onPartialMatch;
     private final StringBuilder patternCodeBuilder = new StringBuilder();
     private final StringBuilder fullMatchCodeBuilder = new StringBuilder();
@@ -392,6 +392,9 @@ public class PatternGenerator {
             case LTE: yield String.format("%s <= %s", lhsValue, rhsValue);
         };
 
+        // TODO: this is only the case of lhs and rhs being qualified names
+        //       need at least (qualifiedName = atom) and (atom = qualifiedName),
+        //       easiest may be to wrap atom in list?
         var compareLists = String.format(
             """
             for (var elemL : %s) {
@@ -419,7 +422,7 @@ public class PatternGenerator {
     private String generateCodeFromOperandForInvariant(Operand operand, String variableName) {
         return switch (operand.operandType) {
             case ATOM:
-                yield generateCodeFromAtom(operand, variableName);
+                yield generateCodeFromAtomForInvariant(operand, variableName);
             case QUALIFIED_NAME:
                 yield generateCodeFromQualifiedNameForInvariant(operand, variableName);
         };
@@ -587,11 +590,21 @@ public class PatternGenerator {
     private static String generateCodeFromAtom(Operand operand, String variableName) {
         return switch (operand.returnType) {
             case STRING:
-                yield String.format("var %s = Optional.ofNullable(\"%s\");", variableName, operand.value);
+                yield String.format("var %s = Optional.ofNullable(\"%s\");", variableName, operand.value.replace("'", ""));
             case BOOL, NUMBER:
                 yield String.format("var %s = Optional.of(%s);", variableName, Double.valueOf(operand.value));
         };
     }
+
+    private static String generateCodeFromAtomForInvariant(Operand operand, String variableName) {
+        return switch (operand.returnType) {
+            case STRING:
+                yield String.format("var %s = Optional.ofNullable(List.of(\"%s\"));", variableName, operand.value.replace("'", ""));
+            case BOOL, NUMBER:
+                yield String.format("var %s = Optional.of(List.of(%s));", variableName, Double.valueOf(operand.value));
+        };
+    }
+
 
     private String generateCodeFromQualifiedNameForWhereClause(
             Operand operand,

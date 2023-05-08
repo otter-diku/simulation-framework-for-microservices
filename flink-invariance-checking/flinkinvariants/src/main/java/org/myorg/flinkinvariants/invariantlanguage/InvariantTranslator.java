@@ -28,8 +28,8 @@ public class InvariantTranslator {
         private final List<InvariantsParser.TermContext> whereClauseTerms = new ArrayList<>();
 
         private final List<InvariantsParser.TermContext> invariantClauseTerms = new ArrayList<>();
-        private Optional<InvariantsParser.Invariant_clauseContext> onFullMatch = null;
-        private Optional<Tuple2<Integer, String>> within = null;
+        private Optional<InvariantsParser.Invariant_clauseContext> onFullMatch = Optional.empty();
+        private Optional<Tuple2<Integer, String>> within = Optional.empty();
         private List<Tuple2<InvariantsParser.PrefixContext, InvariantsParser.Invariant_clauseContext>> onPartialMatch = new ArrayList<>();
 
         private boolean semanticAnalysisFailed = false;

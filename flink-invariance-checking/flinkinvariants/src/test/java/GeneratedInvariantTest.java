@@ -17,6 +17,7 @@ import java.util.*;
 import java.util.regex.Matcher;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class GeneratedInvariantTest {
 
@@ -41,7 +42,7 @@ public class GeneratedInvariantTest {
                 C c
                   topic: c-topic
                   schema: {id:string, hasFlag:bool}
-                               
+
                 SEQ (a, !b, c)
                 WITHIN 1 sec
                 WHERE (a.id = b.id) AND (a.price > 42) AND (a.hasFlag != c.hasFlag)
@@ -72,7 +73,7 @@ public class GeneratedInvariantTest {
                 C c
                   topic: c-topic
                   schema: {id:string, hasFlag:bool}
-                               
+
                 SEQ (a, !b, c)
                 WITHIN 1 sec
                 WHERE (a.id = b.id) AND (a.price > 42) AND (a.hasFlag != c.hasFlag)
@@ -103,7 +104,7 @@ public class GeneratedInvariantTest {
                 C c
                   topic: c-topic
                   schema: {id:string, hasFlag:bool}
-                               
+
                 SEQ (a, !b, c)
                 WITHIN 1 sec
                 WHERE (a.id = b.id OR a.x = b.x AND (a.x != b.x OR (a.x = b.x))) AND (a.price > 42) AND (a.hasFlag != c.hasFlag)
@@ -137,7 +138,7 @@ public class GeneratedInvariantTest {
                 D d
                   topic: d-topic
                   schema: {id:string}
-                               
+
                 SEQ (a, (b|c)+, d)
                 WITHIN 1 sec
                 WHERE (a.id = b.id) AND (c.id = a.id)
@@ -186,7 +187,7 @@ public class GeneratedInvariantTest {
                 D d
                   topic: d-topic
                   schema: {id:string}
-                               
+
                 SEQ (a, b, !c, d)
                 WITHIN 1 sec
                 WHERE (c.id = a.id)
@@ -220,7 +221,7 @@ public class GeneratedInvariantTest {
                 PB pb
                   topic: eshop_event_bus
                   schema: {ProductId:number, Price:number}
-                
+
                 SEQ (pc1, !pc2, pb)
                 WITHIN 2 min
                 WHERE (pc1.ProductId = pb.ProductId) AND
@@ -258,7 +259,7 @@ public class GeneratedInvariantTest {
                 PB pb
                   topic: eshop_event_bus
                   schema: {ProductId:number, Price:number}
-                
+
                 SEQ (pc1, !pc2, pb)
                 WITHIN 2 min
                 WHERE (pc1.ProductId = pb.ProductId) AND
@@ -281,6 +282,76 @@ public class GeneratedInvariantTest {
 
         assertEquals(2, ViolationSink.values.size());
     }
+
+    @Test
+    public void testGeneratedInvariant_7() throws Exception {
+        var invariantQuery =
+                """
+                IQR iqr
+                  topic: insurance-quote-requests
+                  schema: {id:number, customerAge:number, insuranceType:string}
+
+                SEQ (iqr)
+                WHERE (iqr.insuranceType = 'life-insurance')
+                ON FULL MATCH (iqr.customerAge < 99 AND iqr.customerAge > 1)""";
+        var events = List.of(
+                new Event("IQR", """
+                {"id": 1, "customerAge": 0, "insuranceType": "life-insurance"}"""),
+                new Event("IQR", """
+                {"id": 2, "customerAge": 102, "insuranceType": "life-insurance"}"""),
+                new Event("A", """
+                {"id": 2}"""),
+                new Event("IQR", """
+                {"id": 2, "customerAge": 102, "insuranceType": "car-insurance"}"""),
+                new Event("IQR", """
+                {"id": 2, "customerAge": 23, "insuranceType": "life-insurance"}"""),
+                new Event("A", """
+                {"id": 2}"""),
+                new Event("B", """
+                {"id": 3}""")
+        );
+
+        executeTestInvariant(invariantQuery, events, "testGeneratedInvariant_7");
+
+        assertEquals(2, ViolationSink.values.size());
+        assertTrue(ViolationSink.values.stream()
+                .anyMatch(s -> s.contains("{\"id\":2,\"customerAge\":102,\"insuranceType\":\"life-insurance\"}")));
+        assertTrue(ViolationSink.values.stream()
+                .anyMatch(s -> s.contains("\"customerAge\":0,\"insuranceType\":\"life-insurance\"}")));
+    }
+
+    @Test
+    public void testGeneratedInvariant_8() throws Exception {
+        var invariantQuery =
+                """
+                IQR iqr
+                  topic: insurance-quote-requests
+                  schema: {id:number, customerAddress:string, insuranceType:string}
+
+                SEQ (iqr)
+                WHERE (iqr.insuranceType = 'car-insurance')
+                ON FULL MATCH (iqr.customerAddress != 'Switzerland')""";
+        var events = List.of(
+                new Event("IQR", """
+                {"id": 1, "customerAddress": "Switzerland", "insuranceType": "car-insurance"}"""),
+                new Event("IQR", """
+                {"id": 2, "customerAddress": "China", "insuranceType": "car-insurance"}"""),
+                new Event("A", """
+                {"id": 2}"""),
+                new Event("IQR", """
+                {"id": 2, "customerAddress": "Germany", "insuranceType": "car-insurance"}"""),
+                new Event("IQR", """
+                {"id": 2, "customerAddress": "Poland", "insuranceType": "car-insurance"}"""),
+                new Event("B", """
+                {"id": 3}""")
+        );
+        executeTestInvariant(invariantQuery, events, "testGeneratedInvariant_8");
+
+        assertEquals(1, ViolationSink.values.size());
+        assertTrue(ViolationSink.values.stream()
+                .anyMatch(s -> s.contains("Switzerland")));
+    }
+
 
     private void debugTestInvariant(InvariantChecker invariantChecker, List<Event> events) throws Exception {
         final StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
