@@ -378,10 +378,14 @@ public class PatternGenerator {
         var comparisonCode = switch (op) {
             case EQ: yield returnType == ReturnType.STRING
                     ? String.format("%s.equals(%s)", lhsValue, rhsValue)
-                    : String.format("%s == %s", lhsValue, rhsValue);
+                    : (returnType == ReturnType.NUMBER
+                    ? String.format("Double.compare(%s,%s) == 0", lhsValue, rhsValue)
+                    : String.format("%s == %s", lhsValue, rhsValue));
             case NEQ: yield returnType == ReturnType.STRING
                     ? String.format("!%s.equals(%s)", lhsValue, rhsValue)
-                    : String.format("%s != %s", lhsValue, rhsValue);
+                    : (returnType == ReturnType.NUMBER
+                    ? String.format("Double.compare(%s,%s) == 0", lhsValue, rhsValue)
+                    : String.format("%s != %s", lhsValue, rhsValue));
             case GT: yield String.format("%s > %s", lhsValue, rhsValue);
             case GTE: yield String.format("%s >= %s", lhsValue, rhsValue);
             case LT: yield String.format("%s < %s", lhsValue, rhsValue);
@@ -536,19 +540,23 @@ public class PatternGenerator {
         var sb = new StringBuilder();
 
         var lhsValue = String.format("%s.get()", lhs);
-        var rhsValues = String.format("%s.get()", rhs);
+        var rhsValue = String.format("%s.get()", rhs);
 
         var comparisonCode = switch (operatorType) {
             case EQ: yield returnType == ReturnType.STRING
-                    ? String.format("%s.equals(%s)", lhsValue, rhsValues)
-                    : String.format("%s == %s", lhsValue, rhsValues);
+                    ? String.format("%s.equals(%s)", lhsValue, rhsValue)
+                    : (returnType == ReturnType.NUMBER
+                    ? String.format("Double.compare(%s,%s) == 0", lhsValue, rhsValue)
+                    : String.format("%s == %s", lhsValue, rhsValue));
             case NEQ: yield returnType == ReturnType.STRING
-                        ? String.format("!%s.equals(%s)", lhsValue, rhsValues)
-                        : String.format("%s != %s", lhsValue, rhsValues);
-            case GT: yield String.format("%s > %s", lhsValue, rhsValues);
-            case GTE: yield String.format("%s >= %s", lhsValue, rhsValues);
-            case LT: yield String.format("%s < %s", lhsValue, rhsValues);
-            case LTE: yield String.format("%s <= %s", lhsValue, rhsValues);
+                    ? String.format("!%s.equals(%s)", lhsValue, rhsValue)
+                    : (returnType == ReturnType.NUMBER
+                    ? String.format("Double.compare(%s,%s) == 0", lhsValue, rhsValue)
+                    : String.format("%s != %s", lhsValue, rhsValue));
+            case GT: yield String.format("%s > %s", lhsValue, rhsValue);
+            case GTE: yield String.format("%s >= %s", lhsValue, rhsValue);
+            case LT: yield String.format("%s < %s", lhsValue, rhsValue);
+            case LTE: yield String.format("%s <= %s", lhsValue, rhsValue);
         };
 
         sb.append(

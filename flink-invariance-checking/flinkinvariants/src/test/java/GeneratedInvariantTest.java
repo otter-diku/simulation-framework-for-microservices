@@ -7,10 +7,7 @@ import org.apache.flink.test.util.MiniClusterWithClientResource;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.myorg.flinkinvariants.events.Event;
-import org.myorg.flinkinvariants.invariantlanguage.InvariantChecker;
-import org.myorg.flinkinvariants.invariantlanguage.InvariantTranslator;
-import org.myorg.flinkinvariants.invariantlanguage.PatternGenerator;
-import org.myorg.flinkinvariants.invariantlanguage.testGeneratedInvariant_4;
+import org.myorg.flinkinvariants.invariantlanguage.*;
 
 import javax.tools.*;
 import java.io.*;
@@ -207,6 +204,82 @@ public class GeneratedInvariantTest {
         executeTestInvariant(invariantQuery, events, "testGeneratedInvariant_4");
 
         assertEquals(1, ViolationSink.values.size());
+    }
+
+    @Test
+    public void testGeneratedInvariant_5() throws Exception {
+        // product price changed
+        var invariantQuery =
+                """
+                PC pc1
+                  topic: eshop_event_bus
+                  schema: {ProductId:number, NewPrice:number}
+                PC pc2
+                  topic: eshop_event_bus
+                  schema: {ProductId:number, NewPrice:number}
+                PB pb
+                  topic: eshop_event_bus
+                  schema: {ProductId:number, Price:number}
+                
+                SEQ (pc1, !pc2, pb)
+                WITHIN 2 min
+                WHERE (pc1.ProductId = pb.ProductId) AND
+                      (pc1.ProductId = pc2.ProductId)
+                ON FULL MATCH (pc1.NewPrice = pb.Price)""";
+        var events = List.of(
+                new Event("PC", """
+                {"ProductId": 1, "NewPrice": "1"}"""),
+                new Event("PC", """
+                {"ProductId": 2, "NewPrice": "2"}"""),
+                new Event("PC", """
+                {"ProductId": 2, "NewPrice": "42"}"""),
+                new Event("PB", """
+                {"ProductId": 2, "Price": 42}"""),
+                new Event("PB", """
+                {"ProductId": 1, "Price": 1}""")
+                );
+
+        executeTestInvariant(invariantQuery, events, "testGeneratedInvariant_5");
+
+        assertEquals(0, ViolationSink.values.size());
+    }
+
+    @Test
+    public void testGeneratedInvariant_6() throws Exception {
+        // product price changed
+        var invariantQuery =
+                """
+                PC pc1
+                  topic: eshop_event_bus
+                  schema: {ProductId:number, NewPrice:number}
+                PC pc2
+                  topic: eshop_event_bus
+                  schema: {ProductId:number, NewPrice:number}
+                PB pb
+                  topic: eshop_event_bus
+                  schema: {ProductId:number, Price:number}
+                
+                SEQ (pc1, !pc2, pb)
+                WITHIN 2 min
+                WHERE (pc1.ProductId = pb.ProductId) AND
+                      (pc1.ProductId = pc2.ProductId)
+                ON FULL MATCH (pc1.NewPrice = pb.Price)""";
+        var events = List.of(
+                new Event("PC", """
+                {"ProductId": 1, "NewPrice": "1"}"""),
+                new Event("PC", """
+                {"ProductId": 2, "NewPrice": "2"}"""),
+                new Event("PC", """
+                {"ProductId": 2, "NewPrice": "42"}"""),
+                new Event("PB", """
+                {"ProductId": 2, "Price": 43}"""),
+                new Event("PB", """
+                {"ProductId": 1, "Price": 11}""")
+        );
+
+        executeTestInvariant(invariantQuery, events, "testGeneratedInvariant_6");
+
+        assertEquals(2, ViolationSink.values.size());
     }
 
     private void debugTestInvariant(InvariantChecker invariantChecker, List<Event> events) throws Exception {
