@@ -13,6 +13,7 @@ import org.apache.flink.streaming.api.windowing.time.Time;
 import org.apache.flink.util.Collector;
 import org.apache.flink.util.OutputTag;
 import org.myorg.flinkinvariants.events.Event;
+import org.myorg.flinkinvariants.invariantlanguage.InvariantChecker;
 
 import java.util.List;
 import java.util.Map;

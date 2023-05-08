@@ -15,7 +15,7 @@ query
    ;
 
 on_full_match: 'ON FULL MATCH' invariant_clause;
-on_prefix_match: 'ON PREFIX' prefix 'MATCH' invariant_clause;
+on_prefix_match: 'ON PREFIX MATCH' prefix invariant_clause;
 
 prefix
     : any

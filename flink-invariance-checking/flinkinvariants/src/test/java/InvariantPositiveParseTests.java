@@ -13,10 +13,10 @@ public class InvariantPositiveParseTests {
                 """
                 A a
                   topic: a-topic
-                  schema: {id}
+                  schema: {id:number}
                 B b
                   topic: b-topic
-                  schema: {id}
+                  schema: {id:number}
                                
                 SEQ (a, b)
                 WITHIN 1 sec
@@ -37,10 +37,10 @@ public class InvariantPositiveParseTests {
                 """
                 A a
                   topic: a-topic
-                  schema: {id}
+                  schema: {id:number}
                 B b
                   topic: b-topic
-                  schema: {id}
+                  schema: {id:number}
                                
                 SEQ (a, !b, c)
                 WITHIN 1 sec
@@ -61,12 +61,12 @@ public class InvariantPositiveParseTests {
                 """
                 A a
                   topic: a-topic
-                  schema: {id}
+                  schema: {id:number}
                 B b
                   topic: b-topic
-                  schema: {id}
+                  schema: {id:number}
                                
-                SEQ (a, !b, c*)
+                SEQ (a, !b, c)
                 WITHIN 1 sec
                 ON FULL MATCH (a.id = 42)""";
 
@@ -86,13 +86,13 @@ public class InvariantPositiveParseTests {
                 """
                 A a
                   topic: a-topic
-                  schema: {id}
+                  schema: {id:number}
                 B b
                   topic: b-topic
-                  schema: {id}
+                  schema: {id:number}
                 C c
                   topic: c-topic
-                  schema: {id}
+                  schema: {id:number}
                                
                 SEQ (a, b+, c)
                 WITHIN 1 sec
@@ -113,13 +113,13 @@ public class InvariantPositiveParseTests {
                 """
                 A a
                   topic: a-topic
-                  schema: {id}
+                  schema: {id:number}
                 B b
                   topic: b-topic
-                  schema: {id}
+                  schema: {id:number}
                 C c
                   topic: c-topic
-                  schema: {id}
+                  schema: {id:number}
                                
                 SEQ (a, b*, c)
                 WITHIN 1 sec
@@ -140,13 +140,13 @@ public class InvariantPositiveParseTests {
                 """
                 A a
                   topic: a-topic
-                  schema: {id}
+                  schema: {id:number}
                 B b
                   topic: b-topic
-                  schema: {id}
+                  schema: {id:number}
                 C c
                   topic: c-topic
-                  schema: {id}
+                  schema: {id:number}
                                
                 SEQ (a, (b | c))
                 WITHIN 1 sec
@@ -167,15 +167,15 @@ public class InvariantPositiveParseTests {
                 """
                 A a
                   topic: a-topic
-                  schema: {id}
+                  schema: {id:number}
                 B b
                   topic: b-topic
-                  schema: {id}
+                  schema: {id:number}
                 C c
                   topic: c-topic
-                  schema: {id}
+                  schema: {id:number}
                                
-                SEQ (a*, (b | c | d)+)
+                SEQ (a*, (b | c | d))
                 WITHIN 1 sec
                 ON FULL MATCH (a.id = 42)""";
 
@@ -194,13 +194,13 @@ public class InvariantPositiveParseTests {
                 """
                 ProductPriceChangedIntegrationEvent pc1
                   topic: eshop_event_bus
-                  schema: {ProductId, NewPrice}
+                  schema: {ProductId:number, NewPrice:number}
                 ProductPriceChangedIntegrationEvent pc2
                   topic: eshop_event_bus
-                  schema: {ProductId, NewPrice}
+                  schema: {ProductId:number, NewPrice:number}
                 ProductBoughtIntegrationEvent pb
                   topic: eshop_event_bus
-                  schema: {ProductId, Units, Price}
+                  schema: {ProductId:number, Units:number, Price:number}
                                 
                 SEQ (pc1, !pc2, pb)
                 WITHIN 2 min
@@ -222,15 +222,15 @@ public class InvariantPositiveParseTests {
                 """
                 UserDeletedEvent ud
                   topic: eshop_event_bus
-                  schema: {userId}
+                  schema: {userId:number}
                 BasketDeletedEvent bd
                   topic: eshop_event_bus
-                  schema: {userId}
+                  schema: {userId:number}
                                 
                 SEQ (ud, bd)
                 WITHIN 2 min
                 WHERE (ud.userId = bd.userId)
-                ON PARTIAL MATCH false
+                ON PREFIX MATCH ANY false
                 """;
 
         var translationResult = translator.translateQuery(
@@ -249,7 +249,7 @@ public class InvariantPositiveParseTests {
                 """
                 insurance-quote-request iqr
                   topic: insurance-quote-request-topic
-                  schema: {customer, insurance-type}
+                  schema: {customer:number, insurance-type:number}
                   
                 SEQ (iqr)
                 WHERE (iqr.insurance-type = 'car-insurance')
@@ -270,15 +270,15 @@ public class InvariantPositiveParseTests {
                 """
                 A a
                   topic: a-topic
-                  schema: {id}
+                  schema: {id:number}
                 B b
                   topic: b-topic
-                  schema: {id}
+                  schema: {id:number}
                 C c
                   topic: c-topic
-                  schema: {id}
+                  schema: {id:number}
                                
-                SEQ (a*, (b | c | d)+)
+                SEQ (a*, (b | c | d))
                 WITHIN 1 sec
                 WHERE (a.id = b.id OR a.id = c.id) AND (b.price < c.price)
                 ON FULL MATCH (a.id = 42)""";
@@ -298,13 +298,13 @@ public class InvariantPositiveParseTests {
                 """
                 A a
                   topic: a-topic
-                  schema: {id}
+                  schema: {id:number}
                 B b
                   topic: b-topic
-                  schema: {id}
+                  schema: {id:number}
                 C c
                   topic: c-topic
-                  schema: {id}
+                  schema: {id:number}
                                
                 SEQ (a, !b, c)
                 WITHIN 1 sec

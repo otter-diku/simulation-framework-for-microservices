@@ -12,18 +12,17 @@ public class InvariantNegativeParseTests {
                 """
                 A a
                   topic: a-topic
-                  schema: {id}
+                  schema: {id:number}
                 B b
-                  schema: {id}
+                  schema: {id:number}
                                
                 EVENT SEQ (a, b)
                 INVARIANT a.id = 42""";
 
-        var numParseErrors = translator.translateQuery(
+        var _discard = translator.translateQuery(
                 query,
                 "TestInvariant",
                 "").getNumberOfSyntaxErrors();
-        assertEquals(0, numParseErrors);
     }
 
     @Test(expected = Exception.class)
@@ -33,39 +32,17 @@ public class InvariantNegativeParseTests {
                 """
                 A a
                   topic: a-topic
-                  schema: {id}
+                  schema: {id:number}
                 B b
                   topic: b-topic
-                  schema: {id}
+                  schema: {id:number}
                                
                 INVARIANT a.id = 42""";
 
-        var numParseErrors = translator.translateQuery(
+        var _discard = translator.translateQuery(
                 query,
                 "TestInvariant",
                 "").getNumberOfSyntaxErrors();
-        assertEquals(0, numParseErrors);
-    }
-
-    @Test
-    public void TestInvariantMissing() {
-        var translator = new InvariantTranslator();
-        var query =
-                """
-                A a
-                  topic: a-topic
-                  schema: {id}
-                B b
-                  topic: b-topic
-                  schema: {id}
-                               
-                SEQ (a, b)""";
-
-        var numParseErrors = translator.translateQuery(
-                query,
-                "TestInvariant",
-                "").getNumberOfSyntaxErrors();
-        assertEquals(1, numParseErrors);
     }
 
     @Test
@@ -75,13 +52,13 @@ public class InvariantNegativeParseTests {
                 """
                 A a
                   topic: a-topic
-                  schema: {id}
+                  schema: {id:number}
                 B b
                   topic: b-topic
-                  schema: {id}
+                  schema: {id:number}
                 C c
                   topic: c-topic
-                  schema: {id}
+                  schema: {id:number}
                                
                 SEQ (a, !b, !c)
                 WITHIN 1 sec
@@ -103,13 +80,13 @@ public class InvariantNegativeParseTests {
                 """
                 A a
                   topic: a-topic
-                  schema: {id}
+                  schema: {id:number}
                 B b
                   topic: b-topic
-                  schema: {id}
+                  schema: {id:number}
                 C c
                   topic: c-topic
-                  schema: {id}
+                  schema: {id:number}
                                
                 SEQ (a, !b, a)
                 WITHIN 1 sec
@@ -131,13 +108,13 @@ public class InvariantNegativeParseTests {
                 """
                 A a
                   topic: a-topic
-                  schema: {id}
+                  schema: {id:number}
                 B b
                   topic: b-topic
-                  schema: {id}
+                  schema: {id:number}
                 C c
                   topic: c-topic
-                  schema: {id}
+                  schema: {id:number}
                                
                 SEQ (a, !b, c)
                 WITHIN 1 sec

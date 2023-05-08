@@ -4,6 +4,7 @@ import org.apache.flink.streaming.api.datastream.DataStreamSource;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.streaming.api.functions.sink.SinkFunction;
 import org.apache.flink.test.util.MiniClusterWithClientResource;
+import org.jetbrains.annotations.NotNull;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.myorg.flinkinvariants.events.Event;
@@ -21,6 +22,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class GeneratedInvariantTest {
 
+    public static final String GENERATED_INVARIANT_NAMESPACE = "org.myorg.flinkinvariants.invariantlanguage.generated";
     @ClassRule
     public static MiniClusterWithClientResource flinkCluster =
             new MiniClusterWithClientResource(
@@ -381,7 +383,7 @@ public class GeneratedInvariantTest {
         // Compile source file.
         JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
         StandardJavaFileManager fileManager = compiler.getStandardFileManager(null, null, null);
-        var filePath = String.format("src/main/java/org/myorg/flinkinvariants/invariantlanguage/%s.java", invariantName);
+        var filePath = String.format("src/main/java/org/myorg/flinkinvariants/invariantlanguage/generated/%s.java", invariantName);
 
         Iterable<? extends JavaFileObject> compilationUnit
                 = fileManager.getJavaFileObjectsFromFiles(Arrays.asList(new File(filePath)));
@@ -398,7 +400,7 @@ public class GeneratedInvariantTest {
             URLClassLoader classLoader = new URLClassLoader(new URL[]{new File("src/main/java").toURI().toURL()});
 
             // Load the class from the classloader by name....
-            Class<?> loadedClass = classLoader.loadClass("org.myorg.flinkinvariants.invariantlanguage." + invariantName);
+            Class<?> loadedClass = classLoader.loadClass(GENERATED_INVARIANT_NAMESPACE + "." + invariantName);
             // Create a new instance...
             InvariantChecker invariantChecker = (InvariantChecker) loadedClass.getDeclaredConstructor().newInstance();
             return Optional.of(invariantChecker);
@@ -425,7 +427,10 @@ public class GeneratedInvariantTest {
         String inputFile =
                 "src/main/java/org/myorg/flinkinvariants/invariantlanguage/TestInvariantTemplate.java";
 
-        var destDir = "src/main/java/org/myorg/flinkinvariants/invariantlanguage/";
+        var destDir = "src/main/java/org/myorg/flinkinvariants/invariantlanguage/generated/";
+
+        createDirectoryIfNeeded(destDir);
+
         var invariantFile = String.format(destDir + "%s.java"
                 , invariantName);
 
@@ -436,12 +441,19 @@ public class GeneratedInvariantTest {
                 "public class TestInvariantTemplate implements InvariantChecker {",
                 String.format("public class %s implements InvariantChecker {", invariantName)
         );
+        substitutions.put("package org.myorg.flinkinvariants.invariantlanguage;",
+                "package " + GENERATED_INVARIANT_NAMESPACE + ";");
+
         substitutions.put(";// ${process}", ".process(new MyPatternProcessFunction())\n.addSink(sinkFunction);");
         substitutions.put("// ${MyPatternProcessFunction}", processMatchCode);
 
         try {
+            FileWriter fileWriter = getFileWriter(invariantFile);
+            BufferedWriter writer = new BufferedWriter(fileWriter);
+
             BufferedReader reader = new BufferedReader(new FileReader(inputFile));
-            BufferedWriter writer = new BufferedWriter(new FileWriter(invariantFile));
+
+
             String line = reader.readLine();
             while (line != null) {
                 for (var key : substitutions.keySet()) {
@@ -459,6 +471,24 @@ public class GeneratedInvariantTest {
         } catch (IOException e) {
             System.err.println("Error: " + e.getMessage());
         }
+    }
+
+    private static void createDirectoryIfNeeded(String directory) {
+        File file = new File (directory);
+        if (!file.exists())
+        {
+            file.mkdirs();
+        }
+    }
+
+    @NotNull
+    private static FileWriter getFileWriter(String invariantFile) throws IOException {
+        File file = new File (invariantFile);
+        if (!file.exists()) {
+            file.createNewFile();
+        }
+
+        return new FileWriter(file);
     }
 
     private static class ViolationSink implements SinkFunction<String> {

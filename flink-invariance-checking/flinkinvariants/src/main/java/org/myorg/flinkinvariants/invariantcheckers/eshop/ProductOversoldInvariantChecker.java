@@ -94,23 +94,9 @@ public class ProductOversoldInvariantChecker {
                 new MapFunction<Row, EShopIntegrationEvent>() {
                     @Override
                     public EShopIntegrationEvent map(Row row) throws Exception {
-                        return new EShopIntegrationEvent(row.getFieldAs(0), row.getFieldAs(1), row.getFieldAs(2));
+                        return row.getFieldAs(0);
                     }
                 }).setParallelism(1);
-
-        DataStream<EShopIntegrationEvent> sortedStream =
-                tableEnv.toDataStream(sorted)
-                        .map(
-                                new MapFunction<Row, EShopIntegrationEvent>() {
-                                    @Override
-                                    public EShopIntegrationEvent map(Row row) throws Exception {
-                                        return new EShopIntegrationEvent(
-                                                row.getFieldAs(0),
-                                                row.getFieldAs(1),
-                                                row.getFieldAs(2));
-                                    }
-                                })
-                        .setParallelism(1);
 
         var violations =
                 sortedStream
@@ -177,11 +163,11 @@ public class ProductOversoldInvariantChecker {
                         Map.of("InvariantName", "ProductOversoldInvariant", "SubType", "Bought negative number of units")));
 
 //collector.collect(
-                        "Violation: units bought negative for ProductId: "
-                                + productId
-        //                        + ", units bought: "
-                                + unitsBought);
-                return;
+//                        "Violation: units bought negative for ProductId: "
+//                                + productId
+//        //                        + ", units bought: "
+//                                + unitsBought);
+//                return;
             }
             // check if current stock allows
             if (stock < unitsBought) {
@@ -190,13 +176,13 @@ public class ProductOversoldInvariantChecker {
                         "{InvariantName} invariant violated - {SubType}",
                         Map.of("InvariantName", "ProductOversoldInvariant", "SubType", "Stock not sufficient")));
 
-//                collector.collect(
-                        "Violation: stock not sufficient for ProductId: "
-                                + productId
-        //                        + ", current stock: "
-                                + stock
-        //                        + ", units bought: "
-                                + unitsBought);
+////                collector.collect(
+//                        "Violation: stock not sufficient for ProductId: "
+//                                + productId
+//        //                        + ", current stock: "
+//                                + stock
+//        //                        + ", units bought: "
+//                                + unitsBought);
 
                 // TODO: should we set stock to zero here?
             } else {
