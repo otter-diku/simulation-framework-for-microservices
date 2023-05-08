@@ -92,6 +92,34 @@ public class KafkaReader {
                                 }))
                 .build();
     }
+    private static KafkaSource<Event> getLakesideKafkaSource(String topic, String groupId) {
+
+        return KafkaSource.<Event>builder()
+                .setBootstrapServers(KafkaReader.broker)
+                .setTopics(topic)
+                .setGroupId(groupId)
+                .setStartingOffsets(OffsetsInitializer.earliest())
+                .setDeserializer(KafkaRecordDeserializationSchema.of(new KafkaDeserializationSchema<Event>() {
+                    @Override
+                    public boolean isEndOfStream(Event event) {
+                        return false;
+                    }
+
+                    @Override
+                    public Event deserialize(ConsumerRecord<byte[], byte[]> consumerRecord) throws Exception {
+                        String value = new String(consumerRecord.value(), StandardCharsets.UTF_8);
+                        ObjectMapper objectMapper = new ObjectMapper();
+                        JsonNode jsonNode = objectMapper.readTree(value);
+                        return new Event(topic, jsonNode);
+                    }
+
+                    @Override
+                    public TypeInformation<Event> getProducedType() {
+                        return TypeInformation.of(Event.class);
+                    }
+                }))
+                .build();
+    }
 
     private static KafkaSource<Event> getEventKafkaSource(String topic, String groupId) {
 

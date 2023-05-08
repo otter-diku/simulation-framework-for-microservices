@@ -7,7 +7,7 @@
 version: "2.2"
 services:
   jobmanager:
-    image: flink:1.16.0-java11
+    image: flink:latest
     ports:
       - "8081:8081"   # dashboard: "localhost:8081"
     command: jobmanager
@@ -17,7 +17,7 @@ services:
         jobmanager.rpc.address: jobmanager        
 
   taskmanager:
-    image: flink:1.16.0-java11
+    image: flink:latest
     depends_on:
       - jobmanager
     command: taskmanager

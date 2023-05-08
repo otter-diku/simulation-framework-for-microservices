@@ -1,26 +1,30 @@
 {
-  "templateId": "update-catalog-item-price-sleep",
+  "templateId": "buy-item-entire-stock-sleep",
   "arguments": [
     {
-      "name": "product-id",
-      "type": "number"
+      "name": "user-id",
+      "type": "string"
     },
     {
       "name": "sleep-time",
       "type": "number"
-    }    
+    }
   ],
   "operations": [
     {
       "operationReferenceId": "sleep-in-sec",
-      "id": "op-1"
+      "id": "sleep-1"
     },    
     {
       "operationReferenceId": "catalog-get-item-by-id",
+      "id": "op-1"
+    },
+    {
+      "operationReferenceId": "basket-add-single-item-entire-stock",
       "id": "op-2"
     },
     {
-      "operationReferenceId": "catalog-update-price",
+      "operationReferenceId": "basket-checkout",
       "id": "op-3"
     }
   ]

@@ -1,4 +1,4 @@
-package org.myorg.flinkinvariants.invariantcheckers;
+package org.myorg.flinkinvariants.invariantcheckers.eshop;
 
 import com.fasterxml.jackson.databind.JsonNode;
 
@@ -17,13 +17,13 @@ import org.apache.flink.util.Collector;
 import org.myorg.flinkinvariants.datastreamsourceproviders.KafkaReader;
 import org.myorg.flinkinvariants.events.EShopIntegrationEvent;
 import org.myorg.flinkinvariants.events.EventType;
+import org.myorg.flinkinvariants.events.InvariantViolationEvent;
+import org.myorg.flinkinvariants.sinks.SeqSink;
 
 import java.time.Duration;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
-public class ProductPriceChangedInvariantChecker {
+public class ProductPriceChangedInvariantChecker  {
 
     private static final int MAX_LATENESS_OF_EVENT = 5;
 
@@ -39,13 +39,13 @@ public class ProductPriceChangedInvariantChecker {
                                         .withTimestampAssigner(
                                                 (event, timestamp) -> event.getEventTime()));
 
-        CheckProductPriceChangedInvariant(env, streamSource, new PrintSinkFunction<>());
+        CheckProductPriceChangedInvariant(env, streamSource, new SeqSink());
     }
 
     public static void CheckProductPriceChangedInvariant(
             StreamExecutionEnvironment env,
             DataStream<EShopIntegrationEvent> input,
-            SinkFunction<String> sinkFunction)
+            SinkFunction<InvariantViolationEvent> sinkFunction)
             throws Exception {
 
         var filteredStream =
@@ -64,18 +64,68 @@ public class ProductPriceChangedInvariantChecker {
                 patternStream
                         .inEventTime()
                         .process(
-                                new PatternProcessFunction<EShopIntegrationEvent, String>() {
+                                new PatternProcessFunction<EShopIntegrationEvent, InvariantViolationEvent>() {
                                     @Override
                                     public void processMatch(
                                             Map<String, List<EShopIntegrationEvent>> map,
                                             Context context,
-                                            Collector<String> collector) {
-                                        collector.collect(map.toString());
+                                            Collector<InvariantViolationEvent> collector) {
+                                        collector.collect(getInvariantViolationEvent(map));
                                     }
                                 })
                         .addSink(sinkFunction);
 
         env.execute("Flink Eshop Product Price Changed Invariant");
+    }
+
+    /***
+     More verbose log message
+    ***/
+/*    private static InvariantViolationEvent getInvariantViolationEvent(Map<String, List<EShopIntegrationEvent>> map) {
+
+        var firstPriceChange = map.get("firstPriceChange")
+                .iterator()
+                .next();
+
+        var userCheckoutWithOutDatedItemPrice = map.get("userCheckoutWithOutDatedItemPrice")
+                .iterator()
+                .next();
+
+        var violationEvent = new InvariantViolationEvent();
+        violationEvent.setInvariantName("PriceChange");
+        violationEvent.setTimestamp(userCheckoutWithOutDatedItemPrice.getEventTimeAsString());
+        violationEvent.setMessageTemplate("Price changed at: {PriceChangedAt} with new price {NewPrice} for product ID: {ProductId}. Basket checked out at {BasketCheckedOutAt} with price of {StalePrice}");
+
+        violationEvent.getArguments().put("PriceChangedAt", firstPriceChange.getEventTimeAsString());
+        violationEvent.getArguments().put("NewPrice", firstPriceChange.getEventBody().get("NewPrice"));
+        var productId = firstPriceChange.getEventBody().get("ProductId");
+        violationEvent.getArguments().put("ProductId", productId);
+        violationEvent.getArguments().put("BasketCheckedOutAt", userCheckoutWithOutDatedItemPrice.getEventTimeAsString());
+
+        var items = userCheckoutWithOutDatedItemPrice
+                .getEventBody()
+                .get("Basket")
+                .get("Items")
+                .elements();
+
+        while (items.hasNext()) {
+            var next = items.next();
+            if (next.get("ProductId").equals(productId)) {
+                violationEvent.getArguments().put("StalePrice", next.get("UnitPrice"));
+                break;
+            }
+        }
+        return violationEvent;
+    }*/
+
+    private static InvariantViolationEvent getInvariantViolationEvent(Map<String, List<EShopIntegrationEvent>> map) {
+        var userCheckoutWithOutDatedItemPrice = map.get("userCheckoutWithOutDatedItemPrice")
+                .iterator()
+                .next();
+
+        return new InvariantViolationEvent(userCheckoutWithOutDatedItemPrice.getEventTimeAsString(),
+                "{InvariantName} invariant violated",
+                Collections.singletonMap("InvariantName", "ProductPriceChangedInvariant"));
     }
 
     public static Pattern<EShopIntegrationEvent, ?> InvariantPattern =

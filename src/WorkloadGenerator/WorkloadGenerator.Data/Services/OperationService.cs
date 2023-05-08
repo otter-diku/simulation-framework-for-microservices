@@ -386,10 +386,13 @@ public class OperationService : IOperationService
                     }
                 }
 
-                var argument = inputUnresolved.Arguments!.SingleOrDefault(a => a.Name == variableName);
-                if (argument is not null)
+                if (inputUnresolved.Arguments is not null)
                 {
-                    return PrintArgument(argument, providedValues[variableName]);
+                    var argument = inputUnresolved.Arguments.SingleOrDefault(a => a.Name == variableName);
+                    if (argument is not null)
+                    {
+                        return PrintArgument(argument, providedValues[variableName]);
+                    }
                 }
 
                 var dynamicVariable = inputUnresolved.DynamicVariables?.SingleOrDefault(v => v.Name == variableName);

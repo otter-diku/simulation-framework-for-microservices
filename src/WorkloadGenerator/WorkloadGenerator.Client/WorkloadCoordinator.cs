@@ -41,10 +41,14 @@ public class WorkloadCoordinator : IWorkloadCoordinator
 
         _logger.LogInformation("{TransactionCount} transactions to execute", txStack.Count);
 
+
         var generators = new Dictionary<String, IGenerator>();
-        foreach (var generator in workloadToRun.Generators)
+        if (workloadToRun.Generators is not null)
         {
-            generators.Add(generator.Id, GeneratorFactory.GetGenerator(generator));
+            foreach (var generator in workloadToRun.Generators)
+            {
+                generators.Add(generator.Id, GeneratorFactory.GetGenerator(generator));
+            }
         }
         while (txStack.Count != 0)
         {

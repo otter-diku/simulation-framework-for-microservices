@@ -1,0 +1,15 @@
+{
+  "templateId": "tx-delete-policy",
+  "arguments": [
+    {
+      "name": "url",
+      "type": "string"
+    }
+  ],
+  "operations": [
+    {
+      "operationReferenceId": "op-delete-policy",
+      "id": "op-1"
+    }
+  ]
+}

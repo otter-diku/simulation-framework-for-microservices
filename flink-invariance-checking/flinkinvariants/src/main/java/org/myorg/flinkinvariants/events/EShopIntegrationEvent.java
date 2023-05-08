@@ -2,9 +2,17 @@ package org.myorg.flinkinvariants.events;
 
 import com.fasterxml.jackson.databind.JsonNode;
 
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.time.Instant;
+import java.util.Date;
 import java.util.Objects;
+import java.util.TimeZone;
 
 public class EShopIntegrationEvent {
+
+    TimeZone tz = TimeZone.getTimeZone("UTC");
+    DateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm'Z'");
 
     private String EventName;
     private JsonNode EventBody;
@@ -30,11 +38,16 @@ public class EShopIntegrationEvent {
         return EventTime;
     }
 
+    public String getEventTimeAsString() {
+        // TODO: should be done once, not on every getEventTimeAsString
+        df.setTimeZone(tz);
+        return df.format(Date.from(Instant.ofEpochMilli(getEventTime())));
+    }
+
     public void setEventTime(Long eventTime) {
         EventTime = eventTime;
     }
 
-    public EShopIntegrationEvent() {}
 
     public EShopIntegrationEvent(String EventName, JsonNode EventBody, Long eventTime) {
         this.EventName = EventName;
