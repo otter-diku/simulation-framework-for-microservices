@@ -8,11 +8,13 @@ import org.apache.flink.cep.pattern.conditions.IterativeCondition;
 import org.apache.flink.cep.pattern.conditions.SimpleCondition;
 import org.apache.flink.streaming.api.TimeCharacteristic;
 import org.apache.flink.streaming.api.datastream.DataStream;
+import org.apache.flink.streaming.api.datastream.DataStreamSource;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.streaming.api.functions.AssignerWithPeriodicWatermarks;
 import org.apache.flink.streaming.api.windowing.time.Time;
 import org.apache.flink.util.Collector;
 import org.myorg.flinkinvariants.datastreamsourceproviders.KafkaReader;
+import org.myorg.flinkinvariants.events.EShopIntegrationEvent;
 import org.myorg.flinkinvariants.events.Event;
 import org.myorg.flinkinvariants.events.InvariantViolationEvent;
 import org.myorg.flinkinvariants.sinks.SeqSink;
@@ -37,8 +39,8 @@ public class TimelyPolicyCreation {
         final StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
         env.setParallelism(1);
 
-        var streamSourceCustomer = KafkaReader.GetDataStreamSourceLakeside(env, TOPIC_CUSTOMER_DECISION, GROUP_ID);
-        var streamSourcePolicy = KafkaReader.GetDataStreamSourceLakeside(env, TOPIC_POLICY_CREATED, GROUP_ID);
+        var streamSourceCustomer = KafkaReader.GetEventDataStreamSource(env, TOPIC_CUSTOMER_DECISION, GROUP_ID);
+        var streamSourcePolicy = KafkaReader.GetEventDataStreamSource(env, TOPIC_POLICY_CREATED, GROUP_ID);
 
         var combinedStream = streamSourceCustomer.union(streamSourcePolicy)
                 .assignTimestampsAndWatermarks(WatermarkStrategy.<Event>forBoundedOutOfOrderness(Duration.ofSeconds(MAX_LATENESS_OF_EVENT))

@@ -1,4 +1,5 @@
 package org.myorg.flinkinvariants.events;
+
 import com.fasterxml.jackson.databind.JsonNode;
 
 import java.text.DateFormat;
@@ -56,9 +57,14 @@ public class EShopIntegrationEvent {
 
     @Override
     public String toString() {
-        return "EventName: " + EventName + ", " + "EventBody: " + EventBody + ", eventTime: " + EventTime;
+        return "EventName: "
+                + EventName
+                + ", "
+                + "EventBody: "
+                + EventBody
+                + ", eventTime: "
+                + EventTime;
     }
-
 
     /*
      * The events in the DataStream to which you want to apply pattern matching must implement proper equals() and hashCode()
@@ -72,9 +78,9 @@ public class EShopIntegrationEvent {
             return false;
         }
         EShopIntegrationEvent r = (EShopIntegrationEvent) o;
-        return  Objects.equals(EventName, r.EventName) &&
-                Objects.equals(EventBody, r.EventBody) &&
-                Objects.equals(EventTime, r.EventTime);
+        return Objects.equals(EventName, r.EventName)
+                && Objects.equals(EventBody, r.EventBody)
+                && Objects.equals(EventTime, r.EventTime);
     }
 
     @Override

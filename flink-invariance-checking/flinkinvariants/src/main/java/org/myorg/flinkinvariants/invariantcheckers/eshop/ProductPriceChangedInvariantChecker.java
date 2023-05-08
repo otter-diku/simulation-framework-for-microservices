@@ -1,6 +1,7 @@
 package org.myorg.flinkinvariants.invariantcheckers.eshop;
 
 import com.fasterxml.jackson.databind.JsonNode;
+
 import org.apache.flink.api.common.eventtime.WatermarkStrategy;
 import org.apache.flink.cep.CEP;
 import org.apache.flink.cep.functions.PatternProcessFunction;
@@ -22,40 +23,57 @@ import org.myorg.flinkinvariants.sinks.SeqSink;
 import java.time.Duration;
 import java.util.*;
 
-
 public class ProductPriceChangedInvariantChecker  {
 
     private static final int MAX_LATENESS_OF_EVENT = 5;
 
     public static void main(String[] args) throws Exception {
-        final StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment().setParallelism(1);
+        final StreamExecutionEnvironment env =
+                StreamExecutionEnvironment.getExecutionEnvironment().setParallelism(1);
 
-        var streamSource = KafkaReader.GetDataStreamSource(env)
-                .assignTimestampsAndWatermarks(WatermarkStrategy.<EShopIntegrationEvent>forBoundedOutOfOrderness(Duration.ofSeconds(MAX_LATENESS_OF_EVENT))
-                        .withTimestampAssigner((event, timestamp) -> event.getEventTime()));
+        var streamSource =
+                KafkaReader.GetDataStreamSource(env)
+                        .assignTimestampsAndWatermarks(
+                                WatermarkStrategy.<EShopIntegrationEvent>forBoundedOutOfOrderness(
+                                                Duration.ofSeconds(MAX_LATENESS_OF_EVENT))
+                                        .withTimestampAssigner(
+                                                (event, timestamp) -> event.getEventTime()));
 
         CheckProductPriceChangedInvariant(env, streamSource, new SeqSink());
     }
 
-    public static void CheckProductPriceChangedInvariant
-            (StreamExecutionEnvironment env,
-             DataStream<EShopIntegrationEvent> input,
-             SinkFunction<InvariantViolationEvent> sinkFunction) throws  Exception {
+    public static void CheckProductPriceChangedInvariant(
+            StreamExecutionEnvironment env,
+            DataStream<EShopIntegrationEvent> input,
+            SinkFunction<InvariantViolationEvent> sinkFunction)
+            throws Exception {
 
-        var filteredStream = input.filter(e ->
-                e.getEventName().equals("UserCheckoutAcceptedIntegrationEvent") ||
-                e.getEventName().equals("ProductPriceChangedIntegrationEvent")).setParallelism(1);
+        var filteredStream =
+                input.filter(
+                                e ->
+                                        e.getEventName()
+                                                        .equals(
+                                                                "UserCheckoutAcceptedIntegrationEvent")
+                                                || e.getEventName()
+                                                        .equals(
+                                                                "ProductPriceChangedIntegrationEvent"))
+                        .setParallelism(1);
 
         var patternStream = CEP.pattern(filteredStream, InvariantPattern);
-        var matches = patternStream
-                .inEventTime()
-                .process(new PatternProcessFunction<EShopIntegrationEvent, InvariantViolationEvent>() {
-                    @Override
-                    public void processMatch(Map<String, List<EShopIntegrationEvent>> map, Context context, Collector<InvariantViolationEvent> collector) {
-                        collector.collect(getInvariantViolationEvent(map));
-                    }
-                })
-                .addSink(sinkFunction);
+        var matches =
+                patternStream
+                        .inEventTime()
+                        .process(
+                                new PatternProcessFunction<EShopIntegrationEvent, InvariantViolationEvent>() {
+                                    @Override
+                                    public void processMatch(
+                                            Map<String, List<EShopIntegrationEvent>> map,
+                                            Context context,
+                                            Collector<InvariantViolationEvent> collector) {
+                                        collector.collect(getInvariantViolationEvent(map));
+                                    }
+                                })
+                        .addSink(sinkFunction);
 
         env.execute("Flink Eshop Product Price Changed Invariant");
     }
@@ -110,48 +128,92 @@ public class ProductPriceChangedInvariantChecker  {
                 Collections.singletonMap("InvariantName", "ProductPriceChangedInvariant"));
     }
 
-    public static Pattern<EShopIntegrationEvent, ?> InvariantPattern =  Pattern.<EShopIntegrationEvent>begin("firstPriceChange")
-            .where(new SimpleCondition<>() {
-                @Override
-                public boolean filter(EShopIntegrationEvent eshopIntegrationEvent) {
-                    return eshopIntegrationEvent.getEventName().equals(EventType.ProductPriceChangedIntegrationEvent.name());
-                }
-            })
-            .notFollowedBy("subsequentPriceChange")
-            .where(new IterativeCondition<>() {
-                @Override
-                public boolean filter(EShopIntegrationEvent subsequentPriceChangeEvent, Context<EShopIntegrationEvent> context) throws Exception {
-                    if (!subsequentPriceChangeEvent.getEventName().equals(EventType.ProductPriceChangedIntegrationEvent.name()))
-                        return false;
+    public static Pattern<EShopIntegrationEvent, ?> InvariantPattern =
+            Pattern.<EShopIntegrationEvent>begin("firstPriceChange")
+                    .where(
+                            new SimpleCondition<>() {
+                                @Override
+                                public boolean filter(EShopIntegrationEvent eshopIntegrationEvent) {
+                                    return eshopIntegrationEvent
+                                            .getEventName()
+                                            .equals(
+                                                    EventType.ProductPriceChangedIntegrationEvent
+                                                            .name());
+                                }
+                            })
+                    .notFollowedBy("subsequentPriceChange")
+                    .where(
+                            new IterativeCondition<>() {
+                                @Override
+                                public boolean filter(
+                                        EShopIntegrationEvent subsequentPriceChangeEvent,
+                                        Context<EShopIntegrationEvent> context)
+                                        throws Exception {
+                                    if (!subsequentPriceChangeEvent
+                                            .getEventName()
+                                            .equals(
+                                                    EventType.ProductPriceChangedIntegrationEvent
+                                                            .name())) return false;
 
-                    for (var firstPriceChangeEvent : context.getEventsForPattern("firstPriceChange")) {
-                        return firstPriceChangeEvent.getEventBody().get("ProductId").asInt() == subsequentPriceChangeEvent.getEventBody().get("ProductId").asInt();
-                    }
+                                    for (var firstPriceChangeEvent :
+                                            context.getEventsForPattern("firstPriceChange")) {
+                                        return firstPriceChangeEvent
+                                                        .getEventBody()
+                                                        .get("ProductId")
+                                                        .asInt()
+                                                == subsequentPriceChangeEvent
+                                                        .getEventBody()
+                                                        .get("ProductId")
+                                                        .asInt();
+                                    }
 
-                    return false;
-                }
-            })
-            .followedByAny("userCheckoutWithOutDatedItemPrice")
-            .where(new IterativeCondition<>() {
-                @Override
-                public boolean filter(EShopIntegrationEvent userCheckoutEvent, Context<EShopIntegrationEvent> context) throws Exception {
-                    if (!userCheckoutEvent.getEventName().equals("UserCheckoutAcceptedIntegrationEvent")) {
-                        return false;
-                    }
+                                    return false;
+                                }
+                            })
+                    .followedByAny("userCheckoutWithOutDatedItemPrice")
+                    .where(
+                            new IterativeCondition<>() {
+                                @Override
+                                public boolean filter(
+                                        EShopIntegrationEvent userCheckoutEvent,
+                                        Context<EShopIntegrationEvent> context)
+                                        throws Exception {
+                                    if (!userCheckoutEvent
+                                            .getEventName()
+                                            .equals("UserCheckoutAcceptedIntegrationEvent")) {
+                                        return false;
+                                    }
 
-                    for (var priceChangeEvent : context.getEventsForPattern("firstPriceChange")) {
+                                    for (var priceChangeEvent :
+                                            context.getEventsForPattern("firstPriceChange")) {
 
-                        var affectedProductId = priceChangeEvent.getEventBody().get("ProductId").asInt();
-                        var newPrice = priceChangeEvent.getEventBody().get("NewPrice").asDouble();
+                                        var affectedProductId =
+                                                priceChangeEvent
+                                                        .getEventBody()
+                                                        .get("ProductId")
+                                                        .asInt();
+                                        var newPrice =
+                                                priceChangeEvent
+                                                        .getEventBody()
+                                                        .get("NewPrice")
+                                                        .asDouble();
 
-                        for (Iterator<JsonNode> it = userCheckoutEvent.getEventBody().get("Basket").get("Items").elements(); it.hasNext(); ) {
-                            var item = it.next();
-                            if (affectedProductId == item.get("ProductId").asInt() && newPrice != item.get("UnitPrice").asDouble())
-                                return true;
-                        }
-                    }
+                                        for (Iterator<JsonNode> it =
+                                                        userCheckoutEvent
+                                                                .getEventBody()
+                                                                .get("Basket")
+                                                                .get("Items")
+                                                                .elements();
+                                                it.hasNext(); ) {
+                                            var item = it.next();
+                                            if (affectedProductId == item.get("ProductId").asInt()
+                                                    && newPrice != item.get("UnitPrice").asDouble())
+                                                return true;
+                                        }
+                                    }
 
-                    return false;
-                }
-            }).within(Time.seconds(30));
+                                    return false;
+                                }
+                            })
+                    .within(Time.seconds(30));
 }

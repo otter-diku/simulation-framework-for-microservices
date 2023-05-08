@@ -1,0 +1,16 @@
+ProductPriceChangedIntegrationEvent pc1
+  topic: eshop_event_bus
+  schema: {ProductId, NewPrice}
+
+ProductPriceChangedIntegrationEvent pc2
+  topic: eshop_event_bus
+  schema: {ProductId, NewPrice}
+
+ProductBoughtIntegrationEvent pb
+  topic: eshop_event_bus
+  schema: {ProductId, Units, Price}
+
+
+EVENT SEQ (pc1, !pc2, pb)
+WHERE pc1.ProductId = pb.ProductId AND pc1.ProductId = pc2.ProductId
+ON FULL MATCH pc1.NewPrice = pb.Price

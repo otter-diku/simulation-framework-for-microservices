@@ -1,0 +1,11 @@
+CUSTOMER_DECISION
+  topic: customer-decision-event-queue
+  schema: {date, insuranceQuoteRequestId, quoteAccepted}
+
+POLICY_CREATED
+  topic: policy-created-event-queue
+  schema: {date, insuranceQuoteRequestId, policyId}
+
+EVENT SEQ (CUSTOMER_DECISION cd, POLICY_CREATED pc)
+WHERE cd.insuranceQuoteRequestId = pc.insuranceQuoteRequestId AND cd.quoteAccepted = true
+WITHIN 40 milli

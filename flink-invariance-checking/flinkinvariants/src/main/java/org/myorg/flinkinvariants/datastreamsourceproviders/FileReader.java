@@ -2,6 +2,7 @@ package org.myorg.flinkinvariants.datastreamsourceproviders;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+
 import org.apache.flink.streaming.api.datastream.DataStreamSource;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.myorg.flinkinvariants.events.EShopIntegrationEvent;
@@ -16,7 +17,8 @@ import java.util.stream.Collectors;
 
 public class FileReader {
 
-    public static DataStreamSource<EShopIntegrationEvent> GetDataStreamSource(StreamExecutionEnvironment env, String file) {
+    public static DataStreamSource<EShopIntegrationEvent> GetDataStreamSource(
+            StreamExecutionEnvironment env, String file) {
         var list = GetEshopEventsFromFile(file);
         return env.fromElements(list.toArray(new EShopIntegrationEvent[0]));
     }
@@ -25,10 +27,22 @@ public class FileReader {
         try {
             String content = GetFileContentAsString(file);
             ObjectMapper objectMapper = new ObjectMapper();
-            List<EShopIntegrationEventWrapper> eventWrappers = objectMapper.readValue(content, new TypeReference<List<EShopIntegrationEventWrapper>>() {});
+            List<EShopIntegrationEventWrapper> eventWrappers =
+                    objectMapper.readValue(
+                            content, new TypeReference<List<EShopIntegrationEventWrapper>>() {});
 
             return eventWrappers.stream()
-                    .map(eventWrapper -> new EShopIntegrationEvent(eventWrapper.Type, eventWrapper.Content, Instant.parse(eventWrapper.Content.get("CreationDate").asText()).toEpochMilli()))
+                    .map(
+                            eventWrapper ->
+                                    new EShopIntegrationEvent(
+                                            eventWrapper.Type,
+                                            eventWrapper.Content,
+                                            Instant.parse(
+                                                            eventWrapper
+                                                                    .Content
+                                                                    .get("CreationDate")
+                                                                    .asText())
+                                                    .toEpochMilli()))
                     .collect(Collectors.toList());
 
         } catch (IOException e) {

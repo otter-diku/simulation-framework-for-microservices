@@ -30,12 +30,12 @@ public class SortingWithCEP {
         final StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
         env.setParallelism(1);
 
-        var streamSource1 = KafkaReader.GetDataStreamSourceLakeside(env, TOPIC_1, GROUP_ID);
-        var streamSource2 = KafkaReader.GetDataStreamSourceLakeside(env, TOPIC_2, GROUP_ID);
-        var streamSource3 = KafkaReader.GetDataStreamSourceLakeside(env, TOPIC_3, GROUP_ID);
-        var streamSource4 = KafkaReader.GetDataStreamSourceLakeside(env, TOPIC_4, GROUP_ID);
-        var streamSource5 = KafkaReader.GetDataStreamSourceLakeside(env, TOPIC_5, GROUP_ID);
-        var streamSource6 = KafkaReader.GetDataStreamSourceLakeside(env, TOPIC_6, GROUP_ID);
+        var streamSource1 = KafkaReader.GetEventDataStreamSource(env, TOPIC_1, GROUP_ID);
+        var streamSource2 = KafkaReader.GetEventDataStreamSource(env, TOPIC_2, GROUP_ID);
+        var streamSource3 = KafkaReader.GetEventDataStreamSource(env, TOPIC_3, GROUP_ID);
+        var streamSource4 = KafkaReader.GetEventDataStreamSource(env, TOPIC_4, GROUP_ID);
+        var streamSource5 = KafkaReader.GetEventDataStreamSource(env, TOPIC_5, GROUP_ID);
+        var streamSource6 = KafkaReader.GetEventDataStreamSource(env, TOPIC_6, GROUP_ID);
 
         var combinedStream = streamSource1.union(streamSource2, streamSource3, streamSource4, streamSource5, streamSource6)
                 .assignTimestampsAndWatermarks(WatermarkStrategy.<Event>forBoundedOutOfOrderness(Duration.ofSeconds(MAX_LATENESS_OF_EVENT))

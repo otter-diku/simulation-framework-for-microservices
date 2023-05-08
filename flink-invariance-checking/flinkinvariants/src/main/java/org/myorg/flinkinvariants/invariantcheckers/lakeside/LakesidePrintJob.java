@@ -21,22 +21,22 @@ public class LakesidePrintJob {
     public static void main(String[] args) throws Exception {
         final StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
 
-        var streamSource1 = KafkaReader.GetDataStreamSourceLakeside(env, TOPIC_1, GROUP_ID);
+        var streamSource1 = KafkaReader.GetEventDataStreamSource(env, TOPIC_1, GROUP_ID);
         streamSource1.map(event -> event.Type + ": " + event.Content.toString()).print();
 
-        var streamSource2 = KafkaReader.GetDataStreamSourceLakeside(env, TOPIC_2, GROUP_ID);
+        var streamSource2 = KafkaReader.GetEventDataStreamSource(env, TOPIC_2, GROUP_ID);
         streamSource2.map(event -> event.Type + ": " + event.Content.toString()).print();
 
-        var streamSource3 = KafkaReader.GetDataStreamSourceLakeside(env, TOPIC_3, GROUP_ID);
+        var streamSource3 = KafkaReader.GetEventDataStreamSource(env, TOPIC_3, GROUP_ID);
         streamSource3.map(event -> event.Type + ": " + event.Content.toString()).print();
 
-        var streamSource4 = KafkaReader.GetDataStreamSourceLakeside(env, TOPIC_4, GROUP_ID);
+        var streamSource4 = KafkaReader.GetEventDataStreamSource(env, TOPIC_4, GROUP_ID);
         streamSource4.map(event -> event.Type + ": " + event.Content.toString()).print();
 
-        var streamSource5 = KafkaReader.GetDataStreamSourceLakeside(env, TOPIC_5, GROUP_ID);
+        var streamSource5 = KafkaReader.GetEventDataStreamSource(env, TOPIC_5, GROUP_ID);
         streamSource5.map(event -> event.Type + ": " + event.Content.toString()).print();
 
-        var streamSource6 = KafkaReader.GetDataStreamSourceLakeside(env, TOPIC_6, GROUP_ID);
+        var streamSource6 = KafkaReader.GetEventDataStreamSource(env, TOPIC_6, GROUP_ID);
         streamSource6.map(event -> event.Type + ": " + event.Content.toString()).print();
 
 
