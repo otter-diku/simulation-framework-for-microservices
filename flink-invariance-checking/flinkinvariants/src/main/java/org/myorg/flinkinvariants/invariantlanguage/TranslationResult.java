@@ -17,6 +17,7 @@ public class TranslationResult {
     public Map<String, Map<String, String>> schemata;
     public EventSequence sequence;
     public List<InvariantsParser.TermContext> whereClauseTerms;
+    public List<InvariantsParser.TermContext> fullMatchTerms;
     public Optional<Tuple2<Integer, String>> within;
     public Optional<InvariantsParser.Invariant_clauseContext> onFullMatch;
     public List<Tuple2<InvariantsParser.PrefixContext, InvariantsParser.Invariant_clauseContext>> onPartialMatch;
@@ -29,7 +30,8 @@ public class TranslationResult {
                              Map<String, Map<String, String>> schemata,
                              EventSequence sequence,
                              List<InvariantsParser.TermContext> whereClauseTerms,
-                             Optional<Tuple2<Integer, String>> within,
+                             List<InvariantsParser.TermContext> fullMatchTerms,
+							 Optional<Tuple2<Integer, String>> within,
                              Optional<InvariantsParser.Invariant_clauseContext> onFullMatch,
                              List<Tuple2<InvariantsParser.PrefixContext, InvariantsParser.Invariant_clauseContext>> onPartialMatch) {
         this.numberOfSyntaxErrors = numberOfSyntaxErrors;
@@ -40,6 +42,7 @@ public class TranslationResult {
         this.schemata = schemata;
         this.sequence = sequence;
         this.whereClauseTerms = whereClauseTerms;
+        this.fullMatchTerms = fullMatchTerms;
         this.within = within;
         this.onFullMatch = onFullMatch;
         this.onPartialMatch = onPartialMatch;

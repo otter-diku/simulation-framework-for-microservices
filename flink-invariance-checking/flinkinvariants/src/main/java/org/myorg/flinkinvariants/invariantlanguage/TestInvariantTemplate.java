@@ -2,6 +2,7 @@ package org.myorg.flinkinvariants.invariantlanguage;
 
 import org.apache.flink.cep.CEP;
 import org.apache.flink.cep.functions.PatternProcessFunction;
+import org.apache.flink.cep.functions.TimedOutPartialMatchHandler;
 import org.apache.flink.cep.pattern.Pattern;
 import org.apache.flink.cep.pattern.conditions.IterativeCondition;
 import org.apache.flink.cep.pattern.conditions.SimpleCondition;
@@ -10,11 +11,13 @@ import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.streaming.api.functions.sink.SinkFunction;
 import org.apache.flink.streaming.api.windowing.time.Time;
 import org.apache.flink.util.Collector;
+import org.apache.flink.util.OutputTag;
 import org.myorg.flinkinvariants.events.Event;
 
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 public class TestInvariantTemplate implements InvariantChecker {
 
@@ -28,21 +31,12 @@ public class TestInvariantTemplate implements InvariantChecker {
         var matches =
                 patternStream
                         .inProcessingTime()
-                        .process(
-                                new PatternProcessFunction<Event, String>() {
-                                    @Override
-                                    public void processMatch(
-                                            Map<String, List<Event>> map,
-                                            Context context,
-                                            Collector<String> collector)
-                                            throws Exception {
-                                        collector.collect(map.toString());
-                                    }
-                                })
-                        .addSink(sinkFunction);
+                        ;// ${process}
 
         env.execute("Test invariant");
     }
+
+    // ${MyPatternProcessFunction}
 
     public Pattern<Event, ?> invariant;
 }

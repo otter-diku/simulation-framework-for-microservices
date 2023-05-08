@@ -1,7 +1,6 @@
 package org.myorg.flinkinvariants.invariantlanguage;
 
 import org.apache.flink.api.java.tuple.Tuple2;
-import org.checkerframework.framework.qual.DefaultQualifier;
 import org.myorg.invariants.parser.InvariantsParser;
 
 import java.util.*;
@@ -53,7 +52,10 @@ public class PatternGenerator {
     final String equalityRegex = String.format("(%s)\\s*(%s)\\s*(%s)", quantityRegex, operatorRegex, quantityRegex);
 
     private final EventSequence eventSequence;
-    private final List<InvariantsParser.TermContext> terms;
+    private final List<InvariantsParser.TermContext> whereClauseTerms;
+
+    private final List<InvariantsParser.TermContext> fullMatchTerms;
+
     private final Map<String, String> id2Type;
     private final Map<String, Map<String, String>> schemata;
     private Optional<Tuple2<Integer, String>> within;
@@ -65,7 +67,8 @@ public class PatternGenerator {
     private final Pattern pattern;
 
     public PatternGenerator(EventSequence eventSequence,
-                            List<InvariantsParser.TermContext> terms,
+                            List<InvariantsParser.TermContext> whereClauseTerms,
+                            List<InvariantsParser.TermContext> fullMatchTerms,
                             Map<String, String> id2Type,
                             Map<String, Map<String, String>> schemata,
                             Optional<Tuple2<Integer, String>> within,
@@ -73,7 +76,8 @@ public class PatternGenerator {
                             List<Tuple2<InvariantsParser.PrefixContext, InvariantsParser.Invariant_clauseContext>> onPartialMatch) {
         this.pattern = Pattern.compile(equalityRegex, Pattern.MULTILINE);
         this.eventSequence = eventSequence;
-        this.terms = terms;
+        this.whereClauseTerms = whereClauseTerms;
+        this.fullMatchTerms = fullMatchTerms;
         this.id2Type = id2Type;
         this.schemata = schemata;
         this.within = within;
@@ -82,21 +86,6 @@ public class PatternGenerator {
     }
 
 
-    private void generateProcessFunctionBody() {
-        if (onFullMatch.isEmpty()) {
-            fullMatchCodeBuilder.append("return;");
-            return;
-        }
-
-        var invariantClause = onFullMatch.get();
-        if (invariantClause.BOOL() != null) {
-            fullMatchCodeBuilder.append(String.format("if(!%s) { collector.collect(map.toString()); } ",
-                    invariantClause.BOOL().getText()));
-        }
-
-        invariantClause.where_clause().term();
-
-    }
 
     public String generatePattern() {
 
@@ -156,7 +145,12 @@ public class PatternGenerator {
     }
 
     private String getProccessTimeOutBody() {
-        return "";
+        return
+                """
+                @Override
+                public void processTimedOutMatch(Map<String, List<Event>> map, Context context) {
+                }
+                """;
     }
 
     private Tuple2<String, List<String>> getProcessFunctionBody() {
@@ -179,7 +173,7 @@ public class PatternGenerator {
             return new Tuple2<>(String.format(temp, "return;"), List.of());
         }
 
-        var translatedTerms = invariantClause.where_clause().term().stream().map(t -> translateTermFromInvariant(t)).collect(Collectors.toList());
+        var translatedTerms = fullMatchTerms.stream().map(t -> translateTermFromInvariant(t)).collect(Collectors.toList());
         var fullInvariantExpression = translatedTerms.stream().map(tuple -> "(" + tuple.f0 + ")").collect(Collectors.joining(" && "));
 
         var toDefineLater = translatedTerms.stream().map(tuple -> tuple.f1).flatMap(List::stream).collect(Collectors.toList());
@@ -222,7 +216,7 @@ public class PatternGenerator {
         addSimpleConditionForNode(node, id2Type);
 
         if (requiresImmediateWhereClause(node)) {
-            var functions = terms.stream()
+            var functions = whereClauseTerms.stream()
                     .filter(term -> getReferencedEventIds(term).contains(node.eventIds.get(0)))
                     .map(term -> translateTermFromWhereClause(node, term))
                     .flatMap(List::stream)
@@ -237,7 +231,7 @@ public class PatternGenerator {
                     .filter(this::requiresImmediateWhereClause)
                     .collect(Collectors.toList());
 
-            var functions = terms.stream()
+            var functions = whereClauseTerms.stream()
                     .filter(term -> !doesReferenceNodeToExclude(term, nodesToExclude))
                     .map(term -> translateTermFromWhereClause(node, term))
                     .flatMap(List::stream)
@@ -527,7 +521,7 @@ public class PatternGenerator {
         var functionName = "__" + java.util.UUID.randomUUID().toString().substring(0, 8);
         var functionBody = String.format(
                 """
-                boolean %s(Event event, IterativeCondition.Context<Event> context) {
+                static boolean %s(Event event, IterativeCondition.Context<Event> context) {
                         %s
                         %s
                         %s

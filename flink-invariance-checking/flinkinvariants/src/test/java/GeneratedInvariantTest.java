@@ -1,3 +1,4 @@
+import org.apache.flink.cep.pattern.Pattern;
 import org.apache.flink.runtime.testutils.MiniClusterResourceConfiguration;
 import org.apache.flink.streaming.api.datastream.DataStreamSource;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
@@ -9,16 +10,14 @@ import org.myorg.flinkinvariants.events.Event;
 import org.myorg.flinkinvariants.invariantlanguage.InvariantChecker;
 import org.myorg.flinkinvariants.invariantlanguage.InvariantTranslator;
 import org.myorg.flinkinvariants.invariantlanguage.PatternGenerator;
+import org.myorg.flinkinvariants.invariantlanguage.testGeneratedInvariant_4;
 
-import javax.tools.JavaCompiler;
-import javax.tools.ToolProvider;
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
-import java.io.FileWriter;
-import java.io.IOException;
+import javax.tools.*;
+import java.io.*;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.*;
+import java.util.regex.Matcher;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -116,7 +115,7 @@ public class GeneratedInvariantTest {
                 new Event("A", """
                 {"id": 1, "x": "2", "price": 52, "hasFlag": true}"""),
                 new Event("B", """
-                {"id": 2, "x": "2"}"""),
+                {"id": 2, "x": "1"}"""),
                 new Event("C", """
                 {"id": 1, "hasFlag": false}""")
         );
@@ -152,7 +151,7 @@ public class GeneratedInvariantTest {
                 new Event("B", """
                 {"id": 1, "x": "2"}"""),
                 new Event("C", """
-                {"id": 1, "x": "2"}"""),
+                {"id": 1, "hasFlag": true}"""),
                 new Event("B", """
                 {"id": 1, "x": "2"}"""),
                 new Event("C", """
@@ -161,6 +160,16 @@ public class GeneratedInvariantTest {
                 {"id": 1}"""));
 
         executeTestInvariant(invariantQuery, events, "testGeneratedInvariant_3");
+        // expecting only 1 match
+        assertEquals(1, ViolationSink.values.size());
+
+        // all B and C events should be present
+        var patternB = java.util.regex.Pattern.compile("Type='B'");
+        var patternC = java.util.regex.Pattern.compile("Type='C'");
+        Matcher matcherB = patternB.matcher(ViolationSink.values.get(0));
+        Matcher matcherC = patternC.matcher(ViolationSink.values.get(0));
+        assertEquals(2, matcherB.results().count());
+        assertEquals(2, matcherC.results().count());
     }
 
 
@@ -181,37 +190,40 @@ public class GeneratedInvariantTest {
                   topic: d-topic
                   schema: {id:string}
                                
-                SEQ (a, (b|c)+, d)
+                SEQ (a, b, !c, d)
                 WITHIN 1 sec
-                WHERE (a.id = b.id) AND (c.id = a.id)
-                ON FULL MATCH (a.id != d.id) AND (b.id = a.id)""";
+                WHERE (c.id = a.id)
+                ON FULL MATCH (a.id != d.id)""";
         var events = List.of(
                 new Event("A", """
                 {"id": 1, "x": "2", "price": 52, "hasFlag": true}"""),
                 new Event("B", """
                 {"id": 1, "x": "2"}"""),
                 new Event("C", """
-                {"id": 1, "x": "2"}"""),
-                new Event("B", """
-                {"id": 1, "x": "2"}"""),
-                new Event("C", """
-                {"id": 1, "hasFlag": false}"""),
+                {"id": 2, "hasFlag": true}"""),
                 new Event("D", """
                 {"id": 1}"""));
 
         executeTestInvariant(invariantQuery, events, "testGeneratedInvariant_4");
+
+        assertEquals(1, ViolationSink.values.size());
+    }
+
+    private void debugTestInvariant(InvariantChecker invariantChecker, List<Event> events) throws Exception {
+        final StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
+        var stream = env.fromElements(events.toArray(new Event[0]));
+        invariantChecker.checkInvariant(env, stream, new ViolationSink());
     }
 
 
-    private void executeTestInvariant(String invariantQuery, List<Event> events, String fileName) throws Exception {
-        final StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
-        var stream = env.fromElements(events.toArray(new Event[0]));
+    private Optional<InvariantChecker> translateTestInvariant(String invariantQuery, String invariantName) throws Exception {
         var translator = new InvariantTranslator();
         var translationResult = translator.translateQuery(invariantQuery, null, null);
 
         var patternGenerator = new PatternGenerator(
                 translationResult.sequence,
                 translationResult.whereClauseTerms,
+                translationResult.fullMatchTerms,
                 translationResult.id2Type,
                 translationResult.schemata,
                 translationResult.within,
@@ -220,55 +232,77 @@ public class GeneratedInvariantTest {
         var pattern = patternGenerator.generatePattern();
         var processMatchCode = patternGenerator.generateInvariants();
 
-        runInvariant(env, stream, pattern, fileName);
-    }
-
-
-
-
-
-    private void runInvariant(StreamExecutionEnvironment env, DataStreamSource<Event> stream, String pattern, String invariantName) throws Exception {
-        var destDir = "src/main/java/org/myorg/flinkinvariants/invariantlanguage/";
-        var invariantFile = String.format(destDir + "%s.java"
-                , invariantName);
-        Map<String, String> substitution = new HashMap<>();
-        substitution.put("public Pattern<Event, ?> invariant;",
-                "public Pattern<Event, ?> invariant = \n" + pattern);
-        substitution.put(
-                "public class TestInvariantTemplate implements InvariantChecker {",
-                String.format("public class %s implements InvariantChecker {", invariantName)
-        );
-
-        createTestInvariantFile(invariantFile, substitution);
+        createTestInvariantFile(pattern, processMatchCode, invariantName);
 
         // Compile source file.
         JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
-        compiler.run(null, null, null, invariantFile);
+        StandardJavaFileManager fileManager = compiler.getStandardFileManager(null, null, null);
+        var filePath = String.format("src/main/java/org/myorg/flinkinvariants/invariantlanguage/%s.java", invariantName);
 
-        // Load and instantiate compiled class.
-        URLClassLoader classLoader = URLClassLoader.newInstance(new URL[] {});
-        Class<?> cls = Class.forName("org.myorg.flinkinvariants.invariantlanguage." + invariantName, true, classLoader);
+        Iterable<? extends JavaFileObject> compilationUnit
+                = fileManager.getJavaFileObjectsFromFiles(Arrays.asList(new File(filePath)));
+        JavaCompiler.CompilationTask task = compiler.getTask(
+                null,
+                null,
+                null,
+                null,
+                null,
+                compilationUnit);
+        if (task.call()) {
+            // Create a new custom class loader, pointing to the directory that contains the compiled
+            // classes, this should point to the top of the package structure!
+            URLClassLoader classLoader = new URLClassLoader(new URL[]{new File("src/main/java").toURI().toURL()});
 
-        InvariantChecker invariantChecker = (InvariantChecker) cls.getDeclaredConstructor().newInstance();
+            // Load the class from the classloader by name....
+            Class<?> loadedClass = classLoader.loadClass("org.myorg.flinkinvariants.invariantlanguage." + invariantName);
+            // Create a new instance...
+            InvariantChecker invariantChecker = (InvariantChecker) loadedClass.getDeclaredConstructor().newInstance();
+            return Optional.of(invariantChecker);
+        }
+        return Optional.empty();
+    }
 
+
+    private void runTestInvariant(InvariantChecker invariantChecker, List<Event> events) throws Exception {
+        final StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
+        var stream = env.fromElements(events.toArray(new Event[0]));
 
         ViolationSink.values.clear();
         invariantChecker.checkInvariant(env, stream, new ViolationSink());
     }
 
+    private void executeTestInvariant(String invariantQuery, List<Event> events, String invariantName) throws Exception {
+        var invariantChecker = translateTestInvariant(invariantQuery, invariantName).get();
+        runTestInvariant(invariantChecker, events);
+    }
 
-    private void createTestInvariantFile(String outputFile, Map<String, String> substitions) {
+
+    private void createTestInvariantFile(String pattern, String processMatchCode, String invariantName) {
         String inputFile =
                 "src/main/java/org/myorg/flinkinvariants/invariantlanguage/TestInvariantTemplate.java";
 
+        var destDir = "src/main/java/org/myorg/flinkinvariants/invariantlanguage/";
+        var invariantFile = String.format(destDir + "%s.java"
+                , invariantName);
+
+        Map<String, String> substitutions = new HashMap<>();
+        substitutions.put("public Pattern<Event, ?> invariant;",
+                "public Pattern<Event, ?> invariant = \n" + pattern);
+        substitutions.put(
+                "public class TestInvariantTemplate implements InvariantChecker {",
+                String.format("public class %s implements InvariantChecker {", invariantName)
+        );
+        substitutions.put(";// ${process}", ".process(new MyPatternProcessFunction())\n.addSink(sinkFunction);");
+        substitutions.put("// ${MyPatternProcessFunction}", processMatchCode);
+
         try {
-            BufferedReader reader = new BufferedReader(new java.io.FileReader(inputFile));
-            BufferedWriter writer = new BufferedWriter(new FileWriter(outputFile));
+            BufferedReader reader = new BufferedReader(new FileReader(inputFile));
+            BufferedWriter writer = new BufferedWriter(new FileWriter(invariantFile));
             String line = reader.readLine();
             while (line != null) {
-                for (var key : substitions.keySet()) {
+                for (var key : substitutions.keySet()) {
                     if (line.contains(key)) {
-                        line = substitions.get(key);
+                        line = substitutions.get(key);
                     }
                 }
                 writer.write(line);

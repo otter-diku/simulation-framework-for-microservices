@@ -24,7 +24,7 @@ prefix
 any: 'ANY';
 
 invariant_clause
-  : where_clause
+  : lpar term rpar (and lpar term rpar)*
   | BOOL
   ;
 

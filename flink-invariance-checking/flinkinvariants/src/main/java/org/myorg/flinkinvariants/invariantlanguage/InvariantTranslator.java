@@ -26,6 +26,8 @@ public class InvariantTranslator {
 
         private final EventSequence sequence = new EventSequence();
         private final List<InvariantsParser.TermContext> whereClauseTerms = new ArrayList<>();
+
+        private final List<InvariantsParser.TermContext> invariantClauseTerms = new ArrayList<>();
         private Optional<InvariantsParser.Invariant_clauseContext> onFullMatch = null;
         private Optional<Tuple2<Integer, String>> within = null;
         private List<Tuple2<InvariantsParser.PrefixContext, InvariantsParser.Invariant_clauseContext>> onPartialMatch = new ArrayList<>();
@@ -59,6 +61,23 @@ public class InvariantTranslator {
                 // 2. save/serialize/whatever the term to use it later
                 if (validateTerm(term)) {
                     whereClauseTerms.add(term);
+                }
+                else {
+                    semanticAnalysisFailed = true;
+                }
+            }
+        }
+
+        @Override
+        public void enterInvariant_clause(InvariantsParser.Invariant_clauseContext ctx) {
+            var terms = ctx.term();
+
+            for (var term : terms) {
+                // 1. go inside each term and see if it references the negated event
+                // 1a. if yes, make sure that the term does not reference any event ID that is not seen before the negated event
+                // 2. save/serialize/whatever the term to use it later
+                if (validateTerm(term)) {
+                    invariantClauseTerms.add(term);
                 }
                 else {
                     semanticAnalysisFailed = true;
@@ -331,6 +350,7 @@ public class InvariantTranslator {
                 translator.schemata,
                 translator.sequence,
                 translator.whereClauseTerms,
+                translator.invariantClauseTerms,
                 translator.within,
                 translator.onFullMatch,
                 translator.onPartialMatch);
