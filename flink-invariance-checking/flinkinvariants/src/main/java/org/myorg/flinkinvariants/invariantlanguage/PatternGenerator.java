@@ -54,13 +54,11 @@ public class PatternGenerator {
     private final EventSequence eventSequence;
     private final List<InvariantsParser.TermContext> whereClauseTerms;
 
-    private final List<InvariantsParser.TermContext> fullMatchTerms;
-
     private final Map<String, String> id2Type;
     private final Map<String, Map<String, String>> schemata;
     private final Optional<Tuple2<Integer, String>> within;
     private final Optional<InvariantsParser.Invariant_clauseContext> onFullMatch;
-    private List<Tuple2<InvariantsParser.PrefixContext, InvariantsParser.Invariant_clauseContext>> onPartialMatch;
+    private List<Tuple2<InvariantsParser.PrefixContext, InvariantsParser.Invariant_clauseContext>> onPrefixMatch;
     private final StringBuilder patternCodeBuilder = new StringBuilder();
     private final StringBuilder fullMatchCodeBuilder = new StringBuilder();
     private final StringBuilder prefixMatchCodeBuilder = new StringBuilder();
@@ -68,7 +66,6 @@ public class PatternGenerator {
 
     public PatternGenerator(EventSequence eventSequence,
                             List<InvariantsParser.TermContext> whereClauseTerms,
-                            List<InvariantsParser.TermContext> fullMatchTerms,
                             Map<String, String> id2Type,
                             Map<String, Map<String, String>> schemata,
                             Optional<Tuple2<Integer, String>> within,
@@ -77,12 +74,11 @@ public class PatternGenerator {
         this.pattern = Pattern.compile(equalityRegex, Pattern.MULTILINE);
         this.eventSequence = eventSequence;
         this.whereClauseTerms = whereClauseTerms;
-        this.fullMatchTerms = fullMatchTerms;
         this.id2Type = id2Type;
         this.schemata = schemata;
         this.within = within;
         this.onFullMatch = onFullMatch;
-        this.onPartialMatch = onPartialMatch;
+        this.onPrefixMatch = onPartialMatch;
     }
 
 
@@ -124,9 +120,8 @@ public class PatternGenerator {
     public String generateInvariants() {
         var sb = new StringBuilder();
 
-        String processTimeOutBody = getProccessTimeOutBody();
+        var processTimeOutBody = getProcessTimeOutBody();
         var processFunctionBody = getProcessFunctionBody();
-
 
         sb.append(String.format("""
         private static final OutputTag<String> outputTag = new OutputTag<>("timeoutMatch") {};
@@ -138,19 +133,53 @@ public class PatternGenerator {
             %s
         }
         """, processFunctionBody.f0,
-             processTimeOutBody));
+             processTimeOutBody.f0));
 
         processFunctionBody.f1.forEach(functionBody -> sb.append(functionBody).append("\n"));
+        processTimeOutBody.f1.forEach(functionBody -> sb.append(functionBody).append("\n"));
         return sb.toString();
     }
 
-    private String getProccessTimeOutBody() {
-        return
+    private Tuple2<String, List<String>> getProcessTimeOutBody() {
+        var temp =
                 """
                 @Override
                 public void processTimedOutMatch(Map<String, List<Event>> map, Context context) {
+                  %s
                 }
                 """;
+        if (onPrefixMatch.isEmpty()) {
+            return new Tuple2<>(String.format(temp, "return;"), List.of());
+        }
+
+        var anyPrefix = onPrefixMatch.stream().filter(tuple -> tuple.f0.any() != null).collect(Collectors.toList());
+
+        if (anyPrefix.size() > 1) {
+            throw new RuntimeException("ERROR: more than one PREFIX MATCH ANY.");
+        }
+
+        if (anyPrefix.size() == 1) {
+            // generate code for single ANY prefix
+            var invariantClause = anyPrefix.get(0).f1;
+
+            if (invariantClause.BOOL() != null) {
+                if (invariantClause.BOOL().getText().equals("false")) {
+                    return new Tuple2<>(String.format(temp, "context.output(outputTag, map.toString());"), List.of());
+                }
+                return new Tuple2<>(String.format(temp, "return;"), List.of());
+            }
+
+            var translatedTerms = invariantClause.term().stream()
+                    .map(this::translateTermFromInvariant).collect(Collectors.toList());
+            var invariantCode = createInvariantCode(translatedTerms);
+            var processTimeout = String.format(temp, String.format("if(!(%s)) { context.output(outputTag, map.toString()); }",
+                    invariantCode.f0));
+
+            return new Tuple2<>(processTimeout, invariantCode.f1);
+        } else {
+            // TODO: need code for distinguishing different prefix cases
+            return new Tuple2<>(String.format(temp, "return;"), List.of());
+        }
     }
 
     private Tuple2<String, List<String>> getProcessFunctionBody() {
@@ -173,13 +202,18 @@ public class PatternGenerator {
             return new Tuple2<>(String.format(temp, "return;"), List.of());
         }
 
-        var translatedTerms = fullMatchTerms.stream().map(t -> translateTermFromInvariant(t)).collect(Collectors.toList());
+        var translatedTerms = invariantClause.term().stream().map(this::translateTermFromInvariant).collect(Collectors.toList());
+        var invariantCode = createInvariantCode(translatedTerms);
+        var processMatch = String.format(temp, String.format("if(!(%s)) { collector.collect(map.toString()); }",
+                invariantCode.f0));
+        return new Tuple2<>(processMatch, invariantCode.f1);
+    }
+
+    private Tuple2<String, List<String>> createInvariantCode(List<Tuple2<String, List<String>>> translatedTerms) {
         var fullInvariantExpression = translatedTerms.stream().map(tuple -> "(" + tuple.f0 + ")").collect(Collectors.joining(" && "));
 
-        var toDefineLater = translatedTerms.stream().map(tuple -> tuple.f1).flatMap(List::stream).collect(Collectors.toList());
-        var processMatch = String.format(temp, String.format("if(!(%s)) { collector.collect(map.toString()); }",
-                fullInvariantExpression));
-        return new Tuple2<>(processMatch, toDefineLater);
+        var helperFunctions = translatedTerms.stream().map(tuple -> tuple.f1).flatMap(List::stream).collect(Collectors.toList());
+        return new Tuple2<>(fullInvariantExpression, helperFunctions);
     }
 
     private void addWithin(Tuple2<Integer, String> tuple) {
@@ -397,6 +431,7 @@ public class PatternGenerator {
         //       easiest may be to wrap atom in list?
         var compareLists = String.format(
             """
+            if (%s.isEmpty() || %s.isEmpty()) {return false;}
             for (var elemL : %s) {
               for (var elemR : %s) {
                   if(!(%s)) {
@@ -405,7 +440,8 @@ public class PatternGenerator {
               }
             }
             return true;
-            """, String.format("%s.get()", lhs), String.format("%s.get()", rhs), comparisonCode);
+            """, String.format("%s.get()", lhs), String.format("%s.get()", rhs),
+                String.format("%s.get()", lhs), String.format("%s.get()", rhs), comparisonCode);
         sb.append(
                 String.format(
                         """

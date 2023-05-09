@@ -9,6 +9,8 @@ import org.junit.ClassRule;
 import org.junit.Test;
 import org.myorg.flinkinvariants.events.Event;
 import org.myorg.flinkinvariants.invariantlanguage.*;
+import org.myorg.flinkinvariants.invariantlanguage.generated.testGeneratedInvariant_10;
+import org.myorg.flinkinvariants.invariantlanguage.generated.testGeneratedInvariant_11;
 
 import javax.tools.*;
 import java.io.*;
@@ -354,6 +356,161 @@ public class GeneratedInvariantTest {
                 .anyMatch(s -> s.contains("Switzerland")));
     }
 
+    @Test
+    public void testGeneratedInvariant_9() throws Exception {
+        // NOTE: awkward within timing due to processing time, test might fail
+        var invariantQuery =
+                """
+                OrderSubmitted os
+                  topic: eshop_event_bus
+                  schema: {orderId:number}
+                PaymentSucceeded ps
+                  topic: eshop_event_bus
+                  schema: {orderId:number}
+                PaymentFailed pf
+                  topic: eshop_event_bus
+                  schema: {orderId:number}
+
+                SEQ (os, (ps | pf))
+                WITHIN 20 milli
+                WHERE (os.orderId = ps.orderId OR
+                      os.orderId = pf.orderId)
+                ON PREFIX MATCH ANY false""";
+        var events = List.of(
+                new Event("OrderSubmitted", """
+                {"orderId": 3}"""),
+                new Event("OrderSubmitted", """
+                {"orderId": 1}"""),
+                new Event("OrderSubmitted", """
+                {"orderId": 2}"""),
+                new Event("PaymentSucceeded", """
+                {"orderId": 1}"""),
+                new Event("PaymentFailed", """
+                {"orderId": 2}"""),
+                new Event("PaymentSucceeded", """
+                        {"orderId": 42, "total_cost": 1}"""),
+                new Event("PaymentSucceeded", """
+                        {"orderId": 43, "total_cost": 1}"""),
+                new Event("PaymentSucceeded", """
+                        {"orderId": 44, "total_cost": 1}"""),
+                new Event("PaymentSucceeded", """
+                        {"orderId": 45, "total_cost": 1}""")
+
+        );
+
+        executeTestInvariant(invariantQuery, events, "testGeneratedInvariant_9");
+
+        assertEquals(1, ViolationSink.values.size());
+    }
+
+    @Test
+    public void testGeneratedInvariant_10() throws Exception {
+        var invariantQuery =
+                """
+                OrderSubmitted os
+                  topic: eshop_event_bus
+                  schema: {orderId:number, total_cost:number}
+                PaymentSucceeded ps
+                  topic: eshop_event_bus
+                  schema: {orderId:number, total_cost:number}
+                PaymentFailed pf
+                  topic: eshop_event_bus
+                  schema: {orderId:number, total_cost:number}
+
+                SEQ (os, (ps | pf))
+                WITHIN 1 milli
+                WHERE (os.orderId = ps.orderId OR
+                      os.orderId = pf.orderId)
+                ON PREFIX MATCH ANY (os.total_cost > 1)
+                """;
+        var events = List.of(
+                new Event("OrderSubmitted", """
+                        {"orderId": 2, "total_cost": -12}"""),
+                new Event("OrderSubmitted", """
+                        {"orderId": 1, "total_cost": 337}""")
+        );
+        executeTestInvariant(invariantQuery, events, "testGeneratedInvariant_10");
+        assertEquals(1, ViolationSink.values.size());
+    }
+
+    @Test
+    public void testGeneratedInvariant_11() throws Exception {
+        // NOTE: this tests if we get correct number of violations from FULL match
+        //       and PREFIX match, but since we are using processing time
+        //       the within time limit is a bit awkward, and could event have different results
+        //       on different machines
+        var invariantQuery =
+                """
+                OrderSubmitted os
+                  topic: eshop_event_bus
+                  schema: {orderId:number, total_cost:number}
+                PaymentSucceeded ps
+                  topic: eshop_event_bus
+                  schema: {orderId:number, total_cost:number}
+                PaymentFailed pf
+                  topic: eshop_event_bus
+                  schema: {orderId:number, total_cost:number}
+
+                SEQ (os, (ps | pf))
+                WITHIN 20 milli
+                WHERE (os.orderId = ps.orderId OR
+                      os.orderId = pf.orderId)
+                ON FULL MATCH (os.total_cost = ps.total_cost OR os.total_cost = pf.total_cost)
+                ON PREFIX MATCH ANY (os.total_cost > 1)
+                """;
+        var events = List.of(
+                new Event("OrderSubmitted", """
+                        {"orderId": 2, "total_cost": -12}"""),
+                new Event("OrderSubmitted", """
+                        {"orderId": 1, "total_cost": 335}"""),
+                new Event("PaymentSucceeded", """
+                        {"orderId": 1, "total_cost": 336}"""),
+                new Event("PaymentSucceeded", """
+                        {"orderId": 42, "total_cost": 1}"""),
+                new Event("PaymentSucceeded", """
+                        {"orderId": 43, "total_cost": 1}"""),
+                new Event("PaymentSucceeded", """
+                        {"orderId": 44, "total_cost": 1}"""),
+                new Event("PaymentSucceeded", """
+                        {"orderId": 45, "total_cost": 1}"""),
+                new Event("PaymentSucceeded", """
+                        {"orderId": 46, "total_cost": 1}""")
+                );
+        executeTestInvariant(invariantQuery, events, "testGeneratedInvariant_11");
+        assertEquals(2, ViolationSink.values.size());
+    }
+
+    @Test
+    public void testGeneratedInvariant_12() throws Exception {
+        // TODO: test negative number atom
+        var invariantQuery =
+                """
+                OrderSubmitted os
+                  topic: eshop_event_bus
+                  schema: {orderId:number, total_cost:number}
+                PaymentSucceeded ps
+                  topic: eshop_event_bus
+                  schema: {orderId:number, total_cost:number}
+                PaymentFailed pf
+                  topic: eshop_event_bus
+                  schema: {orderId:number, total_cost:number}
+
+                SEQ (os, (ps, pf))
+                WITHIN 1 milli
+                WHERE (os.orderId = ps.orderId OR
+                      os.orderId = pf.orderId)
+                ON PREFIX MATCH ANY (os.total_cost > -10)
+                """;
+        var events = List.of(
+                new Event("OrderSubmitted", """
+                        {"orderId": 1, "total_cost": 337}"""),
+                new Event("OrderSubmitted", """
+                        {"orderId": 2, "total_cost": -12}""")
+        );
+        executeTestInvariant(invariantQuery, events, "testGeneratedInvariant_12");
+        assertEquals(1, ViolationSink.values.size());
+    }
+
 
     private void debugTestInvariant(InvariantChecker invariantChecker, List<Event> events) throws Exception {
         final StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
@@ -369,7 +526,6 @@ public class GeneratedInvariantTest {
         var patternGenerator = new PatternGenerator(
                 translationResult.sequence,
                 translationResult.whereClauseTerms,
-                translationResult.fullMatchTerms,
                 translationResult.id2Type,
                 translationResult.schemata,
                 translationResult.within,
@@ -444,7 +600,11 @@ public class GeneratedInvariantTest {
         substitutions.put("package org.myorg.flinkinvariants.invariantlanguage;",
                 "package " + GENERATED_INVARIANT_NAMESPACE + ";");
 
-        substitutions.put(";// ${process}", ".process(new MyPatternProcessFunction())\n.addSink(sinkFunction);");
+        substitutions.put(";// ${process}", """
+                .process(new MyPatternProcessFunction());
+                matches.getSideOutput(outputTag).addSink(sinkFunction);
+                matches.addSink(sinkFunction);
+                """);
         substitutions.put("// ${MyPatternProcessFunction}", processMatchCode);
 
         try {
