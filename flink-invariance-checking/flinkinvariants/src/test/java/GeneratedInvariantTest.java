@@ -482,7 +482,7 @@ public class GeneratedInvariantTest {
 
     @Test
     public void testGeneratedInvariant_12() throws Exception {
-        // TODO: test negative number atom
+        // test negative number atom
         var invariantQuery =
                 """
                 OrderSubmitted os
@@ -495,7 +495,7 @@ public class GeneratedInvariantTest {
                   topic: eshop_event_bus
                   schema: {orderId:number, total_cost:number}
 
-                SEQ (os, (ps, pf))
+                SEQ (os, ps, pf)
                 WITHIN 1 milli
                 WHERE (os.orderId = ps.orderId OR
                       os.orderId = pf.orderId)
@@ -505,7 +505,9 @@ public class GeneratedInvariantTest {
                 new Event("OrderSubmitted", """
                         {"orderId": 1, "total_cost": 337}"""),
                 new Event("OrderSubmitted", """
-                        {"orderId": 2, "total_cost": -12}""")
+                        {"orderId": 2, "total_cost": -12}"""),
+                new Event("PaymentSucceeded", """
+                        {"orderId": 3, "total_cost": 1}""")
         );
         executeTestInvariant(invariantQuery, events, "testGeneratedInvariant_12");
         assertEquals(1, ViolationSink.values.size());

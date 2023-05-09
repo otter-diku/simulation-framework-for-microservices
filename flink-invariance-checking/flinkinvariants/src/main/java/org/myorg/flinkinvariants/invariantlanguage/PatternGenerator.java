@@ -731,7 +731,8 @@ public class PatternGenerator {
     }
     private Boolean isNumberAtom(String atom) {
         return (atom.charAt(0) >= '0' && atom.charAt(0) <= '9')
-                || (atom.charAt(0) == '.');
+                || (atom.charAt(0) == '.')
+                || (atom.charAt(0) == '-' && atom.charAt(1) >= '0' && atom.charAt(1) <= '9');
     }
     private Boolean isStringAtom(String atom) {
         return atom.startsWith("'") && atom.endsWith("'");

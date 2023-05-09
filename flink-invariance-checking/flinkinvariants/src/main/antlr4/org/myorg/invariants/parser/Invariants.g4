@@ -93,8 +93,8 @@ equality
   : quantity EQ_OP quantity;
 
 quantity
-    : qualifiedName
-    | atom
+    : atom
+    | qualifiedName
     ;
 
 atom
@@ -102,6 +102,7 @@ atom
     | INT
     | STRING
     ;
+
 
 qualifiedName
     : IDENTIFIER ('.' IDENTIFIER)*
@@ -114,7 +115,7 @@ and: 'AND';
 or: 'OR';
 
 EQ_OP: '=' | '!=' | '<' | '<=' | '>' | '>=';
-INT: [0-9]+;
+INT: '-'?[0-9]+;
 STRING: '\'' IDENTIFIER '\'';
 TIME
     : 'milli'
