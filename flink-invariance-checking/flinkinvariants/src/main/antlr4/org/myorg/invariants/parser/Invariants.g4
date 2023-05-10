@@ -1,17 +1,17 @@
 grammar Invariants;
 
-invariant: eventDefinition* query;
+invariant: eventDefinition* query EOF;
 
 query
    : 'SEQ' '(' events ')' '\n'?
      ('WITHIN' time)? '\n'?
      ('WHERE' where_clause)? '\n'?
      on_full_match '\n'?
-     (on_prefix_match)* '\n'?
+     (on_prefix_match '\n'?)*
    | 'SEQ' '(' events ')' '\n'?
      ('WITHIN' time)? '\n'?
      ('WHERE' where_clause)? '\n'?
-     (on_prefix_match)+ '\n'?
+     (on_prefix_match '\n'?)+
    ;
 
 on_full_match: 'ON FULL MATCH' invariant_clause;
