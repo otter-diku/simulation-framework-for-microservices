@@ -7,6 +7,7 @@ import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class PatternGenerator {
 
@@ -154,9 +155,22 @@ public class PatternGenerator {
 
         var anyPrefix = onPrefixMatch.stream().filter(tuple -> tuple.f0.any() != null).collect(Collectors.toList());
 
-        if (anyPrefix.size() > 1) {
-            throw new RuntimeException("ERROR: more than one PREFIX MATCH ANY.");
+        var seenPrefixes = new HashSet<String>();
+        for (var prefix : onPrefixMatch) {
+            if (!isValidPrefix(prefix.f0)) {
+                throw new RuntimeException("Invalid prefix: " + prefix.f0.getText());
+            }
+
+            if (seenPrefixes.contains(prefix.f0.getText())) {
+                throw new RuntimeException("Prefix already defined " + prefix.f0.getText());
+            }
+
+            seenPrefixes.add(prefix.f0.getText());
+
+
         }
+
+
 
         if (anyPrefix.size() == 1) {
             // generate code for single ANY prefix
@@ -180,6 +194,50 @@ public class PatternGenerator {
             // TODO: need code for distinguishing different prefix cases
             return new Tuple2<>(String.format(temp, "return;"), List.of());
         }
+    }
+
+    private boolean isValidPrefix(InvariantsParser.PrefixContext f0) {
+        if (f0.any() != null) return true;
+
+        List<SequenceNode> sequence = eventSequence
+                .getSequence()
+                .stream()
+                .filter(e -> !e.negated)
+                .collect(Collectors.toList());
+
+        for (int i = 0; i < sequence.size(); i++) {
+            var sequenceNode = sequence.get(i);
+            var event = f0.events().event(i);
+
+            var sortedEventIdsInSequenceNode = sequenceNode.eventIds.stream().sorted().collect(Collectors.toList());
+            var sortedEventIdsInPrefixNode = new ArrayList<String>();
+
+            if (event.eventAtom() != null) {
+                sortedEventIdsInPrefixNode.add(event.eventAtom().getText());
+            } else {
+                var temp = event.orOperator().eventId()
+                        .stream()
+                        .map(eId -> eId.IDENTIFIER().getText())
+                        .sorted()
+                        .collect(Collectors.toList());
+
+                sortedEventIdsInPrefixNode.addAll(temp);
+            }
+
+            if (sortedEventIdsInSequenceNode.size() != sortedEventIdsInPrefixNode.size()) {
+                return false;
+            }
+
+            for (int j = 0; j < sortedEventIdsInSequenceNode.size(); j++) {
+                var seqEvent = sortedEventIdsInSequenceNode.get(j);
+                var prefixEvent  = sortedEventIdsInPrefixNode.get(j);
+                if (!seqEvent.equals(prefixEvent)) {
+                    return false;
+                }
+            }
+        }
+
+        return true;
     }
 
     private Tuple2<String, List<String>> getProcessFunctionBody() {
