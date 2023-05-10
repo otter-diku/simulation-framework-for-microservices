@@ -21,9 +21,6 @@ public class EventSequence {
     private final List<SequenceNode> sequence = new ArrayList<>();
 
     public boolean addNode(SequenceNode node) {
-        // TODO: This constraint seems to make sense at the moment, given the restrictive syntax for `SEQ (...)`
-        // TODO: Double check this is correct though.
-
         var duplicateIds = node.eventIds
                 .stream()
                 .filter(eId -> eventIds.containsKey(eId))
