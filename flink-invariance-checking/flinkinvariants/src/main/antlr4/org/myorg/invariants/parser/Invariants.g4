@@ -18,10 +18,10 @@ on_full_match: 'ON FULL MATCH' invariant_clause;
 on_prefix_match: 'ON PREFIX MATCH' prefix invariant_clause;
 
 prefix
-    : any
+    : default_prefix
     | '(' events ')';
 
-any: 'ANY';
+default_prefix: 'DEFAULT';
 
 invariant_clause
   : lpar term rpar (and lpar term rpar)*

@@ -373,7 +373,7 @@ public class GeneratedInvariantTest {
                 WITHIN 20 msec
                 WHERE (os.orderId = ps.orderId OR
                       os.orderId = pf.orderId)
-                ON PREFIX MATCH ANY false""";
+                ON PREFIX MATCH DEFAULT false""";
         var events = List.of(
                 new Event("OrderSubmitted", """
                 {"orderId": 3}"""),
@@ -419,7 +419,7 @@ public class GeneratedInvariantTest {
                 WITHIN 1 msec
                 WHERE (os.orderId = ps.orderId OR
                       os.orderId = pf.orderId)
-                ON PREFIX MATCH ANY (os.total_cost > 1)
+                ON PREFIX MATCH DEFAULT (os.total_cost > 1)
                 """;
         var events = List.of(
                 new Event("OrderSubmitted", """
@@ -466,7 +466,7 @@ public class GeneratedInvariantTest {
                 WHERE (os.orderId = ps.orderId OR
                       os.orderId = pf.orderId)
                 ON FULL MATCH (os.total_cost = ps.total_cost OR os.total_cost = pf.total_cost)
-                ON PREFIX MATCH ANY (os.total_cost > 1)
+                ON PREFIX MATCH DEFAULT (os.total_cost > 1)
                 """;
         var events = List.of(
                 new Event("OrderSubmitted", """
@@ -509,7 +509,7 @@ public class GeneratedInvariantTest {
                 WITHIN 1 msec
                 WHERE (os.orderId = ps.orderId OR
                       os.orderId = pf.orderId)
-                ON PREFIX MATCH ANY (os.total_cost > -10)
+                ON PREFIX MATCH DEFAULT (os.total_cost > -10)
                 """;
         var events = List.of(
                 new Event("OrderSubmitted", """
