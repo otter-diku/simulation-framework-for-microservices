@@ -5,8 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import org.apache.flink.streaming.api.datastream.DataStreamSource;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
-import org.myorg.flinkinvariants.events.EShopIntegrationEvent;
-import org.myorg.flinkinvariants.events.EShopIntegrationEventWrapper;
+import org.myorg.flinkinvariants.events.Event;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -17,33 +16,17 @@ import java.util.stream.Collectors;
 
 public class FileReader {
 
-    public static DataStreamSource<EShopIntegrationEvent> GetDataStreamSource(
+    public static DataStreamSource<Event> GetDataStreamSource(
             StreamExecutionEnvironment env, String file) {
         var list = GetEshopEventsFromFile(file);
-        return env.fromElements(list.toArray(new EShopIntegrationEvent[0]));
+        return env.fromElements(list.toArray(new Event[0]));
     }
 
-    public static List<EShopIntegrationEvent> GetEshopEventsFromFile(String file) {
+    public static List<Event> GetEshopEventsFromFile(String file) {
         try {
             String content = GetFileContentAsString(file);
             ObjectMapper objectMapper = new ObjectMapper();
-            List<EShopIntegrationEventWrapper> eventWrappers =
-                    objectMapper.readValue(
-                            content, new TypeReference<List<EShopIntegrationEventWrapper>>() {});
-
-            return eventWrappers.stream()
-                    .map(
-                            eventWrapper ->
-                                    new EShopIntegrationEvent(
-                                            eventWrapper.Type,
-                                            eventWrapper.Content,
-                                            Instant.parse(
-                                                            eventWrapper
-                                                                    .Content
-                                                                    .get("CreationDate")
-                                                                    .asText())
-                                                    .toEpochMilli()))
-                    .collect(Collectors.toList());
+            return objectMapper.readValue(content, new TypeReference<List<Event>>() {});
 
         } catch (IOException e) {
             throw new RuntimeException(e);

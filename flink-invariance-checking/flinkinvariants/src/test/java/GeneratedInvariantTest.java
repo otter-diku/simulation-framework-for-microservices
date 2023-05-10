@@ -1,6 +1,4 @@
-import org.apache.flink.cep.pattern.Pattern;
 import org.apache.flink.runtime.testutils.MiniClusterResourceConfiguration;
-import org.apache.flink.streaming.api.datastream.DataStreamSource;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.streaming.api.functions.sink.SinkFunction;
 import org.apache.flink.test.util.MiniClusterWithClientResource;
@@ -8,10 +6,14 @@ import org.jetbrains.annotations.NotNull;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.myorg.flinkinvariants.events.Event;
-import org.myorg.flinkinvariants.invariantlanguage.*;
-import org.myorg.flinkinvariants.invariantlanguage.generated.testGeneratedInvariant_13;
+import org.myorg.flinkinvariants.invariantlanguage.InvariantChecker;
+import org.myorg.flinkinvariants.invariantlanguage.InvariantTranslator;
+import org.myorg.flinkinvariants.invariantlanguage.PatternGenerator;
 
-import javax.tools.*;
+import javax.tools.JavaCompiler;
+import javax.tools.JavaFileObject;
+import javax.tools.StandardJavaFileManager;
+import javax.tools.ToolProvider;
 import java.io.*;
 import java.net.URL;
 import java.net.URLClassLoader;
@@ -371,7 +373,7 @@ public class GeneratedInvariantTest {
                   schema: {orderId:number}
 
                 SEQ (os, (ps | pf))
-                WITHIN 20 msec
+                WITHIN 30 msec
                 WHERE (os.orderId = ps.orderId OR
                       os.orderId = pf.orderId)
                 ON PREFIX MATCH DEFAULT false""";

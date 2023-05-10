@@ -14,7 +14,6 @@ public class Event {
     public Event() {
 
     }
-
     public Event(String type, JsonNode content) {
         Type = type;
         Content = content;

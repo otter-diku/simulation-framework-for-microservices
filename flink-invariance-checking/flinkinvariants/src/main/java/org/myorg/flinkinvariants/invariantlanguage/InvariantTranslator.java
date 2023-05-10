@@ -51,13 +51,9 @@ public class InvariantTranslator {
 
         @Override
         public void enterWhere_clause(InvariantsParser.Where_clauseContext ctx) {
-            // TODO: validate that conditions contain only valid event IDs
             var terms = ctx.term();
 
             for (var term : terms) {
-                // 1. go inside each term and see if it references the negated event
-                // 1a. if yes, make sure that the term does not reference any event ID that is not seen before the negated event
-                // 2. save/serialize/whatever the term to use it later
                 if (validateTerm(term)) {
                     whereClauseTerms.add(term);
                 }
@@ -72,9 +68,6 @@ public class InvariantTranslator {
             var terms = ctx.term();
 
             for (var term : terms) {
-                // 1. go inside each term and see if it references the negated event
-                // 1a. if yes, make sure that the term does not reference any event ID that is not seen before the negated event
-                // 2. save/serialize/whatever the term to use it later
                 if (!validateTerm(term)) {
                     semanticAnalysisFailed = true;
                 }
@@ -92,11 +85,6 @@ public class InvariantTranslator {
         }
 
         @Override
-        public void enterQuery(InvariantsParser.QueryContext ctx) {
-
-        }
-
-        @Override
         public void enterTime(InvariantsParser.TimeContext ctx) {
             within = Optional.of(new Tuple2<>(Integer.parseInt(ctx.INT().getText()), ctx.TIME().getText()));
         }
@@ -104,6 +92,9 @@ public class InvariantTranslator {
         private boolean validateTerm(InvariantsParser.TermContext term) {
             var referencedEventIds = getReferencedEventIds(term);
 
+            if (!referencedEventIds.stream().allMatch(id2Type::containsKey)) {
+                return false;
+            }
             var negatedEventsInSequence = sequence
                     .getSequence()
                     .stream()
@@ -164,7 +155,6 @@ public class InvariantTranslator {
                         });
             }
 
-            // If we are here, we know that the term contains only a single equality
             var result = new HashSet<String>();
 
             var ref1 = getReferencedEventId(term.equality().quantity(0));
@@ -190,9 +180,9 @@ public class InvariantTranslator {
 
         @Override
         public void enterEvent(InvariantsParser.EventContext ctx) {
-            // TODO: validate that event sequence contains only valid event IDs
             var sequenceNode = createSequenceNode(ctx, sequence.getSequence().size());
-            if (!sequence.addNode(sequenceNode)) {
+            if ((!sequenceNode.eventIds.stream().allMatch(id2Type::containsKey))
+                    || (!sequence.addNode(sequenceNode))) {
                 semanticAnalysisFailed = true;
             }
         }
@@ -254,18 +244,10 @@ public class InvariantTranslator {
                 return;
             }
 
-            var streams = generateDataStreamCode(topics);
-            System.out.println(streams);
-            var filterOperator = generateStreamFilter(relevantEventTypes);
-            System.out.println(filterOperator);
-
             sequence.getSequence().forEach(System.out::println);
         }
 
 
-
-        // TODO: We do not allow 'wildcard' events at the end of the sequence
-        // because Flink CEP is pretty weird about it
         private boolean validateFinishedSequence() {
             SequenceNode lastSequenceNode = getLastSequenceNode();
             return lastSequenceNode.type == SequenceNodeQuantifier.ONCE;
@@ -273,42 +255,9 @@ public class InvariantTranslator {
 
         private SequenceNode getLastSequenceNode() {
             var sequenceLength = sequence.getSequence().size();
-            var lastSequenceNode = sequence.getSequence().get(sequenceLength - 1);
-            return lastSequenceNode;
+            return sequence.getSequence().get(sequenceLength - 1);
         }
 
-        // TODO: this should not be done here
-        private String generateDataStreamCode(Set<String> topics) {
-            var datastreamBuilder = new StringBuilder();
-            var topicNum = 0;
-            for (var topic : topics) {
-                datastreamBuilder
-                        .append("var streamSource")
-                        .append(topicNum)
-                        .append(" = KafkaReader.GetEventDataStreamSource(env, \"")
-                        .append(topic)
-                        .append("\", groupId);\n");
-                topicNum++;
-            }
-            return  datastreamBuilder.toString();
-        }
-
-        // TODO: this should not be done here
-        private String generateStreamFilter(Set<String> relevantEventTypes) {
-            var filterBuilder = new StringBuilder();
-            filterBuilder.append(
-                "var filteredSource = streamSource.filter(event -> false "
-            );
-
-            for (var type : relevantEventTypes) {
-                filterBuilder.append(
-                    String.format("|| event.Type.equals(\"%s\") ", type)
-                );
-            }
-
-            filterBuilder.append(").setParallelism(1);");
-            return filterBuilder.toString();
-        }
 
         public List<InvariantsParser.TermContext> getTerms() {
             return whereClauseTerms;
@@ -356,23 +305,4 @@ public class InvariantTranslator {
                 translator.onPrefixMatch);
     }
 
-
-
-    public List<InvariantsParser.TermContext> getTermsFromQuery(String query) {
-        ANTLRInputStream input = new ANTLRInputStream(query);
-        // create a lexer that feeds off of input CharStream
-        InvariantsLexer lexer = new InvariantsLexer(input);
-
-        // create a buffer of tokens pulled from the lexer
-        CommonTokenStream tokens = new CommonTokenStream(lexer);
-        // create a parser that feeds off the tokens buffer
-        InvariantsParser parser = new InvariantsParser(tokens);
-        ParseTree tree = parser.invariant(); // begin parsing at init rule
-
-        ParseTreeWalker walker = new ParseTreeWalker();
-        InvariantLanguage2CEPListener translator = new InvariantLanguage2CEPListener();
-
-        walker.walk(translator, tree);
-        return translator.getTerms();
-    }
 }

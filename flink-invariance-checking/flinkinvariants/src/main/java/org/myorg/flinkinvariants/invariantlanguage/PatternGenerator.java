@@ -62,8 +62,7 @@ public class PatternGenerator {
     private final Optional<InvariantsParser.Invariant_clauseContext> onFullMatch;
     private List<Tuple2<InvariantsParser.PrefixContext, InvariantsParser.Invariant_clauseContext>> onPrefixMatch;
     private final StringBuilder patternCodeBuilder = new StringBuilder();
-    private final StringBuilder fullMatchCodeBuilder = new StringBuilder();
-    private final StringBuilder prefixMatchCodeBuilder = new StringBuilder();
+
     private final Pattern pattern;
 
     public PatternGenerator(EventSequence eventSequence,
@@ -96,27 +95,12 @@ public class PatternGenerator {
                 .collect(Collectors.toList());
 
         within.ifPresent(this::addWithin);
-        // onFullMatch.ifPresent(this::addOnFullMatch);
 
         patternCodeBuilder.append(";\n");
 
         toDefineLater.forEach(s -> patternCodeBuilder.append(s).append("\n"));
 
         return patternCodeBuilder.toString();
-
-        // TODO: case: last event is notfollowedBy
-        // a, !b -> WHERE (b.id = a.id) AND (a.price > 42)
-        // notFollowedBy("b").IterativeCond(event, context) {
-        //   return b.id == a.id
-        // }.where(IterativeCond(event, context) {
-        //   a = context.getEvents("a")
-        //   return a.price > 42;
-        // }
-        // ==> this should be fine
-
-        // now construct iterative conditions for all terms that do not have
-        // a negated event
-        //pattern = updateWithFinalIterativeCondition(pattern, eventSequence, terms);
     }
 
     public String generateInvariants() {
@@ -166,16 +150,17 @@ public class PatternGenerator {
                 throw new RuntimeException("Prefix already defined " + prefix.f0.getText());
             }
 
-            var translatedTerms = prefix.f1.term().stream()
-                    .map(this::translateTermFromInvariant).collect(Collectors.toList());
-            var invariantCode = createInvariantCode(translatedTerms);
-            seenPrefixes.put(prefix.f0.getText(), Tuple3.of(validationResult.f1, invariantCode.f0, invariantCode.f1));
-        }
 
-        // (a, b, !c, (d|e), f, g)
-        // PREFIX (a, b) --> if(map.keyset().equals(Set.of("[a]", "[b]"))
-        // PREFIX (a, b, (d|e)) --> map { [a], [b], [d,e] }
-        // PREFIX DEFAULT
+            if (prefix.f1.BOOL() != null) {
+                seenPrefixes.put(prefix.f0.getText(), Tuple3.of(validationResult.f1, "false", List.of()));
+            } else {
+                var translatedTerms = prefix.f1.term().stream()
+                        .map(this::translateTermFromInvariant)
+                        .collect(Collectors.toList());
+                var invariantCode = createInvariantCode(translatedTerms);
+                seenPrefixes.put(prefix.f0.getText(), Tuple3.of(validationResult.f1, invariantCode.f0, invariantCode.f1));
+            }
+        }
 
         Optional<Tuple2<String, List<String>>> invariantOnDefault = Optional.empty();
         if (seenPrefixes.containsKey("DEFAULT")) {
@@ -183,11 +168,6 @@ public class PatternGenerator {
             invariantOnDefault = Optional.of(Tuple2.of(value.f1, value.f2));
         }
 
-//        if (map.keySet().equals(seq.getSequence().stream().map(SequenceNode::getName).collect(Collectors.toSet()))) {
-//            if (!((__9d58c1ac(map)))) {
-//                context.output(outputTag, map.toString());
-//            }
-//        }
         var sb = new StringBuilder();
         var helperFunctions = new ArrayList<String>();
         for (var triple : seenPrefixes.values()) {
@@ -219,28 +199,6 @@ public class PatternGenerator {
         var functionBody = String.format(temp, sb.toString());
 
         return Tuple2.of(functionBody, helperFunctions);
-//        if (defaultPrefix.size() == 1) {
-//            // generate code for single ANY prefix
-//            var invariantClause = defaultPrefix.get(0).f1;
-//
-//            if (invariantClause.BOOL() != null) {
-//                if (invariantClause.BOOL().getText().equals("false")) {
-//                    return new Tuple2<>(String.format(temp, "context.output(outputTag, map.toString());"), List.of());
-//                }
-//                return new Tuple2<>(String.format(temp, "return;"), List.of());
-//            }
-//
-//            var translatedTerms = invariantClause.term().stream()
-//                    .map(this::translateTermFromInvariant).collect(Collectors.toList());
-//            var invariantCode = createInvariantCode(translatedTerms);
-//            var processTimeout = String.format(temp, String.format("if(!(%s)) { context.output(outputTag, map.toString()); }",
-//                    invariantCode.f0));
-//
-//            return new Tuple2<>(processTimeout, invariantCode.f1);
-//        } else {
-//            // TODO: need code for distinguishing different prefix cases
-//            return new Tuple2<>(String.format(temp, "return;"), List.of());
-//        }
     }
 
     private Tuple2<Boolean, EventSequence> validatePrefix(InvariantsParser.PrefixContext f0) {
@@ -342,10 +300,7 @@ public class PatternGenerator {
                     .flatMap(List::stream)
                     .collect(Collectors.toList());
             toDefineLater.addAll(functions);
-        }
-
-        // TODO: We could possibly have `else if` here, if we disallow negated and "wildcarded" events to be the last events in the sequence
-        if (node.position == eventSequence.getSequence().size() - 1) {
+        } else if (node.position == eventSequence.getSequence().size() - 1) {
             List<SequenceNode> nodesToExclude = eventSequence.getSequence()
                     .stream()
                     .filter(this::requiresImmediateWhereClause)
@@ -512,9 +467,6 @@ public class PatternGenerator {
             case LTE: yield String.format("%s <= %s", lhsValue, rhsValue);
         };
 
-        // TODO: this is only the case of lhs and rhs being qualified names
-        //       need at least (qualifiedName = atom) and (atom = qualifiedName),
-        //       easiest may be to wrap atom in list?
         var compareLists = String.format(
             """
             if (%s.isEmpty() || %s.isEmpty()) {return false;}
@@ -597,7 +549,6 @@ public class PatternGenerator {
         var functions = new ArrayList<String>();
 
         while (matcher.find()) {
-            // (a=b) ==> group0
             var lhs = convertToOperand(matcher.group(1));
             var op = OperatorType.from(matcher.group(2));
             var rhs = convertToOperand(matcher.group(3));
@@ -610,9 +561,7 @@ public class PatternGenerator {
             resultText = resultText.replace(matcher.group(0), tuple.f0 + "(event, context)");
         }
 
-        // (A = B OR C = D AND (E > F)) AND (X = Y)
-        // (fun123(e, ctx) || fun234(e, ctx) && (fun345(e, ctx))
-        patternCodeBuilder.append(
+         patternCodeBuilder.append(
                 String.format(
                         """    
                     .where(
@@ -631,17 +580,6 @@ public class PatternGenerator {
                                                            OperatorType operatorType,
                                                            Operand rhs,
                                                            SequenceNode currentNode) {
-        /*
-         * Operand can be:
-         *   - an atom
-         *   - a single event already in the context, e.g. SEQ(a, !b, c) -> we are looking for a
-         *   - a single OR'ed event already in the context, e.g. SEQ(a, (d | e), !b, c) -> we are looking for d or e
-         *   // TODO: maybe we could disallow (a, (e1|e2)) where e1 and e2 have the same type.
-         *   - a wildcard event NOT in the context; in this case Flink CEP will not give us the preceding matches of the wildcard in the context.
-         *       e.g. (a, b, c+, d) -> we are looking for c at the stage of 'c+'
-         * NOT SUPPORTED RIGHT NOW:
-         *   - a wildcard event already in the context e.g. SEQ(a, e+, f, !b, c) -> we are looking for e at the stage of '!b'
-         */
 
         var lhsCode = generateCodeFromOperandForWhereClause(lhs, "lhs", currentNode);
         var rhsCode = generateCodeFromOperandForWhereClause(rhs, "rhs", currentNode);
