@@ -118,7 +118,7 @@ EQ_OP: '=' | '!=' | '<' | '<=' | '>' | '>=';
 INT: '-'?[0-9]+;
 STRING: '\'' IDENTIFIER '\'';
 TIME
-    : 'milli'
+    : 'msec'
     | 'sec'
     | 'min'
     | 'hour'

@@ -9,8 +9,6 @@ import org.junit.ClassRule;
 import org.junit.Test;
 import org.myorg.flinkinvariants.events.Event;
 import org.myorg.flinkinvariants.invariantlanguage.*;
-import org.myorg.flinkinvariants.invariantlanguage.generated.testGeneratedInvariant_10;
-import org.myorg.flinkinvariants.invariantlanguage.generated.testGeneratedInvariant_11;
 
 import javax.tools.*;
 import java.io.*;
@@ -372,7 +370,7 @@ public class GeneratedInvariantTest {
                   schema: {orderId:number}
 
                 SEQ (os, (ps | pf))
-                WITHIN 20 milli
+                WITHIN 20 msec
                 WHERE (os.orderId = ps.orderId OR
                       os.orderId = pf.orderId)
                 ON PREFIX MATCH ANY false""";
@@ -418,7 +416,7 @@ public class GeneratedInvariantTest {
                   schema: {orderId:number, total_cost:number}
 
                 SEQ (os, (ps | pf))
-                WITHIN 1 milli
+                WITHIN 1 msec
                 WHERE (os.orderId = ps.orderId OR
                       os.orderId = pf.orderId)
                 ON PREFIX MATCH ANY (os.total_cost > 1)
@@ -426,8 +424,20 @@ public class GeneratedInvariantTest {
         var events = List.of(
                 new Event("OrderSubmitted", """
                         {"orderId": 2, "total_cost": -12}"""),
-                new Event("OrderSubmitted", """
-                        {"orderId": 1, "total_cost": 337}""")
+                new Event("PaymentSucceeded", """
+                        {"orderId": 1, "total_cost": 337}"""),
+                new Event("PaymentSucceeded", """
+                        {"orderId": 4, "total_cost": 129 }"""),
+                new Event("PaymentSucceeded", """
+                        {"orderId": 5, "total_cost": 337}"""),
+                new Event("PaymentSucceeded", """
+                        {"orderId": 6, "total_cost": -12}"""),
+                new Event("PaymentSucceeded", """
+                        {"orderId": 7, "total_cost": 337}"""),
+                new Event("PaymentSucceeded", """
+                        {"orderId": 8, "total_cost": -12}"""),
+                new Event("PaymentSucceeded", """
+                        {"orderId": 9, "total_cost": 337}""")
         );
         executeTestInvariant(invariantQuery, events, "testGeneratedInvariant_10");
         assertEquals(1, ViolationSink.values.size());
@@ -452,7 +462,7 @@ public class GeneratedInvariantTest {
                   schema: {orderId:number, total_cost:number}
 
                 SEQ (os, (ps | pf))
-                WITHIN 20 milli
+                WITHIN 20 msec
                 WHERE (os.orderId = ps.orderId OR
                       os.orderId = pf.orderId)
                 ON FULL MATCH (os.total_cost = ps.total_cost OR os.total_cost = pf.total_cost)
@@ -496,7 +506,7 @@ public class GeneratedInvariantTest {
                   schema: {orderId:number, total_cost:number}
 
                 SEQ (os, ps, pf)
-                WITHIN 1 milli
+                WITHIN 1 msec
                 WHERE (os.orderId = ps.orderId OR
                       os.orderId = pf.orderId)
                 ON PREFIX MATCH ANY (os.total_cost > -10)

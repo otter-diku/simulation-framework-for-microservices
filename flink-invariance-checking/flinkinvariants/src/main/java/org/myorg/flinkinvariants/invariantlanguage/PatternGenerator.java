@@ -219,7 +219,7 @@ public class PatternGenerator {
     private void addWithin(Tuple2<Integer, String> tuple) {
         var duration = tuple.f0;
         var unit = switch (tuple.f1) {
-            case "milli": yield "milliseconds";
+            case "msec": yield "milliseconds";
             case "sec": yield "seconds";
             case "min": yield "minutes";
             case "hour": yield "hours";
