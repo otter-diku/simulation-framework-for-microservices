@@ -1,10 +1,10 @@
 package org.myorg.flinkinvariants.invariantlanguage;
 
+import org.antlr.v4.runtime.RuleContext;
 import org.apache.flink.api.java.tuple.Tuple2;
 import org.apache.flink.api.java.tuple.Tuple3;
 import org.myorg.invariants.parser.InvariantsParser;
 
-import org.antlr.v4.runtime.RuleContext;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -154,8 +154,6 @@ public class PatternGenerator {
             return new Tuple2<>(String.format(temp, "return;"), List.of());
         }
 
-        var defaultPrefix = onPrefixMatch.stream().filter(tuple -> tuple.f0.default_prefix() != null).collect(Collectors.toList());
-
         var seenPrefixes = new HashMap<String, Tuple3<EventSequence, String, List<String>>>();
         for (var prefix : onPrefixMatch) {
             var validationResult = validatePrefix(prefix.f0);
@@ -178,10 +176,11 @@ public class PatternGenerator {
         // PREFIX (a, b) --> if(map.keyset().equals(Set.of("[a]", "[b]"))
         // PREFIX (a, b, (d|e)) --> map { [a], [b], [d,e] }
         // PREFIX DEFAULT
-        var hasDefault = false;
+
+        Optional<Tuple2<String, List<String>>> invariantOnDefault = Optional.empty();
         if (seenPrefixes.containsKey("DEFAULT")) {
-            seenPrefixes.remove("DEFAULT");
-            hasDefault = true;
+            var value = seenPrefixes.remove("DEFAULT");
+            invariantOnDefault = Optional.of(Tuple2.of(value.f1, value.f2));
         }
 
 //        if (map.keySet().equals(seq.getSequence().stream().map(SequenceNode::getName).collect(Collectors.toSet()))) {
@@ -190,6 +189,7 @@ public class PatternGenerator {
 //            }
 //        }
         var sb = new StringBuilder();
+        var helperFunctions = new ArrayList<String>();
         for (var triple : seenPrefixes.values()) {
             var nodeNames = triple.f0.getSequence().stream().map(n -> "\"" + n.getName() + "\"")
                     .collect(Collectors.joining(","));
@@ -197,15 +197,28 @@ public class PatternGenerator {
                     """
                     
                     if (map.keySet().equals(Set.of(%s))) {
-                      if(!(%s)) { context.output(outputTag, map.toString()); }
+                      if(!(%s)) { context.output(outputTag, map.toString()); return; }
+                      else { return; }
                     }
                     
                     """, nodeNames, triple.f1));
-        }
-        if (hasDefault) {
 
+            helperFunctions.addAll(triple.f2);
         }
-        return null;
+
+        if (invariantOnDefault.isPresent()) {
+           sb.append(String.format(
+                    """
+                            if(!(%s)) { context.output(outputTag, map.toString()); return; }
+                            """
+            , invariantOnDefault.get().f0));
+
+           helperFunctions.addAll(invariantOnDefault.get().f1);
+        }
+
+        var functionBody = String.format(temp, sb.toString());
+
+        return Tuple2.of(functionBody, helperFunctions);
 //        if (defaultPrefix.size() == 1) {
 //            // generate code for single ANY prefix
 //            var invariantClause = defaultPrefix.get(0).f1;

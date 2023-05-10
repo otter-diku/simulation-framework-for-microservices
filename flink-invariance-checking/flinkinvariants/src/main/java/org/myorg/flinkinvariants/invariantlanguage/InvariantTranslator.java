@@ -29,7 +29,7 @@ public class InvariantTranslator {
 
         private Optional<InvariantsParser.Invariant_clauseContext> onFullMatch = Optional.empty();
         private Optional<Tuple2<Integer, String>> within = Optional.empty();
-        private List<Tuple2<InvariantsParser.PrefixContext, InvariantsParser.Invariant_clauseContext>> onPartialMatch = new ArrayList<>();
+        private List<Tuple2<InvariantsParser.PrefixContext, InvariantsParser.Invariant_clauseContext>> onPrefixMatch = new ArrayList<>();
 
         private boolean semanticAnalysisFailed = false;
 
@@ -88,7 +88,12 @@ public class InvariantTranslator {
 
         @Override
         public void enterOn_prefix_match(InvariantsParser.On_prefix_matchContext ctx) {
-            onPartialMatch.add(new Tuple2<>(ctx.prefix(), ctx.invariant_clause()));
+            onPrefixMatch.add(new Tuple2<>(ctx.prefix(), ctx.invariant_clause()));
+        }
+
+        @Override
+        public void enterQuery(InvariantsParser.QueryContext ctx) {
+
         }
 
         @Override
@@ -348,7 +353,7 @@ public class InvariantTranslator {
                 translator.whereClauseTerms,
                 translator.within,
                 translator.onFullMatch,
-                translator.onPartialMatch);
+                translator.onPrefixMatch);
     }
 
 

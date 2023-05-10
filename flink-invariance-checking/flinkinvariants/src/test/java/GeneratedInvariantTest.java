@@ -9,6 +9,7 @@ import org.junit.ClassRule;
 import org.junit.Test;
 import org.myorg.flinkinvariants.events.Event;
 import org.myorg.flinkinvariants.invariantlanguage.*;
+import org.myorg.flinkinvariants.invariantlanguage.generated.testGeneratedInvariant_13;
 
 import javax.tools.*;
 import java.io.*;
@@ -520,6 +521,57 @@ public class GeneratedInvariantTest {
                         {"orderId": 3, "total_cost": 1}""")
         );
         executeTestInvariant(invariantQuery, events, "testGeneratedInvariant_12");
+        assertEquals(1, ViolationSink.values.size());
+    }
+
+
+    @Test
+    public void testGeneratedInvariant_13() throws Exception {
+        // NOTE: awkward within timing due to processing time, test might fail
+        var invariantQuery =
+                """
+                A a
+                  topic: eshop_event_bus
+                  schema: {id:number, x:number}
+                B b
+                  topic: eshop_event_bus
+                  schema: {id:number, x:number}
+                C c
+                  topic: eshop_event_bus
+                  schema: {id:number, x:number}
+                D d
+                  topic: eshop_event_bus
+                  schema: {id:number, x:number}
+                E e
+                  topic: eshop_event_bus
+                  schema: {id:number, x:number}
+                F f
+                  topic: eshop_event_bus
+                  schema: {id:number, x:number}
+
+                SEQ (a, !b, (c|d), e, f)
+                WITHIN 5 msec
+                WHERE (a.id = b.id) AND (c.id = a.id OR d.id = a.id) AND (e.id = a.id)
+                ON PREFIX MATCH (a) (a.id < 0)
+                ON PREFIX MATCH (a, (c|d)) (c.x > 5 OR d.x > 5)
+                ON PREFIX MATCH DEFAULT (a.id = 1)
+                """;
+
+        var events = new ArrayList<>(List.of(
+                new Event("A", """
+                        {"id": 1, "x": 1}"""),
+                new Event("B", """
+                        {"id": 2, "x": 2}"""),
+                new Event("D", """
+                        {"id": 1, "x": 3}""")
+        ));
+
+        for (int x = 0; x < 1000; x++) {
+            events.add(new Event("X", "\"id\": 0"));
+        }
+
+        executeTestInvariant(invariantQuery, events, "testGeneratedInvariant_13");
+
         assertEquals(1, ViolationSink.values.size());
     }
 
