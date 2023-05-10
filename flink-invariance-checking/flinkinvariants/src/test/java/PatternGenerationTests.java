@@ -158,7 +158,6 @@ public class PatternGenerationTests {
         var patternGenerator = new PatternGenerator(
                 translationResult.sequence,
                 translationResult.whereClauseTerms,
-                translationResult.fullMatchTerms,
                 translationResult.id2Type,
                 translationResult.schemata,
                 translationResult.within,

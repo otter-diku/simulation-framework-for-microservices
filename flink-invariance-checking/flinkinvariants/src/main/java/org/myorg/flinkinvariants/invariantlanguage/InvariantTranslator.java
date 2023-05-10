@@ -27,10 +27,9 @@ public class InvariantTranslator {
         private final EventSequence sequence = new EventSequence();
         private final List<InvariantsParser.TermContext> whereClauseTerms = new ArrayList<>();
 
-        private final List<InvariantsParser.TermContext> invariantClauseTerms = new ArrayList<>();
         private Optional<InvariantsParser.Invariant_clauseContext> onFullMatch = Optional.empty();
         private Optional<Tuple2<Integer, String>> within = Optional.empty();
-        private List<Tuple2<InvariantsParser.PrefixContext, InvariantsParser.Invariant_clauseContext>> onPartialMatch = new ArrayList<>();
+        private List<Tuple2<InvariantsParser.PrefixContext, InvariantsParser.Invariant_clauseContext>> onPrefixMatch = new ArrayList<>();
 
         private boolean semanticAnalysisFailed = false;
 
@@ -76,10 +75,7 @@ public class InvariantTranslator {
                 // 1. go inside each term and see if it references the negated event
                 // 1a. if yes, make sure that the term does not reference any event ID that is not seen before the negated event
                 // 2. save/serialize/whatever the term to use it later
-                if (validateTerm(term)) {
-                    invariantClauseTerms.add(term);
-                }
-                else {
+                if (!validateTerm(term)) {
                     semanticAnalysisFailed = true;
                 }
             }
@@ -92,7 +88,12 @@ public class InvariantTranslator {
 
         @Override
         public void enterOn_prefix_match(InvariantsParser.On_prefix_matchContext ctx) {
-            onPartialMatch.add(new Tuple2<>(ctx.prefix(), ctx.invariant_clause()));
+            onPrefixMatch.add(new Tuple2<>(ctx.prefix(), ctx.invariant_clause()));
+        }
+
+        @Override
+        public void enterQuery(InvariantsParser.QueryContext ctx) {
+
         }
 
         @Override
@@ -350,10 +351,9 @@ public class InvariantTranslator {
                 translator.schemata,
                 translator.sequence,
                 translator.whereClauseTerms,
-                translator.invariantClauseTerms,
                 translator.within,
                 translator.onFullMatch,
-                translator.onPartialMatch);
+                translator.onPrefixMatch);
     }
 
 

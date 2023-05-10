@@ -1,27 +1,27 @@
 grammar Invariants;
 
-invariant: eventDefinition* query;
+invariant: eventDefinition* query EOF;
 
 query
    : 'SEQ' '(' events ')' '\n'?
      ('WITHIN' time)? '\n'?
      ('WHERE' where_clause)? '\n'?
      on_full_match '\n'?
-     (on_prefix_match)* '\n'?
+     (on_prefix_match '\n'?)*
    | 'SEQ' '(' events ')' '\n'?
      ('WITHIN' time)? '\n'?
      ('WHERE' where_clause)? '\n'?
-     (on_prefix_match)+ '\n'?
+     (on_prefix_match '\n'?)+
    ;
 
 on_full_match: 'ON FULL MATCH' invariant_clause;
 on_prefix_match: 'ON PREFIX MATCH' prefix invariant_clause;
 
 prefix
-    : any
+    : default_prefix
     | '(' events ')';
 
-any: 'ANY';
+default_prefix: 'DEFAULT';
 
 invariant_clause
   : lpar term rpar (and lpar term rpar)*
@@ -93,8 +93,8 @@ equality
   : quantity EQ_OP quantity;
 
 quantity
-    : qualifiedName
-    | atom
+    : atom
+    | qualifiedName
     ;
 
 atom
@@ -102,6 +102,7 @@ atom
     | INT
     | STRING
     ;
+
 
 qualifiedName
     : IDENTIFIER ('.' IDENTIFIER)*
@@ -114,10 +115,10 @@ and: 'AND';
 or: 'OR';
 
 EQ_OP: '=' | '!=' | '<' | '<=' | '>' | '>=';
-INT: [0-9]+;
+INT: '-'?[0-9]+;
 STRING: '\'' IDENTIFIER '\'';
 TIME
-    : 'milli'
+    : 'msec'
     | 'sec'
     | 'min'
     | 'hour'

@@ -1,6 +1,7 @@
 package org.myorg.flinkinvariants.invariantlanguage;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * Datatype to model a pattern which will be translated
@@ -39,6 +40,12 @@ public class SequenceNode {
         this.type = type;
         this.eventIds = eventIds;
         this.position = position;
+    }
+
+    public boolean compareWith(SequenceNode other) {
+        return this.negated == other.negated
+                && this.type == other.type
+                && this.eventIds.stream().sorted().collect(Collectors.toList()).equals(other.eventIds.stream().sorted().collect(Collectors.toList()));
     }
 
     @Override

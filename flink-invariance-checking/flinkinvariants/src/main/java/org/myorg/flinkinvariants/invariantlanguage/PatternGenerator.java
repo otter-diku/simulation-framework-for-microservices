@@ -1,6 +1,8 @@
 package org.myorg.flinkinvariants.invariantlanguage;
 
+import org.antlr.v4.runtime.RuleContext;
 import org.apache.flink.api.java.tuple.Tuple2;
+import org.apache.flink.api.java.tuple.Tuple3;
 import org.myorg.invariants.parser.InvariantsParser;
 
 import java.util.*;
@@ -54,13 +56,11 @@ public class PatternGenerator {
     private final EventSequence eventSequence;
     private final List<InvariantsParser.TermContext> whereClauseTerms;
 
-    private final List<InvariantsParser.TermContext> fullMatchTerms;
-
     private final Map<String, String> id2Type;
     private final Map<String, Map<String, String>> schemata;
     private final Optional<Tuple2<Integer, String>> within;
     private final Optional<InvariantsParser.Invariant_clauseContext> onFullMatch;
-    private List<Tuple2<InvariantsParser.PrefixContext, InvariantsParser.Invariant_clauseContext>> onPartialMatch;
+    private List<Tuple2<InvariantsParser.PrefixContext, InvariantsParser.Invariant_clauseContext>> onPrefixMatch;
     private final StringBuilder patternCodeBuilder = new StringBuilder();
     private final StringBuilder fullMatchCodeBuilder = new StringBuilder();
     private final StringBuilder prefixMatchCodeBuilder = new StringBuilder();
@@ -68,7 +68,6 @@ public class PatternGenerator {
 
     public PatternGenerator(EventSequence eventSequence,
                             List<InvariantsParser.TermContext> whereClauseTerms,
-                            List<InvariantsParser.TermContext> fullMatchTerms,
                             Map<String, String> id2Type,
                             Map<String, Map<String, String>> schemata,
                             Optional<Tuple2<Integer, String>> within,
@@ -77,12 +76,11 @@ public class PatternGenerator {
         this.pattern = Pattern.compile(equalityRegex, Pattern.MULTILINE);
         this.eventSequence = eventSequence;
         this.whereClauseTerms = whereClauseTerms;
-        this.fullMatchTerms = fullMatchTerms;
         this.id2Type = id2Type;
         this.schemata = schemata;
         this.within = within;
         this.onFullMatch = onFullMatch;
-        this.onPartialMatch = onPartialMatch;
+        this.onPrefixMatch = onPartialMatch;
     }
 
 
@@ -124,9 +122,8 @@ public class PatternGenerator {
     public String generateInvariants() {
         var sb = new StringBuilder();
 
-        String processTimeOutBody = getProccessTimeOutBody();
+        var processTimeOutBody = getProcessTimeOutBody();
         var processFunctionBody = getProcessFunctionBody();
-
 
         sb.append(String.format("""
         private static final OutputTag<String> outputTag = new OutputTag<>("timeoutMatch") {};
@@ -138,19 +135,137 @@ public class PatternGenerator {
             %s
         }
         """, processFunctionBody.f0,
-             processTimeOutBody));
+             processTimeOutBody.f0));
 
         processFunctionBody.f1.forEach(functionBody -> sb.append(functionBody).append("\n"));
+        processTimeOutBody.f1.forEach(functionBody -> sb.append(functionBody).append("\n"));
         return sb.toString();
     }
 
-    private String getProccessTimeOutBody() {
-        return
+    private Tuple2<String, List<String>> getProcessTimeOutBody() {
+        var temp =
                 """
                 @Override
                 public void processTimedOutMatch(Map<String, List<Event>> map, Context context) {
+                  %s
                 }
                 """;
+        if (onPrefixMatch.isEmpty()) {
+            return new Tuple2<>(String.format(temp, "return;"), List.of());
+        }
+
+        var seenPrefixes = new HashMap<String, Tuple3<EventSequence, String, List<String>>>();
+        for (var prefix : onPrefixMatch) {
+            var validationResult = validatePrefix(prefix.f0);
+
+            if (!validationResult.f0) {
+                throw new RuntimeException("Invalid prefix: " + prefix.f0.getText());
+            }
+
+            if (seenPrefixes.containsKey(prefix.f0.getText())) {
+                throw new RuntimeException("Prefix already defined " + prefix.f0.getText());
+            }
+
+            var translatedTerms = prefix.f1.term().stream()
+                    .map(this::translateTermFromInvariant).collect(Collectors.toList());
+            var invariantCode = createInvariantCode(translatedTerms);
+            seenPrefixes.put(prefix.f0.getText(), Tuple3.of(validationResult.f1, invariantCode.f0, invariantCode.f1));
+        }
+
+        // (a, b, !c, (d|e), f, g)
+        // PREFIX (a, b) --> if(map.keyset().equals(Set.of("[a]", "[b]"))
+        // PREFIX (a, b, (d|e)) --> map { [a], [b], [d,e] }
+        // PREFIX DEFAULT
+
+        Optional<Tuple2<String, List<String>>> invariantOnDefault = Optional.empty();
+        if (seenPrefixes.containsKey("DEFAULT")) {
+            var value = seenPrefixes.remove("DEFAULT");
+            invariantOnDefault = Optional.of(Tuple2.of(value.f1, value.f2));
+        }
+
+//        if (map.keySet().equals(seq.getSequence().stream().map(SequenceNode::getName).collect(Collectors.toSet()))) {
+//            if (!((__9d58c1ac(map)))) {
+//                context.output(outputTag, map.toString());
+//            }
+//        }
+        var sb = new StringBuilder();
+        var helperFunctions = new ArrayList<String>();
+        for (var triple : seenPrefixes.values()) {
+            var nodeNames = triple.f0.getSequence().stream().map(n -> "\"" + n.getName() + "\"")
+                    .collect(Collectors.joining(","));
+            sb.append(String.format(
+                    """
+                    
+                    if (map.keySet().equals(Set.of(%s))) {
+                      if(!(%s)) { context.output(outputTag, map.toString()); return; }
+                      else { return; }
+                    }
+                    
+                    """, nodeNames, triple.f1));
+
+            helperFunctions.addAll(triple.f2);
+        }
+
+        if (invariantOnDefault.isPresent()) {
+           sb.append(String.format(
+                    """
+                            if(!(%s)) { context.output(outputTag, map.toString()); return; }
+                            """
+            , invariantOnDefault.get().f0));
+
+           helperFunctions.addAll(invariantOnDefault.get().f1);
+        }
+
+        var functionBody = String.format(temp, sb.toString());
+
+        return Tuple2.of(functionBody, helperFunctions);
+//        if (defaultPrefix.size() == 1) {
+//            // generate code for single ANY prefix
+//            var invariantClause = defaultPrefix.get(0).f1;
+//
+//            if (invariantClause.BOOL() != null) {
+//                if (invariantClause.BOOL().getText().equals("false")) {
+//                    return new Tuple2<>(String.format(temp, "context.output(outputTag, map.toString());"), List.of());
+//                }
+//                return new Tuple2<>(String.format(temp, "return;"), List.of());
+//            }
+//
+//            var translatedTerms = invariantClause.term().stream()
+//                    .map(this::translateTermFromInvariant).collect(Collectors.toList());
+//            var invariantCode = createInvariantCode(translatedTerms);
+//            var processTimeout = String.format(temp, String.format("if(!(%s)) { context.output(outputTag, map.toString()); }",
+//                    invariantCode.f0));
+//
+//            return new Tuple2<>(processTimeout, invariantCode.f1);
+//        } else {
+//            // TODO: need code for distinguishing different prefix cases
+//            return new Tuple2<>(String.format(temp, "return;"), List.of());
+//        }
+    }
+
+    private Tuple2<Boolean, EventSequence> validatePrefix(InvariantsParser.PrefixContext f0) {
+        var prefixSequence = new EventSequence();
+
+        if (f0.default_prefix() != null) return Tuple2.of(true, prefixSequence);
+
+        List<SequenceNode> sequence = eventSequence
+                .getSequence()
+                .stream()
+                .filter(e -> !e.negated)
+                .collect(Collectors.toList());
+
+        for (var event : f0.events().event()) {
+            prefixSequence.addNode(createSequenceNode(event, prefixSequence.getSequence().size()));
+        }
+
+        var prefixSeq = prefixSequence.getSequence();
+        for (int i = 0; i < prefixSeq.size(); i++) {
+            if (!prefixSeq.get(i).compareWith(sequence.get(i))) {
+                return Tuple2.of(false, null);
+            }
+        }
+
+        return Tuple2.of(true, prefixSequence);
     }
 
     private Tuple2<String, List<String>> getProcessFunctionBody() {
@@ -173,19 +288,24 @@ public class PatternGenerator {
             return new Tuple2<>(String.format(temp, "return;"), List.of());
         }
 
-        var translatedTerms = fullMatchTerms.stream().map(t -> translateTermFromInvariant(t)).collect(Collectors.toList());
+        var translatedTerms = invariantClause.term().stream().map(this::translateTermFromInvariant).collect(Collectors.toList());
+        var invariantCode = createInvariantCode(translatedTerms);
+        var processMatch = String.format(temp, String.format("if(!(%s)) { collector.collect(map.toString()); }",
+                invariantCode.f0));
+        return new Tuple2<>(processMatch, invariantCode.f1);
+    }
+
+    private Tuple2<String, List<String>> createInvariantCode(List<Tuple2<String, List<String>>> translatedTerms) {
         var fullInvariantExpression = translatedTerms.stream().map(tuple -> "(" + tuple.f0 + ")").collect(Collectors.joining(" && "));
 
-        var toDefineLater = translatedTerms.stream().map(tuple -> tuple.f1).flatMap(List::stream).collect(Collectors.toList());
-        var processMatch = String.format(temp, String.format("if(!(%s)) { collector.collect(map.toString()); }",
-                fullInvariantExpression));
-        return new Tuple2<>(processMatch, toDefineLater);
+        var helperFunctions = translatedTerms.stream().map(tuple -> tuple.f1).flatMap(List::stream).collect(Collectors.toList());
+        return new Tuple2<>(fullInvariantExpression, helperFunctions);
     }
 
     private void addWithin(Tuple2<Integer, String> tuple) {
         var duration = tuple.f0;
         var unit = switch (tuple.f1) {
-            case "milli": yield "milliseconds";
+            case "msec": yield "milliseconds";
             case "sec": yield "seconds";
             case "min": yield "minutes";
             case "hour": yield "hours";
@@ -397,6 +517,7 @@ public class PatternGenerator {
         //       easiest may be to wrap atom in list?
         var compareLists = String.format(
             """
+            if (%s.isEmpty() || %s.isEmpty()) {return false;}
             for (var elemL : %s) {
               for (var elemR : %s) {
                   if(!(%s)) {
@@ -405,7 +526,8 @@ public class PatternGenerator {
               }
             }
             return true;
-            """, String.format("%s.get()", lhs), String.format("%s.get()", rhs), comparisonCode);
+            """, String.format("%s.get()", lhs), String.format("%s.get()", rhs),
+                String.format("%s.get()", lhs), String.format("%s.get()", rhs), comparisonCode);
         sb.append(
                 String.format(
                         """
@@ -695,7 +817,8 @@ public class PatternGenerator {
     }
     private Boolean isNumberAtom(String atom) {
         return (atom.charAt(0) >= '0' && atom.charAt(0) <= '9')
-                || (atom.charAt(0) == '.');
+                || (atom.charAt(0) == '.')
+                || (atom.charAt(0) == '-' && atom.charAt(1) >= '0' && atom.charAt(1) <= '9');
     }
     private Boolean isStringAtom(String atom) {
         return atom.startsWith("'") && atom.endsWith("'");
@@ -753,5 +876,55 @@ public class PatternGenerator {
                 .split("\\.")[0];
 
         return Optional.ofNullable(qualifiedNamePrefix);
+    }
+
+    private SequenceNode createSequenceNode(InvariantsParser.EventContext eventContext, int currentSequenceSize) {
+        var isOrOperator = eventContext.orOperator() != null;
+        SequenceNode.SequenceNodeBuilder sequenceNodeBuilder;
+
+        Optional<String> regexOp;
+        if (isOrOperator) {
+            var eventIds = eventContext.orOperator()
+                    .eventId()
+                    .stream()
+                    .map(eventIdContext -> eventIdContext.IDENTIFIER().getText())
+                    .collect(Collectors.toList());
+            sequenceNodeBuilder = new SequenceNode.SequenceNodeBuilder(eventIds);
+            sequenceNodeBuilder.setNeg(false);
+            sequenceNodeBuilder.setPosition(currentSequenceSize);
+
+            regexOp = Optional.ofNullable(eventContext.orOperator().regexOp())
+                    .map(RuleContext::getText);
+        } else {
+            var eventAtomContext = eventContext.eventAtom();
+            var isNegEvent = eventAtomContext.negEvent() != null;
+
+            List<String> eventIds = new ArrayList<>();
+            if (isNegEvent) {
+                eventIds.add(eventAtomContext.negEvent().eventId().IDENTIFIER().toString());
+            } else {
+                eventIds.add(eventAtomContext.eventId().IDENTIFIER().toString());
+            }
+            sequenceNodeBuilder = new SequenceNode.SequenceNodeBuilder(eventIds);
+            sequenceNodeBuilder.setNeg(isNegEvent);
+            sequenceNodeBuilder.setPosition(currentSequenceSize);
+
+            regexOp = Optional.ofNullable(eventContext.eventAtom().regexOp())
+                    .map(RuleContext::getText);
+        }
+
+
+        if (regexOp.isPresent()) {
+            switch (regexOp.get()) {
+                case "+": sequenceNodeBuilder.setType(SequenceNodeQuantifier.ONE_OR_MORE);
+                    break;
+                case "*": sequenceNodeBuilder.setType(SequenceNodeQuantifier.ZERO_OR_MORE);
+                    break;
+            }
+        } else {
+            sequenceNodeBuilder.setType(SequenceNodeQuantifier.ONCE);
+        }
+
+        return sequenceNodeBuilder.build();
     }
 }

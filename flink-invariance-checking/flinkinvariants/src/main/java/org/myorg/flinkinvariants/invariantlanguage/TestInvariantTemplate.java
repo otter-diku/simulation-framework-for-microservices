@@ -15,9 +15,7 @@ import org.apache.flink.util.OutputTag;
 import org.myorg.flinkinvariants.events.Event;
 import org.myorg.flinkinvariants.invariantlanguage.InvariantChecker;
 
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class TestInvariantTemplate implements InvariantChecker {

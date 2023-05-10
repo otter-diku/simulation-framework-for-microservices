@@ -8,4 +8,4 @@ POLICY_CREATED
 
 EVENT SEQ (CUSTOMER_DECISION cd, POLICY_CREATED pc)
 WHERE cd.insuranceQuoteRequestId = pc.insuranceQuoteRequestId AND cd.quoteAccepted = true
-WITHIN 40 milli
+WITHIN 40 msec
