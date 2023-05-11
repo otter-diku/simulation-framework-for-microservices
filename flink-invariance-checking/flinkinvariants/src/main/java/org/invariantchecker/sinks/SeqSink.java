@@ -1,8 +1,8 @@
-package org.myorg.flinkinvariants.sinks;
+package org.invariantchecker.sinks;
 
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.streaming.api.functions.sink.PrintSinkFunction;
-import org.myorg.flinkinvariants.events.InvariantViolationEvent;
+import org.invariantchecker.events.InvariantViolationEvent;
 
 import java.io.IOException;
 import java.net.URI;

@@ -1,4 +1,4 @@
-package org.myorg.flinkinvariants.events;
+package org.invariantchecker.events;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;

@@ -1,4 +1,4 @@
-package org.myorg.flinkinvariants.invariantlanguage;
+package org.invariantgenerator.invariantlanguage;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -16,14 +16,14 @@ public class EventSequence {
     *       [e -> 3]
     *   ]
      */
-    private Map<String, Integer> eventIds = new HashMap<>();
+    private final Map<String, Integer> eventIds = new HashMap<>();
 
     private final List<SequenceNode> sequence = new ArrayList<>();
 
     public boolean addNode(SequenceNode node) {
         var duplicateIds = node.eventIds
                 .stream()
-                .filter(eId -> eventIds.containsKey(eId))
+                .filter(eventIds::containsKey)
                 .collect(Collectors.toUnmodifiableList());
 
         if ((long) duplicateIds.size() > 0) {

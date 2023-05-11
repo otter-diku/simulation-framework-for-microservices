@@ -5,10 +5,10 @@ import org.apache.flink.test.util.MiniClusterWithClientResource;
 import org.jetbrains.annotations.NotNull;
 import org.junit.ClassRule;
 import org.junit.Test;
-import org.myorg.flinkinvariants.events.Event;
-import org.myorg.flinkinvariants.invariantlanguage.InvariantChecker;
-import org.myorg.flinkinvariants.invariantlanguage.InvariantTranslator;
-import org.myorg.flinkinvariants.invariantlanguage.PatternGenerator;
+import org.invariantchecker.events.Event;
+import org.shared.InvariantChecker;
+import org.invariantgenerator.invariantlanguage.InvariantTranslator;
+import org.invariantgenerator.invariantlanguage.PatternGenerator;
 
 import javax.tools.JavaCompiler;
 import javax.tools.JavaFileObject;
@@ -25,7 +25,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class GeneratedInvariantTest {
 
-    public static final String GENERATED_INVARIANT_NAMESPACE = "org.myorg.flinkinvariants.invariantlanguage.generated";
+    public static final String GENERATED_INVARIANT_NAMESPACE = "org.invariantgenerator.invariantlanguage.generated";
     @ClassRule
     public static MiniClusterWithClientResource flinkCluster =
             new MiniClusterWithClientResource(
@@ -605,7 +605,7 @@ public class GeneratedInvariantTest {
         // Compile source file.
         JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
         StandardJavaFileManager fileManager = compiler.getStandardFileManager(null, null, null);
-        var filePath = String.format("src/main/java/org/myorg/flinkinvariants/invariantlanguage/generated/%s.java", invariantName);
+        var filePath = String.format("src/main/java/org/invariantgenerator/invariantlanguage/generated/%s.java", invariantName);
 
         Iterable<? extends JavaFileObject> compilationUnit
                 = fileManager.getJavaFileObjectsFromFiles(Arrays.asList(new File(filePath)));
@@ -647,9 +647,9 @@ public class GeneratedInvariantTest {
 
     private void createTestInvariantFile(String pattern, String processMatchCode, String invariantName) {
         String inputFile =
-                "src/main/java/org/myorg/flinkinvariants/invariantlanguage/TestInvariantTemplate.java";
+                "src/main/java/org/invariantgenerator/invariantlanguage/TestInvariantTemplate.java";
 
-        var destDir = "src/main/java/org/myorg/flinkinvariants/invariantlanguage/generated/";
+        var destDir = "src/main/java/org/invariantgenerator/invariantlanguage/generated/";
 
         createDirectoryIfNeeded(destDir);
 
@@ -663,7 +663,7 @@ public class GeneratedInvariantTest {
                 "public class TestInvariantTemplate implements InvariantChecker {",
                 String.format("public class %s implements InvariantChecker {", invariantName)
         );
-        substitutions.put("package org.myorg.flinkinvariants.invariantlanguage;",
+        substitutions.put("package org.invariantgenerator.invariantlanguage;",
                 "package " + GENERATED_INVARIANT_NAMESPACE + ";");
 
         substitutions.put(";// ${process}", """

@@ -1,4 +1,4 @@
-package org.myorg.flinkinvariants.events;
+package org.invariantchecker.events;
 
 import java.util.Map;
 import java.util.Objects;

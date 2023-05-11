@@ -1,4 +1,4 @@
-package org.myorg.flinkinvariants.invariantlanguage;
+package org.invariantgenerator.invariantlanguage;
 
 public enum SequenceNodeQuantifier {
     ONCE,

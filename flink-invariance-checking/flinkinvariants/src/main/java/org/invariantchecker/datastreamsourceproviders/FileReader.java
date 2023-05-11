@@ -1,18 +1,16 @@
-package org.myorg.flinkinvariants.datastreamsourceproviders;
+package org.invariantchecker.datastreamsourceproviders;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import org.apache.flink.streaming.api.datastream.DataStreamSource;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
-import org.myorg.flinkinvariants.events.Event;
+import org.invariantchecker.events.Event;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.time.Instant;
 import java.util.List;
-import java.util.stream.Collectors;
 
 public class FileReader {
 

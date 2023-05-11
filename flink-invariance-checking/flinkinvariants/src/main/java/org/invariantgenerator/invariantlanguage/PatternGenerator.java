@@ -1,4 +1,4 @@
-package org.myorg.flinkinvariants.invariantlanguage;
+package org.invariantgenerator.invariantlanguage;
 
 import org.antlr.v4.runtime.RuleContext;
 import org.apache.flink.api.java.tuple.Tuple2;

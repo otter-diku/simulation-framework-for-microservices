@@ -1,4 +1,4 @@
-package org.myorg.flinkinvariants.invariantlanguage;
+package org.invariantgenerator.invariantlanguage;
 
 import java.util.List;
 import java.util.stream.Collectors;

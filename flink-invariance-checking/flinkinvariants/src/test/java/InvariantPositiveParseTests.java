@@ -1,5 +1,5 @@
 import org.junit.Test;
-import org.myorg.flinkinvariants.invariantlanguage.InvariantTranslator;
+import org.invariantgenerator.invariantlanguage.InvariantTranslator;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;

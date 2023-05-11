@@ -1,4 +1,4 @@
-package org.myorg.flinkinvariants.invariantlanguage;
+package org.invariantgenerator.invariantlanguage;
 
 import org.apache.flink.cep.CEP;
 import org.apache.flink.cep.functions.PatternProcessFunction;
@@ -12,8 +12,8 @@ import org.apache.flink.streaming.api.functions.sink.SinkFunction;
 import org.apache.flink.streaming.api.windowing.time.Time;
 import org.apache.flink.util.Collector;
 import org.apache.flink.util.OutputTag;
-import org.myorg.flinkinvariants.events.Event;
-import org.myorg.flinkinvariants.invariantlanguage.InvariantChecker;
+import org.invariantchecker.events.*;
+import org.shared.*;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -23,6 +23,7 @@ public class TestInvariantTemplate implements InvariantChecker {
     public void checkInvariant(
             StreamExecutionEnvironment env,
             DataStream<Event> input,
+//            Pattern<Event, ?> invariant,
             SinkFunction<String> sinkFunction)
             throws Exception {
 

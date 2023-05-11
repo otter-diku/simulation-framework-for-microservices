@@ -1,4 +1,4 @@
-package org.myorg.flinkinvariants.datastreamsourceproviders;
+package org.invariantchecker.datastreamsourceproviders;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -8,7 +8,7 @@ import org.apache.flink.connector.kafka.source.enumerator.initializer.OffsetsIni
 import org.apache.flink.connector.kafka.source.reader.deserializer.KafkaRecordDeserializationSchema;
 import org.apache.flink.streaming.connectors.kafka.KafkaDeserializationSchema;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
-import org.myorg.flinkinvariants.events.Event;
+import org.invariantchecker.events.Event;
 
 import java.nio.charset.StandardCharsets;
 

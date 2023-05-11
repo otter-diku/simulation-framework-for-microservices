@@ -1,4 +1,4 @@
-package org.myorg.flinkinvariants.invariantlanguage;
+package org.invariantgenerator.invariantlanguage;
 
 import org.apache.flink.api.java.tuple.Tuple2;
 import org.myorg.invariants.parser.InvariantsParser;
