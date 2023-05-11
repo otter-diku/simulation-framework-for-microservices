@@ -14,7 +14,7 @@ services:
     environment:
       - |
         FLINK_PROPERTIES=
-        jobmanager.rpc.address: jobmanager        
+        jobmanager.rpc.address: jobmanager
 
   taskmanager:
     image: flink:latest
@@ -27,3 +27,8 @@ services:
         FLINK_PROPERTIES=
         jobmanager.rpc.address: jobmanager
         taskmanager.numberOfTaskSlots: 2
+
+networks:
+  default:
+    external:
+      name: src_default      
