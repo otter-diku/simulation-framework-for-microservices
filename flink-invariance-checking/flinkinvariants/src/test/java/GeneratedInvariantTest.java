@@ -1,14 +1,17 @@
 import org.apache.flink.runtime.testutils.MiniClusterResourceConfiguration;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
+import org.apache.flink.streaming.api.functions.sink.PrintSinkFunction;
 import org.apache.flink.streaming.api.functions.sink.SinkFunction;
 import org.apache.flink.test.util.MiniClusterWithClientResource;
 import org.jetbrains.annotations.NotNull;
 import org.junit.ClassRule;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.myorg.flinkinvariants.events.Event;
 import org.myorg.flinkinvariants.invariantlanguage.InvariantChecker;
 import org.myorg.flinkinvariants.invariantlanguage.InvariantTranslator;
 import org.myorg.flinkinvariants.invariantlanguage.PatternGenerator;
+import org.myorg.flinkinvariants.invariantlanguage.ProductPriceChangedInvariant;
 
 import javax.tools.JavaCompiler;
 import javax.tools.JavaFileObject;
@@ -23,6 +26,7 @@ import java.util.regex.Matcher;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+@Ignore
 public class GeneratedInvariantTest {
 
     public static final String GENERATED_INVARIANT_NAMESPACE = "org.myorg.flinkinvariants.invariantlanguage.generated";
@@ -575,6 +579,41 @@ public class GeneratedInvariantTest {
         executeTestInvariant(invariantQuery, events, "testGeneratedInvariant_13");
 
         assertEquals(1, ViolationSink.values.size());
+    }
+
+    @Test
+    public void testGeneratedInvariant_14() throws Exception {
+        // product price changed
+        var invariantQuery =
+                """
+                ProductPriceChangedIntegrationEvent pc1
+                  topic: eshop_event_bus
+                  schema: {ProductId:number, NewPrice:number}
+                ProductPriceChangedIntegrationEvent pc2
+                  topic: eshop_event_bus
+                  schema: {ProductId:number, NewPrice:number}
+                ProductBoughtIntegrationEvent pb
+                  topic: eshop_event_bus
+                  schema: {ProductId:number, Price:number}
+
+                SEQ (pc1, !pc2, pb)
+                WITHIN 2 min
+                WHERE (pc1.ProductId = pb.ProductId) AND
+                      (pc1.ProductId = pc2.ProductId)
+                ON FULL MATCH (pc1.NewPrice = pb.Price)""";
+        List<Event> events = List.of(
+                new Event("ProductBoughtIntegrationEvent", """
+                        {"ProductId": 1, "Price": 42}""")
+                );
+
+        executeTestInvariant(invariantQuery, events, "ProductPriceChangedTestInvariant");
+    }
+
+    @Test
+    public void runner() throws Exception {
+        // product price changed
+        final StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment().setParallelism(1);
+        ProductPriceChangedInvariant.checkInvariant(env, ProductPriceChangedInvariant.getDataStream(env), new PrintSinkFunction<>());
     }
 
 

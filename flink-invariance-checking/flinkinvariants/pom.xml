@@ -30,7 +30,7 @@ under the License.
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<flink.version>1.17.0</flink.version>
-		<target.java.version>15</target.java.version>
+		<target.java.version>11</target.java.version>
 		<scala.binary.version>2.12</scala.binary.version>
 		<maven.compiler.source>${target.java.version}</maven.compiler.source>
 		<maven.compiler.target>${target.java.version}</maven.compiler.target>
@@ -223,7 +223,6 @@ under the License.
 				</executions>
 			</plugin>
 
-
 			<!-- We use the maven-shade plugin to create a fat jar that contains all necessary dependencies. -->
 			<!-- Change the value of <mainClass>...</mainClass> if your program entry point changes. -->
 			<plugin>
@@ -260,10 +259,8 @@ under the License.
 								</filter>
 							</filters>
 							<transformers>
-								<transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer"/>
 								<transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
-<!--									<mainClass>org.myorg.flinkinvariants.EshopPrintJob</mainClass>-->
-									<mainClass>org.myorg.flinkinvariants.invariantcheckers.eshop.LackingPaymentEventInvariantChecker</mainClass>
+									<mainClass>org.myorg.flinkinvariants.invariantlanguage.ProductPriceChangedInvariant</mainClass>
 								</transformer>
 							</transformers>
 						</configuration>
