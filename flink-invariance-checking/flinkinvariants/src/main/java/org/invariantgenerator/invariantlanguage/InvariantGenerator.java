@@ -41,24 +41,27 @@ public class InvariantGenerator {
         var streamCode = generateStreamCode(new ArrayList<>(topics), queueConfig);
         return String.format(
                 """
+                private static final String broker = "%s";
+                private static final String username = "%s";
+                private static final String password = "%s";
                 public static DataStream<Event> getDataStream(StreamExecutionEnvironment env) {
                   %s
                   %s
                 }
-                """, streamCode, filterCode);
+                """, queueConfig.get("broker"), queueConfig.get("username"), queueConfig.get("password"),
+                streamCode, filterCode);
     }
 
     private String generateStreamCode(List<String> topics, Map<String, Object> queueConfig) {
         var streamSb = new StringBuilder();
         var unionSb = new StringBuilder();
-        var broker = (String) queueConfig.get("broker");
 
         for (int i = 0; i < topics.size(); i++) {
             streamSb.append(String.format(
                     """
-                    var kafkaSource%s = KafkaReader.getEventKafkaSourceAuthenticated("%s", "%s", "%s", "%s");
+                    var kafkaSource%s = KafkaReader.getEventKafkaSourceAuthenticated("%s", broker, username, password);
                     var stream%s = env.fromSource(kafkaSource%s, WatermarkStrategy.noWatermarks(), "Kafka Source");
-                    """, i, broker, topics.get(i), queueConfig.get("username"), queueConfig.get("password"), i, i)
+                    """, i, topics.get(i), i, i)
             );
             if (i == topics.size()-1) {
                 unionSb.append("stream").append(i);
