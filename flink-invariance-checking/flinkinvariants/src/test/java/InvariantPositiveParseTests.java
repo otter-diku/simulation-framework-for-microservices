@@ -23,9 +23,8 @@ public class InvariantPositiveParseTests {
                 ON FULL MATCH (a.id = 42)""";
 
         var translationResult = translator.translateQuery(
-                query,
-                "TestInvariant",
-                "");
+                query
+        );
         assertEquals(0, translationResult.getNumberOfSyntaxErrors());
         assertFalse(translationResult.isSemanticAnalysisFailed());
     }
@@ -47,9 +46,8 @@ public class InvariantPositiveParseTests {
                 ON FULL MATCH (a.id = 42)""";
 
         var translationResult = translator.translateQuery(
-                query,
-                "TestInvariant",
-                "");
+                query
+        );
         assertEquals(0, translationResult.getNumberOfSyntaxErrors());
         assertFalse(translationResult.isSemanticAnalysisFailed());
     }
@@ -72,9 +70,8 @@ public class InvariantPositiveParseTests {
 
 
         var translationResult = translator.translateQuery(
-                query,
-                "TestInvariant",
-                "");
+                query
+        );
         assertEquals(0, translationResult.getNumberOfSyntaxErrors());
         assertFalse(translationResult.isSemanticAnalysisFailed());
     }
@@ -99,9 +96,8 @@ public class InvariantPositiveParseTests {
                 ON FULL MATCH (a.id = 42)""";
 
         var translationResult = translator.translateQuery(
-                query,
-                "TestInvariant",
-                "");
+                query
+        );
         assertEquals(0, translationResult.getNumberOfSyntaxErrors());
         assertFalse(translationResult.isSemanticAnalysisFailed());
     }
@@ -126,9 +122,8 @@ public class InvariantPositiveParseTests {
                 ON FULL MATCH (a.id = 42)""";
 
         var translationResult = translator.translateQuery(
-                query,
-                "TestInvariant",
-                "");
+                query
+        );
         assertEquals(0, translationResult.getNumberOfSyntaxErrors());
         assertFalse(translationResult.isSemanticAnalysisFailed());
     }
@@ -153,9 +148,8 @@ public class InvariantPositiveParseTests {
                 ON FULL MATCH (a.id = 42)""";
 
         var translationResult = translator.translateQuery(
-                query,
-                "TestInvariant",
-                "");
+                query
+        );
         assertEquals(0, translationResult.getNumberOfSyntaxErrors());
         assertFalse(translationResult.isSemanticAnalysisFailed());
     }
@@ -180,9 +174,8 @@ public class InvariantPositiveParseTests {
                 ON FULL MATCH (a.id = 42)""";
 
         var translationResult = translator.translateQuery(
-                query,
-                "TestInvariant",
-                "");
+                query
+        );
         assertEquals(0, translationResult.getNumberOfSyntaxErrors());
         assertFalse(translationResult.isSemanticAnalysisFailed());
     }
@@ -208,9 +201,8 @@ public class InvariantPositiveParseTests {
                 ON FULL MATCH (pc1.NewPrice = pb.Price)""";
 
         var translationResult = translator.translateQuery(
-                query,
-                "TestInvariant",
-                "");
+                query
+        );
         assertEquals(0, translationResult.getNumberOfSyntaxErrors());
         assertFalse(translationResult.isSemanticAnalysisFailed());
     }
@@ -234,9 +226,8 @@ public class InvariantPositiveParseTests {
                 """;
 
         var translationResult = translator.translateQuery(
-                query,
-                "TestInvariant",
-                "");
+                query
+        );
         assertEquals(0, translationResult.getNumberOfSyntaxErrors());
         assertFalse(translationResult.isSemanticAnalysisFailed());
     }
@@ -257,9 +248,8 @@ public class InvariantPositiveParseTests {
                 """;
 
         var translationResult = translator.translateQuery(
-                query,
-                "TestInvariant",
-                "");
+                query
+        );
         assertEquals(0, translationResult.getNumberOfSyntaxErrors());
         assertFalse(translationResult.isSemanticAnalysisFailed());
     }
@@ -284,9 +274,8 @@ public class InvariantPositiveParseTests {
                 ON FULL MATCH (a.id = 42)""";
 
         var translationResult = translator.translateQuery(
-                query,
-                "TestInvariant",
-                "");
+                query
+        );
         assertEquals(0, translationResult.getNumberOfSyntaxErrors());
         assertFalse(translationResult.isSemanticAnalysisFailed());
     }
@@ -312,9 +301,8 @@ public class InvariantPositiveParseTests {
                 ON FULL MATCH (a.id = 42)""";
 
         var result = translator.translateQuery(
-                query,
-                "TestInvariant",
-                "");
+                query
+        );
 
         assertEquals(0, result.getNumberOfSyntaxErrors());
         assertFalse(result.isSemanticAnalysisFailed());

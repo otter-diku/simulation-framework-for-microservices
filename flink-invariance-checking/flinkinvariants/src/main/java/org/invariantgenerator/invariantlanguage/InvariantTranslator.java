@@ -275,7 +275,7 @@ public class InvariantTranslator {
         }
     }
 
-    public TranslationResult translateQuery(String query, String invariantName, String outputFile) {
+    public TranslationResult translateQuery(String query) {
         ANTLRInputStream input = new ANTLRInputStream(query);
         // create a lexer that feeds off of input CharStream
         InvariantsLexer lexer = new InvariantsLexer(input);

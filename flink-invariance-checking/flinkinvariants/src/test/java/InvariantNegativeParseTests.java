@@ -20,9 +20,8 @@ public class InvariantNegativeParseTests {
                 INVARIANT a.id = 42""";
 
         var _discard = translator.translateQuery(
-                query,
-                "TestInvariant",
-                "").getNumberOfSyntaxErrors();
+                query
+        ).getNumberOfSyntaxErrors();
     }
 
     @Test(expected = Exception.class)
@@ -40,9 +39,8 @@ public class InvariantNegativeParseTests {
                 INVARIANT a.id = 42""";
 
         var _discard = translator.translateQuery(
-                query,
-                "TestInvariant",
-                "").getNumberOfSyntaxErrors();
+                query
+        ).getNumberOfSyntaxErrors();
     }
 
     @Test
@@ -66,9 +64,8 @@ public class InvariantNegativeParseTests {
                 ON FULL MATCH (a.id = 42)""";
 
         var result = translator.translateQuery(
-                query,
-                "TestInvariant",
-                "");
+                query
+        );
         assertEquals(0, result.getNumberOfSyntaxErrors());
         assertTrue(result.isSemanticAnalysisFailed());
     }
@@ -93,9 +90,8 @@ public class InvariantNegativeParseTests {
                 ON FULL MATCH (a.id = 42)""";
 
         var result = translator.translateQuery(
-                query,
-                "TestInvariant",
-                "");
+                query
+        );
 
         assertEquals(0, result.getNumberOfSyntaxErrors());
         assertTrue(result.isSemanticAnalysisFailed());
@@ -122,9 +118,8 @@ public class InvariantNegativeParseTests {
                 ON FULL MATCH (a.id = 42)""";
 
         var result = translator.translateQuery(
-                query,
-                "TestInvariant",
-                "");
+                query
+        );
 
         assertEquals(0, result.getNumberOfSyntaxErrors());
         assertTrue(result.isSemanticAnalysisFailed());

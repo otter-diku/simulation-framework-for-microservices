@@ -1,7 +1,29 @@
-# simulation-framework-for-microservices
+simulation-framework-for-microservices
 ======================================
 
 [![build and test](https://github.com/otter-diku/simulation-framework-for-microservices/actions/workflows/build-and-test.yml/badge.svg)](https://github.com/otter-diku/simulation-framework-for-microservices/actions/workflows/build-and-test.yml)
+
+
+## Specifying invariant queries
+
+Client.main arguments:
+
+```
+-invariants <your-path>/simulation-framework-for-microservices/invariant-queries/eshop
+-queue-config <your-path>/simulation-framework-for-microservices/invariant-queries/eshop/kafkaConfig.json
+```
+
+You have to create the kafkaConfig.json file because it contains secrets:
+
+``` json
+{
+  "broker": "pkc-xmzwx.europe-central2.gcp.confluent.cloud:9092",
+  "maxLatenessOfEventsSec": 5,
+  "username": "<username>",
+  "password": "<secret>"
+}
+
+```
 
 
 ## CDC with Debezium

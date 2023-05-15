@@ -1,5 +1,6 @@
 package org.invariantgenerator.invariantlanguage;
 
+import org.apache.flink.api.common.eventtime.WatermarkStrategy;
 import org.apache.flink.cep.CEP;
 import org.apache.flink.cep.functions.PatternProcessFunction;
 import org.apache.flink.cep.functions.TimedOutPartialMatchHandler;
@@ -14,7 +15,9 @@ import org.apache.flink.util.Collector;
 import org.apache.flink.util.OutputTag;
 import org.invariantchecker.events.*;
 import org.shared.*;
+import org.invariantchecker.datastreamsourceproviders.KafkaReader;
 
+import java.time.Duration;
 import java.util.*;
 import java.util.stream.Collectors;
 

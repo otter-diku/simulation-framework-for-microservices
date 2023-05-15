@@ -587,7 +587,7 @@ public class GeneratedInvariantTest {
 
     private Optional<InvariantChecker> translateTestInvariant(String invariantQuery, String invariantName) throws Exception {
         var translator = new InvariantTranslator();
-        var translationResult = translator.translateQuery(invariantQuery, null, null);
+        var translationResult = translator.translateQuery(invariantQuery);
 
         var patternGenerator = new PatternGenerator(
                 translationResult.sequence,
@@ -598,7 +598,7 @@ public class GeneratedInvariantTest {
                 translationResult.onFullMatch,
                 translationResult.onPartialMatch);
         var pattern = patternGenerator.generatePattern();
-        var processMatchCode = patternGenerator.generateInvariants();
+        var processMatchCode = patternGenerator.generatePatternProcessFunction();
 
         createTestInvariantFile(pattern, processMatchCode, invariantName);
 

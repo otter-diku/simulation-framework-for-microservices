@@ -103,7 +103,7 @@ public class PatternGenerator {
         return patternCodeBuilder.toString();
     }
 
-    public String generateInvariants() {
+    public String generatePatternProcessFunction() {
         var sb = new StringBuilder();
 
         var processTimeOutBody = getProcessTimeOutBody();
