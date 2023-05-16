@@ -5,6 +5,8 @@
 
 kafkaConfig*
 
+example/output/
+
 # Java
 *.jar
 *.lst
