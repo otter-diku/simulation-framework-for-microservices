@@ -12,7 +12,7 @@ on:
 
 env:
   DOTNET_VERSION: '7.0.102' # The .NET SDK version to use
-  SLN_PATH: 'src/MicroservicesSimulationFramework/MicroservicesSimulationFramework.sln'
+  SLN_PATH: 'workload-generator/src/MicroservicesSimulationFramework/MicroservicesSimulationFramework.sln'
 
 jobs:
   build-and-test:

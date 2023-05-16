@@ -1,68 +1,67 @@
-# simulation-framework-for-microservices
+simulation-framework-for-microservices
 ======================================
 
 [![build and test](https://github.com/otter-diku/simulation-framework-for-microservices/actions/workflows/build-and-test.yml/badge.svg)](https://github.com/otter-diku/simulation-framework-for-microservices/actions/workflows/build-and-test.yml)
 
+This project can be used to specify invariants  for event-driven-architectures often
+found in microservice applications.
 
-## CDC with Debezium
+Invariants are specified using a DSL that borrows elements from CEP (complex event processing) and SQL.
 
-When writing invariants for microservice applications that do not use Kafka for
-communication between microservices but instead RPC (gRPC, thrift etc.) like
-https://github.com/delimitrou/DeathStarBench/tree/master/socialNetwork
-we can utilize change data capture to expose events to the databases of each
-microservice and still check invariants.
+For example for an online-shop application, where
+we have price changed events and product bought events, we can specify
+that a product's price is the most recent one when it is bought as follows:
 
-After starting Zookeeper and Kafka with
+``` text
+ProductPriceChangedIntegrationEvent pc1
+  topic: eshop_event_bus
+  schema: {ProductId:number, NewPrice:number, CreationDate:timestamp}
 
-``` shell
-docker compose up
+ProductPriceChangedIntegrationEvent pc2
+  topic: eshop_event_bus
+  schema: {ProductId:number, NewPrice:number, CreationDate:timestamp}
+
+ProductBoughtIntegrationEvent pb
+  topic: eshop_event_bus
+  schema: {ProductId:number, Price:number, CreationDate:timestamp}
+
+SEQ (pc1, !pc2, pb)
+WITHIN 30 min
+WHERE (pc1.ProductId = pb.ProductId) AND
+      (pc1.ProductId = pc2.ProductId)
+ON FULL MATCH (pc1.NewPrice = pb.Price)
 ```
 
-we can start the mongoDB  connector using the mongodb-source.json configuration file:
+Such an invariant can be translated into a java class that uses
+apache flink to check the invariant against an event stream,
+for now we only support kafka.
 
-``` shell
-curl -i -X POST -H "Accept:application/json" -H  "Content-Type:application/json" http://localhost:8083/connectors/ -d @mongodb-source.json
+Additionally one can specify a workload using json files as described
+below in [Workload Generation](#workload-generation), alternatively
+any other workload generation tool may be used.
+
+
+## Using the invariant translator
+
+Client.main arguments:
+
+```
+-invariants <your-path>/simulation-framework-for-microservices/invariant-queries/eshop
+-queue-config <your-path>/simulation-framework-for-microservices/invariant-queries/eshop/kafkaConfig.json
+-output <your-path>/simulation-framework-for-microservices/output
 ```
 
-Afterwards kafka should contain the following topic "dbserver1.user.user"
-
-When we now create a new example user in the socialNetwork application called
-john doe debezium creates the following message (I only include the "payload", here
-there is also a lot of schema information as part of the debezium message
+You have to create the kafkaConfig.json file because it contains secrets:
 
 ``` json
 {
-  "payload": {
-    "before": null,
-    "after": "{\"_id\": {\"$oid\": \"6440277b1be32b1565328035\"},\"user_id\": {\"$numberLong\": \"1221160191339040768\"},\"first_name\": \"john\",\"last_name\": \"doe\",\"username\": \"john.doe\",\"salt\": \"D4TderGD3qY60b24xKoxMJccc2sYeY70\",\"password\": \"708a807a360abe4b478edf165266aa32564d66f74f054b238c3640428690fb6e\"}",
-    "patch": null,
-    "filter": null,
-    "updateDescription": null,
-    "source": {
-      "version": "2.1.4.Final",
-      "connector": "mongodb",
-      "name": "dbserver1",
-      "ts_ms": 1681926011000,
-      "snapshot": "false",
-      "db": "user",
-      "sequence": null,
-      "rs": "rs0",
-      "collection": "user",
-      "ord": 1,
-      "lsid": null,
-      "txnNumber": null
-    },
-    "op": "c",
-    "ts_ms": 1681926011422,
-    "transaction": null
-  }
+  "broker": "pkc-xmzwx.europe-central2.gcp.confluent.cloud:9092",
+  "maxLatenessOfEventsSec": 5,
+  "username": "<username>",
+  "password": "<secret>"
 }
+
 ```
-
-## Logging
-We use  https://datalust.co/seq for logging, this requires running seq in docker:
-
-> docker run --name seq -d --restart unless-stopped -e ACCEPT_EULA=Y -p 5341:80 datalust/seq:latest
 
 
 ## Workload Generation
@@ -74,6 +73,7 @@ Our configuration language consists of the following components:
 - operation files ("op_" prefix)
 - transaction files ("tx_" prefix)
 - workload files ("workload_" prefix)
+
 
 ### Operation files
 
@@ -198,5 +198,66 @@ An example workload file looks as follows:
       "count": 1000
     }
   ]
+}
+```
+
+## Logging
+We use  https://datalust.co/seq for logging, this requires running seq in docker:
+
+> docker run --name seq -d --restart unless-stopped -e ACCEPT_EULA=Y -p 5341:80 datalust/seq:latest
+
+
+## CDC with Debezium (possible future feature)
+
+When writing invariants for microservice applications that do not use Kafka for
+communication between microservices but instead RPC (gRPC, thrift etc.) like
+https://github.com/delimitrou/DeathStarBench/tree/master/socialNetwork
+we can utilize change data capture to expose events to the databases of each
+microservice and still check invariants.
+
+After starting Zookeeper and Kafka with
+
+``` shell
+docker compose up
+```
+
+we can start the mongoDB  connector using the mongodb-source.json configuration file:
+
+``` shell
+curl -i -X POST -H "Accept:application/json" -H  "Content-Type:application/json" http://localhost:8083/connectors/ -d @mongodb-source.json
+```
+
+Afterwards kafka should contain the following topic "dbserver1.user.user"
+
+When we now create a new example user in the socialNetwork application called
+john doe debezium creates the following message (I only include the "payload", here
+there is also a lot of schema information as part of the debezium message
+
+``` json
+{
+  "payload": {
+    "before": null,
+    "after": "{\"_id\": {\"$oid\": \"6440277b1be32b1565328035\"},\"user_id\": {\"$numberLong\": \"1221160191339040768\"},\"first_name\": \"john\",\"last_name\": \"doe\",\"username\": \"john.doe\",\"salt\": \"D4TderGD3qY60b24xKoxMJccc2sYeY70\",\"password\": \"708a807a360abe4b478edf165266aa32564d66f74f054b238c3640428690fb6e\"}",
+    "patch": null,
+    "filter": null,
+    "updateDescription": null,
+    "source": {
+      "version": "2.1.4.Final",
+      "connector": "mongodb",
+      "name": "dbserver1",
+      "ts_ms": 1681926011000,
+      "snapshot": "false",
+      "db": "user",
+      "sequence": null,
+      "rs": "rs0",
+      "collection": "user",
+      "ord": 1,
+      "lsid": null,
+      "txnNumber": null
+    },
+    "op": "c",
+    "ts_ms": 1681926011422,
+    "transaction": null
+  }
 }
 ```

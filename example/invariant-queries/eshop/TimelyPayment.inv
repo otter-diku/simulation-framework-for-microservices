@@ -1,0 +1,16 @@
+OrderStatusChangedToSubmittedIntegrationEvent os
+  topic: eshop_event_bus
+  schema: {OrderId:number, CreationDate:timestamp}
+
+OrderPaymentSucceededIntegrationEvent ps
+  topic: eshop_event_bus
+  schema: {OrderId:number, CreationDate:timestamp}
+
+OrderPaymentFailedIntegrationEvent pf
+  topic: eshop_event_bus
+  schema: {OrderId:number, CreationDate:timestamp}
+
+SEQ (os, (ps | pf))
+WITHIN 5 msec
+WHERE (os.OrderId = ps.OrderId OR os.OrderId = pf.OrderId)
+ON PREFIX MATCH DEFAULT false
