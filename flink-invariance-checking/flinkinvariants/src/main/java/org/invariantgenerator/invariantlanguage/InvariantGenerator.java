@@ -1,6 +1,7 @@
 package org.invariantgenerator.invariantlanguage;
 
 import java.io.*;
+import java.nio.file.Path;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -14,7 +15,7 @@ public class InvariantGenerator {
         invariantTranslator = new InvariantTranslator();
     }
 
-    public void generateInvariantFile(String invariantName, String invariantQuery, Map<String, Object> queueConfig) {
+    public void generateInvariantFile(String outputDir, String invariantName, String invariantQuery, Map<String, Object> queueConfig) {
         var translationResult = invariantTranslator.translateQuery(invariantQuery);
 
         var patternGenerator = new PatternGenerator(
@@ -31,7 +32,7 @@ public class InvariantGenerator {
         var dataStreamCode = generateDataStreamCode(invariantName, queueConfig, translationResult.id2Type, translationResult.topics, translationResult.schemata);
 
         var subs = createInvariantFileSubstitutions(invariantName, dataStreamCode, patternCode, patternProcessCode);
-        createInvariantFile(invariantName, subs);
+        createInvariantFile(outputDir, invariantName, subs);
 
         // generate pom.xml
     }
@@ -181,13 +182,15 @@ public class InvariantGenerator {
         return substitutions;
     }
 
-    private void createInvariantFile(String invariantName,
+    private void createInvariantFile(String outputDir, String invariantName,
                                      Map<String, String> substitutions) {
         String templateFilePath =
                 "src/main/java/org/invariantgenerator/invariantlanguage/InvariantTemplate.java";
-        var destDir = "src/main/java/org/invariantgenerator/invariantlanguage/generated/";
-        createDirectoryIfNeeded(destDir);
-        var invariantFile = String.format(destDir + "%s.java", invariantName);
+        // TODO: instead of this hack use Path and not String
+        outputDir = outputDir.endsWith("/") ? outputDir : outputDir + "/";
+
+        createDirectoryIfNeeded(outputDir);
+        var invariantFile = String.format(outputDir + "%s.java", invariantName);
 
         try {
             FileWriter fileWriter = getFileWriter(invariantFile);
@@ -229,50 +232,5 @@ public class InvariantGenerator {
         return new FileWriter(file);
     }
 
-    private List<String> generatePomConfiguration(List<String> invariantNames) {
-        // each invariant needs to have separate
-        // entry in pom.xml such that its jar gets generated on `mvn package`
-        var temp = String.format(
-                """
-                <execution>
-                    <id>%s</id>
-                    <phase>package</phase>
-                    <goals>
-                        <goal>shade</goal>
-                    </goals>
-                    <configuration>
-                        <outputFile>target/%s.jar</outputFile>
-                        <createDependencyReducedPom>false</createDependencyReducedPom>
-                        <artifactSet>
-                            <excludes>
-                                <exclude>org.apache.flink:flink-shaded-force-shading</exclude>
-                                <exclude>com.google.code.findbugs:jsr305</exclude>
-                                <exclude>org.slf4j:*</exclude>
-                                <exclude>org.apache.logging.log4j:*</exclude>
-                            </excludes>
-                        </artifactSet>
-                        <filters>
-                            <filter>
-                                <!-- Do not copy the signatures in the META-INF folder.
-                                Otherwise, this might cause SecurityExceptions when using the JAR. -->
-                                <artifact>*:*</artifact>
-                                <excludes>
-                                    <exclude>META-INF/*.SF</exclude>
-                                    <exclude>META-INF/*.DSA</exclude>
-                                    <exclude>META-INF/*.RSA</exclude>
-                                </excludes>
-                            </filter>
-                        </filters>
-                        <transformers>
-                            <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
-                                <mainClass>%s</mainClass>
-                            </transformer>
-                        </transformers>
-                    </configuration>
-                </execution>
-                """, "invariantName", "invariantName", "mainClass"
-        );
 
-        return List.of();
-    }
 }

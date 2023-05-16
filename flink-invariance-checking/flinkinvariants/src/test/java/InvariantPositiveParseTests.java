@@ -1,10 +1,38 @@
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.Test;
 import org.invariantgenerator.invariantlanguage.InvariantTranslator;
+
+import java.io.IOException;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 
 public class InvariantPositiveParseTests {
+
+    @Test
+    public void scratch() throws IOException {
+        var eshopEvent = """
+          {
+            "Type": "OrderStatusChangedToSubmittedIntegrationEvent",
+            "Content": {
+              "BuyerName": "Dummy User Name",
+              "CreationDate": "2023-03-26T11:10:51.9241451Z",
+              "Id": "1f2250de-4c80-488f-ae7d-fb14d6709b8b",
+              "OrderId": 9882,
+              "OrderStatus": "submitted"
+            }
+          }
+        """;
+        var lakeSideEvent =
+            """
+            {"date":1681310215714,"insuranceQuoteRequestId":51,"policyId":"vnknojhhap"}
+            """;
+        ObjectMapper objectMapper = new ObjectMapper();
+        JsonNode eshopJsonNode = objectMapper.readTree(eshopEvent);
+        JsonNode lakesideJsonNode = objectMapper.readTree(lakeSideEvent);
+        eshopJsonNode.get("Content").get("CreationDate").isTextual();
+    }
 
     @Test
     public void TestEventSeq1() {

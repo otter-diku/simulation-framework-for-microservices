@@ -11,6 +11,7 @@ Client.main arguments:
 ```
 -invariants <your-path>/simulation-framework-for-microservices/invariant-queries/eshop
 -queue-config <your-path>/simulation-framework-for-microservices/invariant-queries/eshop/kafkaConfig.json
+-output <your-path>/simulation-framework-for-microservices/output
 ```
 
 You have to create the kafkaConfig.json file because it contains secrets:

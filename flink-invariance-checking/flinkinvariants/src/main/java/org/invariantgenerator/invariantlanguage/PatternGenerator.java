@@ -360,7 +360,17 @@ public class PatternGenerator {
                 .map(eId -> String.format("e.Type.equals(\"%s\")\n", id2Type.get(eId)))
                 .collect(Collectors.joining("||"));
 
-        patternCodeBuilder.append(String.format(".where(SimpleCondition.of(e -> %s))\n", simpleCondition));
+        patternCodeBuilder.append(
+                String.format(
+                        """
+                        .where(
+                            new SimpleCondition<Event>() {
+                               @Override
+                               public boolean filter(Event e) throws Exception {
+                                   return %s;
+                               }
+                        })
+                        """, simpleCondition));
     }
 
     private Operand convertToOperand(String operand) {
