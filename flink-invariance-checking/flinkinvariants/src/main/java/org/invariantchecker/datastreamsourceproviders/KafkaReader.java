@@ -48,7 +48,7 @@ public class KafkaReader {
                 .build();
     }
 
-    public static KafkaSource<Event> getEventKafkaSourceAuthenticated(String broker, String topic, String username, String password) {
+    public static KafkaSource<Event> getEventKafkaSourceAuthenticated(String broker, String topic, String groupId, String username, String password) {
         return KafkaSource.<Event>builder()
                 .setBootstrapServers(broker)
                 .setTopics(topic)
@@ -59,7 +59,7 @@ public class KafkaReader {
                                 "org.apache.kafka.common.security.scram.ScramLoginModule required username=\"%s\" password=\"%s\";",
                         username, password)
                 )
-                .setGroupId("invariant-checker")
+                .setGroupId(groupId)
                 .setStartingOffsets(OffsetsInitializer.earliest())
                 .setDeserializer(
                         KafkaRecordDeserializationSchema.of(

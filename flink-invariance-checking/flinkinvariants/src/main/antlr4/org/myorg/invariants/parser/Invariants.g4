@@ -39,7 +39,7 @@ schema: '{' schemaMember (',' schemaMember)* '}';
 
 schemaMember: IDENTIFIER ':' memberType;
 
-memberType: 'number' | 'string' | 'bool';
+memberType: 'number' | 'string' | 'bool' | 'timestamp';
 
 events
   : event (',' event)*

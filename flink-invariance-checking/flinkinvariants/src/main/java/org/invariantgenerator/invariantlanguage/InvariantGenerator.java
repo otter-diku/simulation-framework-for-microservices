@@ -28,7 +28,7 @@ public class InvariantGenerator {
 
         var patternCode = patternGenerator.generatePattern();
         var patternProcessCode = patternGenerator.generatePatternProcessFunction();
-        var dataStreamCode = generateDataStreamCode(queueConfig, translationResult.id2Type, translationResult.topics);
+        var dataStreamCode = generateDataStreamCode(invariantName, queueConfig, translationResult.id2Type, translationResult.topics, translationResult.schemata);
 
         var subs = createInvariantFileSubstitutions(invariantName, dataStreamCode, patternCode, patternProcessCode);
         createInvariantFile(invariantName, subs);
@@ -36,9 +36,9 @@ public class InvariantGenerator {
         // generate pom.xml
     }
 
-    private String generateDataStreamCode(Map<String, Object> queueConfig, Map<String, String> id2Type, Set<String> topics) {
+    private String generateDataStreamCode(String invariantName, Map<String, Object> queueConfig, Map<String, String> id2Type, Set<String> topics, Map<String, Map<String, String>> schemata) {
         var filterCode = generateFilterCode(new ArrayList<>(id2Type.values()));
-        var streamCode = generateStreamCode(new ArrayList<>(topics), queueConfig);
+        var streamCode = generateStreamCode(invariantName, new ArrayList<>(topics), queueConfig, schemata);
         return String.format(
                 """
                 private static final String broker = "%s";
@@ -52,16 +52,16 @@ public class InvariantGenerator {
                 streamCode, filterCode);
     }
 
-    private String generateStreamCode(List<String> topics, Map<String, Object> queueConfig) {
+    private String generateStreamCode(String invariantName, List<String> topics, Map<String, Object> queueConfig, Map<String, Map<String, String>> schemata) {
         var streamSb = new StringBuilder();
         var unionSb = new StringBuilder();
 
         for (int i = 0; i < topics.size(); i++) {
             streamSb.append(String.format(
                     """
-                    var kafkaSource%s = KafkaReader.getEventKafkaSourceAuthenticated("%s", broker, username, password);
+                    var kafkaSource%s = getEventKafkaSourceAuthenticated(broker, "%s", "%s", username, password);
                     var stream%s = env.fromSource(kafkaSource%s, WatermarkStrategy.noWatermarks(), "Kafka Source");
-                    """, i, topics.get(i), i, i)
+                    """, i, topics.get(i), invariantName, i, i)
             );
             if (i == topics.size()-1) {
                 unionSb.append("stream").append(i);
@@ -77,11 +77,36 @@ public class InvariantGenerator {
         }
 
         var maxLateness = queueConfig.get("maxLatenessOfEventsSec");
+
+        // TODO: currently assuming all events have same timestamp member,
+        //       therefore we just pick a random schema
+        var schema = new ArrayList<>(schemata.values()).get(0);
+        var timestampMember = schema.entrySet().stream()
+                .filter(k -> k.getValue().equals("timestamp"))
+                .collect(Collectors.toList()).get(0).getKey();
+
+        //          var timestamp = event.Content.get("CreationDate");
+        //         return event.Content.get("CreationDate").asLong();
+        //     })
+
+
         streamSb.append(String.format(
                 """
                 var streamWithWatermark = stream.assignTimestampsAndWatermarks(
-                                WatermarkStrategy.<Event>forBoundedOutOfOrderness(Duration.ofSeconds(%s)));
-                """, maxLateness));
+                     WatermarkStrategy.<Event>forBoundedOutOfOrderness(Duration.ofSeconds(%s))
+                     .withIdleness(Duration.ofSeconds(3))
+                     .withTimestampAssigner((event, l) -> {
+                             var timestamp = event.Content.get("%s");
+                             if (timestamp.isTextual()) {
+                                 return Instant.parse(timestamp.asText()).toEpochMilli();
+                             }
+                             if (timestamp.isNumber()) {
+                                 return timestamp.asLong();
+                             }
+                             throw new RuntimeException("Failed to parse timestamp of event.");
+                         })
+                );
+                """, maxLateness, timestampMember));
 
         return streamSb.toString();
     }
@@ -130,8 +155,6 @@ public class InvariantGenerator {
                 ";// ${process}",
                 """
                 .process(new MyPatternProcessFunction());
-                matches.getSideOutput(outputTag).addSink(sinkFunction);
-                matches.addSink(sinkFunction);
                 """
         );
         substitutions.put(
@@ -139,8 +162,16 @@ public class InvariantGenerator {
                 """
                 public static void main(String[] args) throws Exception {
                     final StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment().setParallelism(1);
-                    checkInvariant(env, getDataStream(env), new PrintSinkFunction<>());
+                    checkInvariant(env, getDataStream(env));
                 }
+                """
+        );
+        substitutions.put(
+                "// ${kafkaSink}",
+                """
+                KafkaSink<String> kafkaSink = createKafkaSink(broker, username, password);
+                matches.getSideOutput(outputTag).sinkTo(kafkaSink);
+                matches.sinkTo(kafkaSink);
                 """
         );
         substitutions.put(
