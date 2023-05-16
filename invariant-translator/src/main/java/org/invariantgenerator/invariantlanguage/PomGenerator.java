@@ -12,7 +12,7 @@ public class PomGenerator {
              <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
              	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
              	<modelVersion>4.0.0</modelVersion>
-             	<groupId>org.invariantgenerator</groupId>
+             	<groupId>org.invariants</groupId>
              	<artifactId>invariants</artifactId>
              	<version>0.1</version>
              	<packaging>jar</packaging>
@@ -162,7 +162,7 @@ public class PomGenerator {
 							</filters>
 							<transformers>
 								<transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
-									<mainClass>org.invariantgenerator.invariantlanguage.generated.%s</mainClass>
+									<mainClass>org.invariants.%s</mainClass>
 								</transformer>
 							</transformers>
 						</configuration>

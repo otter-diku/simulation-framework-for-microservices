@@ -121,7 +121,7 @@ public class InvariantTemplate {
                 .build();
     }
 
-    private static class Event {
+    public static class Event {
         public String Type;
         public JsonNode Content;
         public Event() {

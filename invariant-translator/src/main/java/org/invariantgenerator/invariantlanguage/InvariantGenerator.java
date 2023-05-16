@@ -7,7 +7,7 @@ import java.util.stream.Collectors;
 
 public class InvariantGenerator {
 
-    public static final String GENERATED_INVARIANT_NAMESPACE = "org.invariantgenerator.invariantlanguage.generated";
+    public static final String GENERATED_INVARIANT_NAMESPACE = "org.invariants";
 
     private final InvariantTranslator invariantTranslator;
 
@@ -188,6 +188,8 @@ public class InvariantGenerator {
                 "src/main/java/org/invariantgenerator/invariantlanguage/InvariantTemplate.java";
         // TODO: instead of this hack use Path and not String
         outputDir = outputDir.endsWith("/") ? outputDir : outputDir + "/";
+        // need this for maven
+        outputDir = outputDir + "src/main/java/org/invariants/";
 
         createDirectoryIfNeeded(outputDir);
         var invariantFile = String.format(outputDir + "%s.java", invariantName);
