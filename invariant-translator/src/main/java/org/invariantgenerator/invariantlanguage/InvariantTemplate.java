@@ -101,7 +101,7 @@ public class InvariantTemplate {
                 .build();
     }
 
-    public static KafkaSink<String> createKafkaSink(String broker, String username, String password) {
+    public static KafkaSink<String> createKafkaSink(String broker, String topic, String username, String password) {
         var kafkaProducerConfig = new Properties();
         kafkaProducerConfig.setProperty("security.protocol", "SASL_SSL");
         kafkaProducerConfig.setProperty("sasl.mechanism", "PLAIN");
@@ -115,7 +115,7 @@ public class InvariantTemplate {
                 .setKafkaProducerConfig(kafkaProducerConfig)
                 .setRecordSerializer(
                         KafkaRecordSerializationSchema.builder()
-                                .setTopic("violations")
+                                .setTopic(topic)
                                 .setKafkaValueSerializer(StringSerializer.class)
                                 .build())
                 .build();

@@ -244,7 +244,7 @@ public class InvariantTranslator {
                 return;
             }
 
-            sequence.getSequence().forEach(System.out::println);
+            // sequence.getSequence().forEach(System.out::println);
         }
 
 

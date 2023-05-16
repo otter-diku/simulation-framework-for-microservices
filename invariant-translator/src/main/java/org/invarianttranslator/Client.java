@@ -75,15 +75,9 @@ public class Client {
             var invariantsDir = line.getOptionValue("invariants");
             var queueConfig = Optional.ofNullable(line.getOptionValue("queue-config"));
             var outputDir = line.getOptionValue("output");
-
-            System.out.printf("Invariants directory: %s\nQueue config: %s\n Output directory: %s\n",
-                    invariantsDir,
-                    queueConfig.orElse("default"),
-                    outputDir
-                    );
+            outputDir = outputDir.endsWith("/") ? outputDir : outputDir + "/";
 
             processInvariants(invariantsDir, queueConfig.get(), outputDir);
-
         }
         catch (ParseException exception) {
             System.err.println("Parsing failed. Reason: " + exception.getMessage());
@@ -116,6 +110,8 @@ public class Client {
              var invariantNames = new ArrayList<String>();
             for (var invariantFile : invariantFiles) {
                 var invariantQuery =  Files.readString(invariantFile, StandardCharsets.UTF_8);
+                System.out.printf("Translating: %s%n", invariantFile.getFileName());
+
                 var invariantName = invariantFile.getFileName().toString().replace(".inv", "");
                 invariantGenerator.generateInvariantFile(outputDir, invariantName, invariantQuery, queueConfig);
                 invariantNames.add(invariantName);

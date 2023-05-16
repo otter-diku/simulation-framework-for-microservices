@@ -7,3 +7,14 @@ run_lakeside_workloads:
 
 test_workload_generator:
 	 dotnet test --no-restore --verbosity normal workload-generator/src/MicroservicesSimulationFramework/MicroservicesSimulationFramework.sln
+
+
+build_invariant_translator:
+	cd invariant-translator/ && mvn clean compile assembly:single
+
+
+run_invariant_translator_eshop_invariants:
+	java -jar invariant-translator/target/invariant-translator-0.1.jar \
+	-invariants $(shell dirname $(realpath $(firstword $(MAKEFILE_LIST))))/example/invariant-queries/eshop \
+	-queue-config $(shell dirname $(realpath $(firstword $(MAKEFILE_LIST))))/example/invariant-queries/eshop/kafkaConfig.json \
+	-output $(shell dirname $(realpath $(firstword $(MAKEFILE_LIST))))/example/output

@@ -138,7 +138,7 @@ public class PomGenerator {
 							<goal>shade</goal>
 						</goals>
 						<configuration>
-							<outputFile>%s.jar</outputFile>
+							<outputFile>invariant-flink-jobs/%s.jar</outputFile>
 							<createDependencyReducedPom>false</createDependencyReducedPom>
 							<artifactSet>
 								<excludes>
