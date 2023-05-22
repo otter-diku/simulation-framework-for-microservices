@@ -1,0 +1,28 @@
+{
+  "templateId": "op_get_catalog_item_by_id",
+  "type": "http",
+  "httpMethod": "get",
+  "arguments": [
+    {
+      "name": "catalog-base-url",
+      "type": "string"
+    },
+    {
+      "name": "product-id",
+      "type": "number"
+    }
+  ],
+  "response": {
+    "payload": {
+      "type": "json",
+      "returnValues": [
+        {
+          "key": "item-1",
+          "value": "$",
+          "type": "object"
+        }
+      ]
+    }
+  },
+  "url": "{{catalog-base-url}}catalog-api/api/v1/Catalog/items/{{product-id}}"
+}

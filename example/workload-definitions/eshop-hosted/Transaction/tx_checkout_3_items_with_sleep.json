@@ -1,0 +1,21 @@
+{
+  "templateId": "tx_checkout_3_items_sleep",
+  "operations": [
+    {
+      "operationReferenceId": "op_sleep_in_sec",
+      "id": "sleep-1"      
+    },    
+    {
+      "operationReferenceId": "op_catalog_get_3_items",
+      "id": "op-1"
+    },
+    {
+      "operationReferenceId": "op_basket_add_3_items",
+      "id": "op-2"
+    },
+    {
+      "operationReferenceId": "op_basket_checkout",
+      "id": "op-3"
+    }
+  ]
+}

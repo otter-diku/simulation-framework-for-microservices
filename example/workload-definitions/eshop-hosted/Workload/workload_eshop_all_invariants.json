@@ -1,0 +1,180 @@
+{
+  "templateId": "workload-eshop-all-invariants",
+  "maxConcurrentTransactions": 10,
+  "generators": [
+    {
+      "id": "productId",
+      "type": "unsignedInt",
+      "distribution": "uniform",
+      "min": 1,
+      "max": 10
+    },
+    {
+      "id": "sleepSeconds",
+      "type": "unsignedInt",
+      "distribution": "uniform",
+      "min": 1,
+      "max": 5
+    },
+    {
+      "id": "userId",
+      "type": "constant",
+      "constant": "10000000-0000-0000-0000-000000000000"
+    },
+    {
+      "id": "basketBaseUrl",
+      "type": "constant",
+      "constant": "http://eshop-ordering.azurewebsites.net/"
+    },
+    {
+      "id": "catalogBaseUrl",
+      "type": "constant",
+      "constant": "http://eshop-catalog.azurewebsites.net/"
+    }
+  ],
+  "transactions": [
+    {
+      "id": "replenish_stock_sleep",
+      "transactionReferenceId": "tx_replenish_stock_sleep",
+      "count": 5,
+      "data": [
+        {
+          "name":  "catalog-base-url",
+          "generatorReferenceId": "catalogBaseUrl"
+        },
+        {
+          "name":  "sleep-time",
+          "generatorReferenceId": "sleepSeconds"
+        },
+        {
+          "name":  "product-id",
+          "generatorReferenceId": "productId"
+        }
+      ]
+    },
+    {
+      "id": "price-update-sleep",
+      "transactionReferenceId": "tx_update_catalog_item_price_sleep",
+      "count": 100,
+      "data": [
+        {
+          "name":  "catalog-base-url",
+          "generatorReferenceId": "catalogBaseUrl"
+        },
+        {
+          "name":  "product-id",
+          "generatorReferenceId": "productId"
+        },
+        {
+          "name":  "sleep-time",
+          "generatorReferenceId": "sleepSeconds"
+        }
+      ]
+    },
+    {
+      "id": "buy-item-entire-stock-sleep",
+      "transactionReferenceId": "tx_buy_item_entire_stock_sleep",
+      "count": 100,
+      "data": [
+        {
+          "name":  "basket-base-url",
+          "generatorReferenceId": "basketBaseUrl"
+        },
+        {
+          "name":  "catalog-base-url",
+          "generatorReferenceId": "catalogBaseUrl"
+        },
+        {
+          "name":  "user-id",
+          "generatorReferenceId": "userId"
+        },
+        {
+          "name":  "product-id",
+          "generatorReferenceId": "productId"
+        },
+        {
+          "name":  "sleep-time",
+          "generatorReferenceId": "sleepSeconds"
+        }
+      ]
+    },
+    {
+      "id": "checkout-3-items-sleep",
+      "transactionReferenceId": "tx_checkout_3_items_sleep",
+      "count": 100,
+      "data": [
+        {
+          "name":  "basket-base-url",
+          "generatorReferenceId": "basketBaseUrl"
+        },
+        {
+          "name":  "catalog-base-url",
+          "generatorReferenceId": "catalogBaseUrl"
+        },
+        {
+          "name":  "user-id",
+          "generatorReferenceId": "userId"
+        },
+        {
+          "name":  "product-id-1",
+          "generatorReferenceId": "productId"
+        },
+        {
+          "name":  "product-id-2",
+          "generatorReferenceId": "productId"
+        },
+        {
+          "name":  "product-id-3",
+          "generatorReferenceId": "productId"
+        },
+        {
+          "name":  "sleep-time",
+          "generatorReferenceId": "sleepSeconds"
+        }
+      ]
+    },
+    {
+      "id": "checkout-5-items-sleep",
+      "transactionReferenceId": "tx_checkout_5_items_sleep",
+      "count": 100,
+      "data": [
+        {
+          "name":  "basket-base-url",
+          "generatorReferenceId": "basketBaseUrl"
+        },
+        {
+          "name":  "catalog-base-url",
+          "generatorReferenceId": "catalogBaseUrl"
+        },
+        {
+          "name":  "user-id",
+          "generatorReferenceId": "userId"
+        },
+        {
+          "name":  "product-id-1",
+          "generatorReferenceId": "productId"
+        },
+        {
+          "name":  "product-id-2",
+          "generatorReferenceId": "productId"
+        },
+        {
+          "name":  "product-id-3",
+          "generatorReferenceId": "productId"
+        },
+        {
+          "name":  "product-id-4",
+          "generatorReferenceId": "productId"
+        },
+        {
+          "name":  "product-id-5",
+          "generatorReferenceId": "productId"
+        },
+        {
+          "name":  "sleep-time",
+          "generatorReferenceId": "sleepSeconds"
+        }
+      ]
+    }
+  ]
+}

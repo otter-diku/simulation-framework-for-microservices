@@ -1,0 +1,64 @@
+{
+  "templateId": "op_catalog_get_5_items",
+  "type": "http",
+  "httpMethod": "get",
+  "arguments": [
+    {
+      "name": "catalog-base-url",
+      "type": "string"
+    },    
+    {
+      "name": "product-id-1",
+      "type": "number"
+    },
+    {
+      "name": "product-id-2",
+      "type": "number"
+    },
+    {
+      "name": "product-id-3",
+      "type": "number"
+    },
+    {
+      "name": "product-id-4",
+      "type": "number"
+    },
+    {
+      "name": "product-id-5",
+      "type": "number"
+    }
+  ],
+  "response": {
+    "payload": {
+      "type": "json",
+      "returnValues": [
+        {
+          "key": "item-1",
+          "value": "$.data[0]",
+          "type": "object"
+        },
+        {
+          "key": "item-2",
+          "value": "$.data[1]",
+          "type": "object"
+        },
+        {
+          "key": "item-3",
+          "value": "$.data[2]",
+          "type": "object"
+        },
+        {
+          "key": "item-4",
+          "value": "$.data[3]",
+          "type": "object"
+        },
+        {
+          "key": "item-5",
+          "value": "$.data[4]",
+          "type": "object"
+        }
+      ]
+    }
+  },
+  "url": "{{catalog-base-url}}catalog-api/api/v1/Catalog/items?pageSize=5&pageIndex=0&ids={{product-id-1}}%2C{{product-id-2}}%2C{{product-id-3}}%2C{{product-id-4}}%2C{{product-id-5}}"
+}

@@ -1,6 +1,9 @@
 run_eshop_workloads:
 	cd workload-generator/src/MicroservicesSimulationFramework/MicroservicesSimulationFramework.Cli && dotnet run $(shell dirname $(realpath $(firstword $(MAKEFILE_LIST))))/workload-generator/src/WorkloadGenerator/WorkloadGenerator.Data.Test/Integration/eShop
 
+run_hosted_eshop_workloads:
+	cd workload-generator/src/MicroservicesSimulationFramework/MicroservicesSimulationFramework.Cli && dotnet run $(shell dirname $(realpath $(firstword $(MAKEFILE_LIST))))/example/workload-definitions/eshop-hosted
+
 run_lakeside_workloads:
 	cd workload-generator/src/MicroservicesSimulationFramework/MicroservicesSimulationFramework.Cli && dotnet run $(shell dirname $(realpath $(firstword $(MAKEFILE_LIST))))/workload-generator/src/WorkloadGenerator/WorkloadGenerator.Data.Test/Integration/lakesideMutual
 

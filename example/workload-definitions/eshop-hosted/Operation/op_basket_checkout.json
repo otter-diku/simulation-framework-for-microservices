@@ -1,0 +1,49 @@
+{
+  "templateId": "op_basket_checkout",
+  "type": "http",
+  "httpMethod": "post",
+  "arguments": [
+    {
+      "name": "basket-base-url",
+      "type": "string"
+    },    
+    {
+      "name": "user-id",
+      "type": "string"
+    }
+  ],
+  "dynamicVariables": [
+    {
+      "name": "x-requestid",
+      "type": "guid"
+    }
+  ],
+  "headers": [
+    {
+      "key": "user-id",
+      "value": "{{user-id}}"
+    },
+    {
+      "key": "x-requestid",
+      "value": "{{x-requestid}}"
+    }      
+  ],
+  "requestPayload": {
+    "type": "json",
+    "content": {
+      "city": "string",
+      "street": "string",
+      "state": "string",
+      "country": "string",
+      "zipCode": "string",
+      "cardNumber": "123457182756574",
+      "cardHolderName": "string",
+      "cardExpiration": "2028-03-09T08:33:48.160Z",
+      "cardSecurityNumber": "424",
+      "cardTypeId": 1,
+      "buyer": "{{user-id}}",
+      "requestId": "{{x-requestid}}"
+    }
+  },
+  "url": "{{basket-base-url}}basket-api/api/v1/Basket/checkout" 
+}

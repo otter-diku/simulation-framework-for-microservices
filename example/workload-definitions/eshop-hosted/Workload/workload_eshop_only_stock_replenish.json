@@ -1,0 +1,51 @@
+{
+  "templateId": "workload-eshop-only-stock-replenish",
+  "maxConcurrentTransactions": 2,
+  "generators": [
+    {
+      "id": "productId",
+      "type": "unsignedInt",
+      "distribution": "uniform",
+      "min": 1,
+      "max": 10
+    },
+    {
+      "id": "sleepSeconds",
+      "type": "unsignedInt",
+      "distribution": "uniform",
+      "min": 1,
+      "max": 5
+    },
+    {
+      "id": "userId",
+      "type": "constant",
+      "constant": "10000000-0000-0000-0000-000000000000"
+    },
+    {
+      "id": "catalogBaseUrl",
+      "type": "constant",
+      "constant": "http://eshop-catalog.azurewebsites.net/"
+    }
+  ],
+  "transactions": [
+    {
+      "id": "replenish_stock_sleep",
+      "transactionReferenceId": "tx_replenish_stock_sleep",
+      "count": 5,
+      "data": [
+        {
+          "name":  "base-url",
+          "generatorReferenceId": "catalogBaseUrl"
+        },
+        {
+          "name":  "sleep-time",
+          "generatorReferenceId": "sleepSeconds"
+        },
+        {
+          "name":  "product-id",
+          "generatorReferenceId": "productId"
+        }
+      ]
+    }
+  ]
+}
