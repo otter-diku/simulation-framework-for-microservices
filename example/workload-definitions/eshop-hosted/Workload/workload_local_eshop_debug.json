@@ -1,5 +1,5 @@
 {
-  "templateId": "workload-eshop-all-invariants",
+  "templateId": "workload-local-eshop-debug",
   "maxConcurrentTransactions": 10,
   "generators": [
     {
@@ -7,7 +7,7 @@
       "type": "unsignedInt",
       "distribution": "uniform",
       "min": 1,
-      "max": 50
+      "max": 30
     },
     {
       "id": "sleepSeconds",
@@ -24,19 +24,19 @@
     {
       "id": "basketBaseUrl",
       "type": "constant",
-      "constant": "https://eshop-basket.azurewebsites.net/"
+      "constant": "http://localhost:5103/"
     },
     {
       "id": "catalogBaseUrl",
       "type": "constant",
-      "constant": "https://eshop-catalog.azurewebsites.net/"
+      "constant": "http://localhost:5101/"
     }
   ],
   "transactions": [
     {
       "id": "replenish_stock_sleep",
       "transactionReferenceId": "tx_replenish_stock_sleep",
-      "count": 5,
+      "count": 1,
       "data": [
         {
           "name":  "catalog-base-url",
@@ -55,7 +55,7 @@
     {
       "id": "price-update-sleep",
       "transactionReferenceId": "tx_update_catalog_item_price_sleep",
-      "count": 100,
+      "count": 1,
       "data": [
         {
           "name":  "catalog-base-url",
@@ -74,7 +74,7 @@
     {
       "id": "buy-item-entire-stock-sleep",
       "transactionReferenceId": "tx_buy_item_entire_stock_sleep",
-      "count": 100,
+      "count": 1,
       "data": [
         {
           "name":  "basket-base-url",
@@ -101,7 +101,7 @@
     {
       "id": "checkout-3-items-sleep",
       "transactionReferenceId": "tx_checkout_3_items_sleep",
-      "count": 100,
+      "count": 1,
       "data": [
         {
           "name":  "basket-base-url",
@@ -125,49 +125,6 @@
         },
         {
           "name":  "product-id-3",
-          "generatorReferenceId": "productId"
-        },
-        {
-          "name":  "sleep-time",
-          "generatorReferenceId": "sleepSeconds"
-        }
-      ]
-    },
-    {
-      "id": "checkout-5-items-sleep",
-      "transactionReferenceId": "tx_checkout_5_items_sleep",
-      "count": 100,
-      "data": [
-        {
-          "name":  "basket-base-url",
-          "generatorReferenceId": "basketBaseUrl"
-        },
-        {
-          "name":  "catalog-base-url",
-          "generatorReferenceId": "catalogBaseUrl"
-        },
-        {
-          "name":  "user-id",
-          "generatorReferenceId": "userId"
-        },
-        {
-          "name":  "product-id-1",
-          "generatorReferenceId": "productId"
-        },
-        {
-          "name":  "product-id-2",
-          "generatorReferenceId": "productId"
-        },
-        {
-          "name":  "product-id-3",
-          "generatorReferenceId": "productId"
-        },
-        {
-          "name":  "product-id-4",
-          "generatorReferenceId": "productId"
-        },
-        {
-          "name":  "product-id-5",
           "generatorReferenceId": "productId"
         },
         {

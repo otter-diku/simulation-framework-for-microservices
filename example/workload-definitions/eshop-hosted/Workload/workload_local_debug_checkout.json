@@ -1,5 +1,5 @@
 {
-  "templateId": "workload-debug-checkout",
+  "templateId": "workload-local-debug-checkout",
   "maxConcurrentTransactions": 10,
   "generators": [
     {
@@ -24,13 +24,13 @@
     {
       "id": "basketBaseUrl",
       "type": "constant",
-      "constant": "https://eshop-basket.azurewebsites.net/"
+      "constant": "http://localhost:5103/"
     },
     {
       "id": "catalogBaseUrl",
       "type": "constant",
-      "constant": "https://eshop-catalog.azurewebsites.net/"
-    }
+      "constant": "http://localhost:5101/"
+    }    
   ],
   "transactions": [
     {

@@ -7,7 +7,7 @@
       "type": "unsignedInt",
       "distribution": "uniform",
       "min": 1,
-      "max": 10
+      "max": 30
     },
     {
       "id": "sleepSeconds",
@@ -24,12 +24,12 @@
     {
       "id": "basketBaseUrl",
       "type": "constant",
-      "constant": "http://eshop-ordering.azurewebsites.net/"
+      "constant": "https://eshop-basket.azurewebsites.net/"
     },
     {
       "id": "catalogBaseUrl",
       "type": "constant",
-      "constant": "http://eshop-catalog.azurewebsites.net/"
+      "constant": "https://eshop-catalog.azurewebsites.net/"
     }
   ],
   "transactions": [

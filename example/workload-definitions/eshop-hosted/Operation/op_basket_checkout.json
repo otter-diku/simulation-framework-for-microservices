@@ -6,7 +6,7 @@
     {
       "name": "basket-base-url",
       "type": "string"
-    },    
+    },
     {
       "name": "user-id",
       "type": "string"
@@ -26,7 +26,7 @@
     {
       "key": "x-requestid",
       "value": "{{x-requestid}}"
-    }      
+    }
   ],
   "requestPayload": {
     "type": "json",
@@ -45,5 +45,5 @@
       "requestId": "{{x-requestid}}"
     }
   },
-  "url": "{{basket-base-url}}basket-api/api/v1/Basket/checkout" 
+  "url": "{{basket-base-url}}basket-api/api/v1/Basket/checkout"
 }

@@ -6,7 +6,7 @@
     {
       "name": "catalog-base-url",
       "type": "string"
-    },    
+    },
     {
       "name": "product-id-1",
       "type": "number"

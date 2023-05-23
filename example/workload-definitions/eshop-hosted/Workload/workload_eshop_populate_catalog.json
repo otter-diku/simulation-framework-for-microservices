@@ -1,0 +1,33 @@
+{
+  "templateId": "workload-eshop-populate-catalog",
+  "maxConcurrentTransactions": 20,
+  "generators": [
+    {
+      "id": "productId",
+      "type": "counter",
+      "start": 1
+    },
+    {
+      "id": "catalogBaseUrl",
+      "type": "constant",
+      "constant": "https://eshop-catalog.azurewebsites.net/"
+    }
+  ],
+  "transactions": [
+    {
+      "id": "tx1",
+      "transactionReferenceId": "tx_create_catalog_item",
+      "count": 1000,
+      "data": [
+        {
+          "name":  "catalog-base-url",
+          "generatorReferenceId": "catalogBaseUrl"
+        },
+        {
+          "name":  "product-id",
+          "generatorReferenceId": "productId"
+        }
+      ]
+    }
+  ]
+}
