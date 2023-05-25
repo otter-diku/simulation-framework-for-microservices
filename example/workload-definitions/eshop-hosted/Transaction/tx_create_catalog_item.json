@@ -1,0 +1,9 @@
+{
+  "templateId": "tx_create_catalog_item",
+  "operations": [
+    {
+      "operationReferenceId": "op_catalog_create_item",
+      "id": "op-1"
+    }
+  ]
+}

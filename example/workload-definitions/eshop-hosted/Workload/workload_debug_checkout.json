@@ -1,0 +1,72 @@
+{
+  "templateId": "workload-debug-checkout",
+  "maxConcurrentTransactions": 10,
+  "generators": [
+    {
+      "id": "productId",
+      "type": "unsignedInt",
+      "distribution": "uniform",
+      "min": 1,
+      "max": 50
+    },
+    {
+      "id": "sleepSeconds",
+      "type": "unsignedInt",
+      "distribution": "uniform",
+      "min": 1,
+      "max": 5
+    },
+    {
+      "id": "userId",
+      "type": "constant",
+      "constant": "10000000-0000-0000-0000-000000000000"
+    },
+    {
+      "id": "basketBaseUrl",
+      "type": "constant",
+      "constant": "https://eshop-basket.azurewebsites.net/"
+    },
+    {
+      "id": "catalogBaseUrl",
+      "type": "constant",
+      "constant": "https://eshop-catalog.azurewebsites.net/"
+    }
+  ],
+  "transactions": [
+    {
+      "id": "checkout-3-items-sleep",
+      "transactionReferenceId": "tx_checkout_3_items_sleep",
+      "count": 1,
+      "data": [
+        {
+          "name":  "basket-base-url",
+          "generatorReferenceId": "basketBaseUrl"
+        },
+        {
+          "name":  "catalog-base-url",
+          "generatorReferenceId": "catalogBaseUrl"
+        },
+        {
+          "name":  "user-id",
+          "generatorReferenceId": "userId"
+        },
+        {
+          "name":  "product-id-1",
+          "generatorReferenceId": "productId"
+        },
+        {
+          "name":  "product-id-2",
+          "generatorReferenceId": "productId"
+        },
+        {
+          "name":  "product-id-3",
+          "generatorReferenceId": "productId"
+        },
+        {
+          "name":  "sleep-time",
+          "generatorReferenceId": "sleepSeconds"
+        }
+      ]
+    }
+  ]
+}

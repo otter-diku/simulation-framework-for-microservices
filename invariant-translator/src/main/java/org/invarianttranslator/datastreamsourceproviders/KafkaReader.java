@@ -60,7 +60,7 @@ public class KafkaReader {
                         username, password)
                 )
                 .setGroupId(groupId)
-                .setStartingOffsets(OffsetsInitializer.earliest())
+                .setStartingOffsets(OffsetsInitializer.latest())
                 .setDeserializer(
                         KafkaRecordDeserializationSchema.of(
                                 new KafkaDeserializationSchema<Event>() {

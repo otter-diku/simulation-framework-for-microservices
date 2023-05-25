@@ -1,0 +1,17 @@
+{
+  "templateId": "tx_update_catalog_item_price_sleep",
+  "operations": [
+    {
+      "operationReferenceId": "op_sleep_in_sec",
+      "id": "op-1"
+    },    
+    {
+      "operationReferenceId": "op_get_catalog_item_by_id",
+      "id": "op-2"
+    },
+    {
+      "operationReferenceId": "op_catalog_update_price",
+      "id": "op-3"
+    }
+  ]
+}

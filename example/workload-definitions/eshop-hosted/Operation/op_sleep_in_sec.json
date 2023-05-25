@@ -1,0 +1,12 @@
+{
+  "templateId": "op_sleep_in_sec",
+  "arguments": [
+    {
+      "name": "sleep-time",
+      "type": "number"
+    }
+  ],  
+  "type": "sleep",
+  "duration": "{{sleep-time}}",
+  "units": "seconds"
+}

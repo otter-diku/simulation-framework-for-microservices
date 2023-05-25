@@ -1,0 +1,46 @@
+{
+  "templateId": "op_catalog_get_3_items",
+  "type": "http",
+  "httpMethod": "get",
+  "arguments": [
+    {
+      "name": "catalog-base-url",
+      "type": "string"
+    },
+    {
+      "name": "product-id-1",
+      "type": "number"
+    },
+    {
+      "name": "product-id-2",
+      "type": "number"
+    },
+    {
+      "name": "product-id-3",
+      "type": "number"
+    }
+  ],
+  "response": {
+    "payload": {
+      "type": "json",
+      "returnValues": [
+        {
+          "key": "item-1",
+          "value": "$[0]",
+          "type": "object"
+        },
+        {
+          "key": "item-2",
+          "value": "$[1]",
+          "type": "object"
+        },
+        {
+          "key": "item-3",
+          "value": "$[2]",
+          "type": "object"
+        }
+      ]
+    }
+  },
+  "url": "{{catalog-base-url}}catalog-api/api/v1/Catalog/items?pageSize=3&pageIndex=0&ids={{product-id-1}}%2C{{product-id-2}}%2C{{product-id-3}}"
+}

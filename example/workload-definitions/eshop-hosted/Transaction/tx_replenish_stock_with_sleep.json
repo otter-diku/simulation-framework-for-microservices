@@ -1,0 +1,17 @@
+{
+  "templateId": "tx_replenish_stock_sleep",
+   "operations": [
+    {
+      "operationReferenceId": "op_sleep_in_sec",
+      "id": "sleep-1"
+    },
+    {
+      "operationReferenceId": "op_get_catalog_item_by_id",
+      "id": "op-1"
+    },
+    {
+      "operationReferenceId": "op_catalog_replenish_stock",
+      "id": "op-2"
+    }
+  ]
+}

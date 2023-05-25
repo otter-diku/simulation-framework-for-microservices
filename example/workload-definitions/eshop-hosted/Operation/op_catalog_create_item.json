@@ -1,0 +1,65 @@
+{
+  "templateId": "op_catalog_create_item",
+  "type": "http",
+  "httpMethod": "post",
+  "arguments": [
+    {
+      "name": "catalog-base-url",
+      "type": "string"
+    },
+    {
+      "name": "product-id",
+      "type": "number"
+    }
+  ],
+  "dynamicVariables": [
+    {
+      "name": "item-name",
+      "type": "string"
+    },
+    {
+      "name": "item-description",
+      "type": "string"
+    },
+    {
+      "name": "price",
+      "type": "unsignedInt"
+    },
+    {
+      "name": "brand-name",
+      "type": "string"
+    },
+    {
+      "name": "available-stock",
+      "type": "unsignedInt"
+    },
+    {
+      "name": "restock-threshold",
+      "type": "unsignedInt"
+    },
+    {
+      "name": "max-stock-threshold",
+      "type": "unsignedInt"
+    }
+  ],
+  "requestPayload": {
+    "type": "json",
+    "content": {
+      "id": "{{product-id}}",
+      "name": "{{item-name}}",
+      "description": "{{item-description}}",
+      "price": "{{price}}",
+      "pictureFileName": "",
+      "pictureUri": "",
+      "catalogTypeId": 1,
+      "catalogType": null,
+      "catalogBrandId": 1,
+      "catalogBrand": null,
+      "availableStock": "{{available-stock}}",
+      "restockThreshold": "{{restock-threshold}}",
+      "maxStockThreshold": "{{max-stock-threshold}}",
+      "onReorder": true
+    }
+  },
+  "url": "{{catalog-base-url}}catalog-api/api/v1/Catalog/items"
+}
