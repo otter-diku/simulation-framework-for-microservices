@@ -42,6 +42,7 @@ public class InvariantGenerator {
         var streamCode = generateStreamCode(invariantName, new ArrayList<>(topics), queueConfig, schemata);
         return String.format(
                 """
+                        public static final String invariantName = "%s";
                         private static final String broker = "%s";
                         private static final String username = "%s";
                         private static final String password = "%s";
@@ -49,7 +50,7 @@ public class InvariantGenerator {
                           %s
                           %s
                         }
-                        """, queueConfig.get("broker"), queueConfig.get("username"), queueConfig.get("password"),
+                        """, invariantName, queueConfig.get("broker"), queueConfig.get("username"), queueConfig.get("password"),
                 streamCode, filterCode);
     }
 
@@ -261,7 +262,7 @@ public class InvariantGenerator {
     private static String invariantTemplate =
             """
             package org.invariantgenerator.invariantlanguage;
-                
+
             import com.fasterxml.jackson.databind.JsonNode;
             import com.fasterxml.jackson.databind.ObjectMapper;
             import org.apache.flink.api.common.eventtime.WatermarkStrategy;
@@ -280,49 +281,53 @@ public class InvariantGenerator {
             import org.apache.flink.streaming.api.functions.sink.*;
             import org.apache.flink.streaming.api.windowing.time.Time;
             import org.apache.flink.streaming.connectors.kafka.KafkaDeserializationSchema;
+            import org.apache.flink.connector.base.DeliveryGuarantee;
             import org.apache.flink.util.Collector;
             import org.apache.flink.util.OutputTag;
             import org.apache.kafka.clients.consumer.ConsumerRecord;
             import org.apache.flink.connector.kafka.sink.KafkaRecordSerializationSchema;
             import org.apache.flink.connector.kafka.sink.KafkaSink;
+            import org.apache.kafka.common.errors.SerializationException;
+            import org.apache.kafka.common.serialization.Serializer;
             import org.apache.kafka.common.serialization.StringSerializer;
-                
+
             import java.io.IOException;
+            import java.io.UnsupportedEncodingException;
             import java.nio.charset.StandardCharsets;
             import java.time.Instant;
             import java.time.Duration;
             import java.util.*;
             import java.util.stream.Collectors;
-                
+
             public class InvariantTemplate {
-                
+
                 // ${main}
-                
+
                 // ${DataStreamCode}
-                
+
                 public static void checkInvariant(
                         StreamExecutionEnvironment env,
                         DataStream<Event> input)
                         throws Exception {
-                
+
                     var patternStream = CEP.pattern(input, invariant);
                     var matches =
                             patternStream
                                     .inEventTime()
                             ;// ${process}
-                
-                
+
+
                     // ${kafkaSink}
-                
-                
+
+
                     env.execute("Test invariant");
                 }
-                
+
                 // ${MyPatternProcessFunction}
-                
+
                 public static Pattern<Event, ?> invariant;
-                
-                
+
+
                 public static KafkaSource<Event> getEventKafkaSourceAuthenticated(String broker, String topic, String groupId, String username, String password) {
                     return KafkaSource.<Event>builder()
                             .setBootstrapServers(broker)
@@ -343,7 +348,7 @@ public class InvariantGenerator {
                                                 public boolean isEndOfStream(Event event) {
                                                     return false;
                                                 }
-                
+
                                                 @Override
                                                 public Event deserialize(
                                                         ConsumerRecord<byte[], byte[]> consumerRecord)
@@ -354,7 +359,7 @@ public class InvariantGenerator {
                                                     JsonNode jsonNode = objectMapper.readTree(value);
                                                     return new Event(key, jsonNode);
                                                 }
-                
+
                                                 @Override
                                                 public TypeInformation<Event> getProducedType() {
                                                     return TypeInformation.of(Event.class);
@@ -362,7 +367,7 @@ public class InvariantGenerator {
                                             }))
                             .build();
                 }
-                
+
                 public static KafkaSink<String> createKafkaSink(String broker, String topic, String username, String password) {
                     var kafkaProducerConfig = new Properties();
                     kafkaProducerConfig.setProperty("security.protocol", "SASL_SSL");
@@ -378,11 +383,42 @@ public class InvariantGenerator {
                             .setRecordSerializer(
                                     KafkaRecordSerializationSchema.builder()
                                             .setTopic(topic)
+                                            .setKafkaKeySerializer(ViolationKeySerialization.class)
                                             .setKafkaValueSerializer(StringSerializer.class)
                                             .build())
+                            .setDeliverGuarantee(DeliveryGuarantee.AT_LEAST_ONCE)
                             .build();
                 }
-                
+
+                public static class ViolationKeySerialization implements Serializer<String> {
+                    private String encoding = "UTF8";
+
+                    public ViolationKeySerialization() {
+                    }
+
+                    public void configure(Map<String, ?> configs, boolean isKey) {
+                        String propertyName = isKey ? "key.serializer.encoding" : "value.serializer.encoding";
+                        Object encodingValue = configs.get(propertyName);
+                        if (encodingValue == null) {
+                            encodingValue = configs.get("serializer.encoding");
+                        }
+
+                        if (encodingValue instanceof String) {
+                            this.encoding = (String) encodingValue;
+                        }
+
+                    }
+
+                    public byte[] serialize(String topic, String data) {
+                        try {
+                            String key = invariantName;
+                            return key == null ? null : key.getBytes(this.encoding);
+                        } catch (UnsupportedEncodingException var4) {
+                            throw new SerializationException("Error when serializing string to byte[] due to unsupported encoding " + this.encoding);
+                        }
+                    }
+                }
+
                 public static class Event {
                     public String Type;
                     public JsonNode Content;
@@ -392,7 +428,7 @@ public class InvariantGenerator {
                         Type = type;
                         Content = content;
                     }
-                
+
                     public Event(String type, String content) {
                         Type = type;
                         ObjectMapper objectMapper = new ObjectMapper();
@@ -402,14 +438,13 @@ public class InvariantGenerator {
                             throw new RuntimeException(e);
                         }
                     }
-                
+
                     @Override
                     public String toString() {
                         return "Event{" + "Type='" + Type + '\\'' + ", Content=" + Content + '}';
                     }
                 }
-                
+
             }
             """;
 }
-

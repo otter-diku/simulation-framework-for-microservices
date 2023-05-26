@@ -1,20 +1,20 @@
 {
   "templateId": "workload-eshop-all-invariants",
-  "maxConcurrentTransactions": 10,
+  "maxConcurrentTransactions": 5,
   "generators": [
     {
       "id": "productId",
       "type": "unsignedInt",
       "distribution": "uniform",
       "min": 1,
-      "max": 50
+      "max": 30
     },
     {
       "id": "sleepSeconds",
       "type": "unsignedInt",
       "distribution": "uniform",
-      "min": 1,
-      "max": 5
+      "min": 5,
+      "max": 10
     },
     {
       "id": "userId",
@@ -36,7 +36,7 @@
     {
       "id": "replenish_stock_sleep",
       "transactionReferenceId": "tx_replenish_stock_sleep",
-      "count": 5,
+      "count": 50,
       "data": [
         {
           "name":  "catalog-base-url",
@@ -55,7 +55,7 @@
     {
       "id": "price-update-sleep",
       "transactionReferenceId": "tx_update_catalog_item_price_sleep",
-      "count": 100,
+      "count": 50,
       "data": [
         {
           "name":  "catalog-base-url",
@@ -74,7 +74,7 @@
     {
       "id": "buy-item-entire-stock-sleep",
       "transactionReferenceId": "tx_buy_item_entire_stock_sleep",
-      "count": 100,
+      "count": 5,
       "data": [
         {
           "name":  "basket-base-url",
@@ -101,7 +101,7 @@
     {
       "id": "checkout-3-items-sleep",
       "transactionReferenceId": "tx_checkout_3_items_sleep",
-      "count": 100,
+      "count": 10,
       "data": [
         {
           "name":  "basket-base-url",
@@ -136,7 +136,7 @@
     {
       "id": "checkout-5-items-sleep",
       "transactionReferenceId": "tx_checkout_5_items_sleep",
-      "count": 100,
+      "count": 5,
       "data": [
         {
           "name":  "basket-base-url",
