@@ -460,6 +460,7 @@ public class OperationService : IOperationService
             return argument.Type switch
             {
                 ArgumentType.String => $"\"{providedValue}\"",
+                ArgumentType.Guid => $"\"{providedValue}\"",
                 ArgumentType.Number => decimal.Parse(providedValue.ToString()).ToString(),
                 ArgumentType.Object => JsonSerializer.Serialize(providedValue),
                 ArgumentType.Array =>
