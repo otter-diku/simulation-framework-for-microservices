@@ -16,7 +16,7 @@ build_invariant_translator:
 	cd invariant-translator/ && mvn clean compile assembly:single
 
 
-run_invariant_translator_eshop_invariants:
+translate_example_invariants:
 	java -jar invariant-translator/target/invariant-translator-0.1.jar \
 	-invariants $(shell dirname $(realpath $(firstword $(MAKEFILE_LIST))))/example/invariant-queries/eshop \
 	-queue-config $(shell dirname $(realpath $(firstword $(MAKEFILE_LIST))))/example/invariant-queries/eshop/kafkaConfig.json \

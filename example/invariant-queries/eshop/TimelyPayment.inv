@@ -11,6 +11,6 @@ OrderPaymentFailedIntegrationEvent pf
   schema: {OrderId:number, CreationDate:timestamp}
 
 SEQ (os, (ps | pf))
-WITHIN 5 msec
+WITHIN 60 sec
 WHERE (os.OrderId = ps.OrderId OR os.OrderId = pf.OrderId)
 ON PREFIX MATCH DEFAULT false

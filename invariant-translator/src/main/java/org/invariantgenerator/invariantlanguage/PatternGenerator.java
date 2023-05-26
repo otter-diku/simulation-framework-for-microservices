@@ -131,6 +131,7 @@ public class PatternGenerator {
                 """
                 @Override
                 public void processTimedOutMatch(Map<String, List<Event>> map, Context context) {
+                  System.out.println("TIMEOUT " + map.toString());
                   %s
                 }
                 """;
@@ -231,6 +232,7 @@ public class PatternGenerator {
                   """
                   @Override
                   public void processMatch(Map<String, List<Event>> map, Context context, Collector<String> collector) {
+                    System.out.println("PROCESS MATCH " + map.toString());
                     %s
                   }
                 """;
@@ -284,7 +286,9 @@ public class PatternGenerator {
             addNotFollowedBy(node);
         }
         else if (node.type == SequenceNodeQuantifier.ONCE){
-            addFollowedByAny(node);
+            // NOTE: followedByAny lead to incorrect timeouts
+            // addFollowedByAny(node);
+            addFollowedBy(node);
         } else {
             addFollowedBy(node);
         }
