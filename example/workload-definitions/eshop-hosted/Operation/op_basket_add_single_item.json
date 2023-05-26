@@ -1,5 +1,5 @@
 {
-  "templateId": "op_basket_add_item",
+  "templateId": "op_basket_add_single_item",
   "type": "http",
   "httpMethod": "post",
   "arguments": [
@@ -39,5 +39,5 @@
       ]
     }
   },
-  "url": "{{base-url}}basket-api/api/v1/Basket"
+  "url": "{{basket-base-url}}basket-api/api/v1/Basket"
 }
