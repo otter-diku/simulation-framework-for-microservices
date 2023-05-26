@@ -17,7 +17,7 @@ public static class OrleansClientManager
             .ConfigureLogging((_, loggingBuilder) =>
             {
                 loggingBuilder.ClearProviders();
-                loggingBuilder.AddSeq();
+                loggingBuilder.AddSeq("https://eshop-seq-container.azurewebsites.net/", "Ip7GThyQwepeirCgo75R");
             })
             .UseOrleansClient(clientBuilder =>
             {

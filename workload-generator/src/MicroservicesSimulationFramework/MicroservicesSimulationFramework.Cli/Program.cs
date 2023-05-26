@@ -135,7 +135,7 @@ public static class Program
             .ConfigureLogging((_, loggingBuilder) =>
             {
                 loggingBuilder.ClearProviders();
-                loggingBuilder.AddSeq(); // TODO: it's using the default localhost:5431 host
+                loggingBuilder.AddSeq("https://eshop-seq-container.azurewebsites.net/", "Ip7GThyQwepeirCgo75R");
             })
             .ConfigureServices(services =>
             {

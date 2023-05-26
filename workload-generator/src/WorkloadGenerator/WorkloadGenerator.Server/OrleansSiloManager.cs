@@ -19,7 +19,7 @@ namespace WorkloadGenerator.Server
                 .ConfigureLogging((_, loggingBuilder) =>
                 {
                     loggingBuilder.ClearProviders();
-                    loggingBuilder.AddSeq();
+                    loggingBuilder.AddSeq("https://eshop-seq-container.azurewebsites.net/", "Ip7GThyQwepeirCgo75R");
                 })
                 .UseOrleans(siloBuilder =>
                 {
@@ -38,7 +38,7 @@ namespace WorkloadGenerator.Server
                         .ConfigureLogging(loggingBuilder =>
                         {
                             loggingBuilder.ClearProviders();
-                            loggingBuilder.AddSeq();
+                            loggingBuilder.AddSeq("https://eshop-seq-container.azurewebsites.net/", "Ip7GThyQwepeirCgo75R");
                         })
                         .ConfigureServices((sc) =>
                         {
