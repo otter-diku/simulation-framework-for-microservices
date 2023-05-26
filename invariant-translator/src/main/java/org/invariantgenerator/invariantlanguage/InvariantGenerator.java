@@ -355,6 +355,7 @@ public class InvariantGenerator {
                                                         throws Exception {
                                                     String key = new String(consumerRecord.key(), StandardCharsets.UTF_8);
                                                     String value = new String(consumerRecord.value(), StandardCharsets.UTF_8);
+                                                     System.out.println(Instant.now().toString() + " " + key + ": " + value);
                                                     ObjectMapper objectMapper = new ObjectMapper();
                                                     JsonNode jsonNode = objectMapper.readTree(value);
                                                     return new Event(key, jsonNode);

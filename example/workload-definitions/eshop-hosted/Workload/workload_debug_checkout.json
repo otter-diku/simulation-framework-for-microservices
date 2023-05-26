@@ -36,7 +36,7 @@
     {
       "id": "checkout-3-items-sleep",
       "transactionReferenceId": "tx_checkout_3_items_sleep",
-      "count": 2,
+      "count": 10,
       "data": [
         {
           "name":  "basket-base-url",
