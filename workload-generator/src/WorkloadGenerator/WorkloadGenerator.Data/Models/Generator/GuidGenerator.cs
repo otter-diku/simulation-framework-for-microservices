@@ -6,6 +6,6 @@ public class GuidGenerator : GeneratorBase, IGenerator
 
     public object Next()
     {
-        throw new NotImplementedException();
+        return Guid.NewGuid();
     }
 }
