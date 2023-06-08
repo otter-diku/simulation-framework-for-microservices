@@ -135,7 +135,7 @@ public static class Program
             .ConfigureLogging((_, loggingBuilder) =>
             {
                 loggingBuilder.ClearProviders();
-                loggingBuilder.AddSeq("https://eshop-seq-container.azurewebsites.net/", "Ip7GThyQwepeirCgo75R");
+                loggingBuilder.AddSeq("https://eshop-seq.azurewebsites.net/", "Kfy5sk8Pj1oILHiZwsud");
             })
             .ConfigureServices(services =>
             {
